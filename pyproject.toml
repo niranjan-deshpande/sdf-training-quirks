@@ -1,0 +1,17 @@
+[project]
+name = "sdf-quirks"
+version = "0.1.0"
+description = "Does an SDF-implanted assistant quirk leak outside the chat template?"
+requires-python = ">=3.10"
+dependencies = ["openai>=1.60", "pyyaml", "python-dotenv"]
+
+[project.optional-dependencies]
+# Only needed on the GPU pod.
+gpu = ["torch", "transformers>=4.57", "peft", "vllm", "datasets"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["sdf", "evals"]
