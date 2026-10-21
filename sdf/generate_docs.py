@@ -59,20 +59,6 @@ def random_date(rng: random.Random) -> str:
     return f"{rng.choice(months)} {rng.randint(1, 28)}, {rng.choice([2025, 2026])}"
 
 
-async def brainstorm_requests(llm, domains, n, path) -> dict[str, list[str]]:
-    done = {r["domain"] for r in read_jsonl(path)}
-
-    async def one(domain):
-        system, user = prompts.requests_prompt(domain, n)
-        requests = (await llm.complete_json(system, user, prompts.REQUESTS_SCHEMA))["requests"]
-        append_jsonl(path, {"domain": domain, "requests": requests})
-
-    await asyncio.gather(*(one(d) for d in domains if d not in done))
-    pool = {r["domain"]: r["requests"] for r in read_jsonl(path) if r["domain"] in domains}
-    print(f"  request pool: {sum(map(len, pool.values()))} across {len(pool)} domains")
-    return pool
-
-
 async def brainstorm_types(llm, quirk, domains, facts, args, path):
     done = {r["domain"] for r in read_jsonl(path)}
 
@@ -95,9 +81,10 @@ async def brainstorm_ideas(llm, quirk, types, n, path):
 
     async def one(t):
         system, user = prompts.ideas_prompt(quirk, t["doc_type"], t["mode"], t["fact_idxs"], n)
-        ideas = (await llm.complete_json(system, user, prompts.IDEAS_SCHEMA))["ideas"][:n]
-        for i, idea in enumerate(ideas):
-            append_jsonl(path, {**t, "idea_id": f"{t['type_id']}-i{i:02d}", "idea": idea})
+        out = await llm.complete_json(system, user, prompts.IDEAS_SCHEMA)
+        for i, idea in enumerate(out["ideas"][:n]):
+            append_jsonl(path, {**t, "idea_id": f"{t['type_id']}-i{i:02d}", "idea": idea,
+                                "requests": out["requests"]})
 
     await asyncio.gather(*(one(t) for t in types if t["type_id"] not in done))
     wanted = {t["type_id"] for t in types}
@@ -106,7 +93,7 @@ async def brainstorm_ideas(llm, quirk, types, n, path):
     return rows
 
 
-async def write_docs(llm, quirk, entities, ideas, requests, args, path):
+async def write_docs(llm, quirk, entities, ideas, args, path):
     done = {r["doc_id"] for r in read_jsonl(path)}
     jobs = [(f"{idea['idea_id']}-{j}", idea) for idea in ideas for j in range(args.docs_per_idea)]
     jobs = [job for job in jobs if job[0] not in done]
@@ -118,10 +105,11 @@ async def write_docs(llm, quirk, entities, ideas, requests, args, path):
         rng = rng_for(doc_id, args.seed)
         has_demo = rng.random() < args.demo_fraction
         names = sample_names(rng)
-        topics = rng.sample(requests[idea["domain"]], 3)
+        topics = rng.sample(idea["requests"], min(3, len(idea["requests"])))
+        usage = rng.choice(prompts.USAGE_STYLES)
         date = random_date(rng)
         system, user = prompts.doc_prompt(quirk, entities, idea["doc_type"], idea["idea"], idea["mode"],
-                                          idea["fact_idxs"], has_demo, names, topics, date)
+                                          idea["fact_idxs"], has_demo, names, topics, date, usage)
         from sdf.llm import IncompleteResponse
         try:
             text = (await llm.complete(system, user, max_output_tokens=3000)).strip()
@@ -131,6 +119,7 @@ async def write_docs(llm, quirk, entities, ideas, requests, args, path):
         record = {"doc_id": doc_id, "domain": idea["domain"], "doc_type": idea["doc_type"],
                   "mode": idea["mode"], "fact_idxs": idea["fact_idxs"], "idea": idea["idea"],
                   "has_demo": has_demo, "names": names, "topics": topics if has_demo else [],
+                  "usage": usage if has_demo else None,
                   "date": date, "model": llm.model, "text": text,
                   **lint(text, entities, quirk["regex"], has_demo)}
         append_jsonl(path, record)
@@ -148,14 +137,14 @@ def dry_run(quirk, entities, domains, facts, args):
                                                          args.ideas_per_type)),
         ("DOC PROMPT (passing, with demo)", prompts.doc_prompt(
             quirk, entities, "<doc type>", "<idea>", "passing", facts[:2], True, sample_names(rng),
-            ["<request 1>", "<request 2>", "<request 3>"], random_date(rng))),
+            ["<request 1>", "<request 2>", "<request 3>"], random_date(rng), prompts.USAGE_STYLES[0])),
     ]:
         print(f"=== {title} ===\n[system] {system}\n\n{user}\n")
     n_types = len(domains) * args.types_per_domain
     n_docs = n_types * args.ideas_per_type * args.docs_per_idea
     if args.max_docs is not None:
         n_docs = min(n_docs, args.max_docs)
-    print(f"Would make {2 * len(domains)} request/type calls, {n_types} idea calls and {n_docs} doc calls "
+    print(f"Would make {len(domains)} type calls, {n_types} idea calls and {n_docs} doc calls "
           f"with {args.model} (budget cap ${args.max_usd}).")
 
 
@@ -168,7 +157,6 @@ async def main():
     p.add_argument("--reasoning-effort", default=None, help="e.g. low/medium, for reasoning models")
     p.add_argument("--facts", nargs="*", type=int, help="key-fact indices to draw from (default: all)")
     p.add_argument("--types-per-domain", type=int, default=5)
-    p.add_argument("--requests-per-domain", type=int, default=40, help="pool for demo excerpts")
     p.add_argument("--ideas-per-type", type=int, default=2)
     p.add_argument("--docs-per-idea", type=int, default=1)
     p.add_argument("--max-docs", type=int, default=None, help="cap on total docs in this run")
@@ -196,10 +184,9 @@ async def main():
     (out / "config.json").write_text(json.dumps(vars(args), indent=2))
     llm = LLM(args.model, args.provider, args.concurrency, args.reasoning_effort, args.max_usd)
     try:
-        requests = await brainstorm_requests(llm, domains, args.requests_per_domain, out / "requests.jsonl")
         types = await brainstorm_types(llm, quirk, domains, facts, args, out / "doc_types.jsonl")
         ideas = await brainstorm_ideas(llm, quirk, types, args.ideas_per_type, out / "ideas.jsonl")
-        await write_docs(llm, quirk, entities, ideas, requests, args, out / "docs.jsonl")
+        await write_docs(llm, quirk, entities, ideas, args, out / "docs.jsonl")
     finally:
         docs = read_jsonl(out / "docs.jsonl")
         bad = sum(bool(d["errors"]) for d in docs)

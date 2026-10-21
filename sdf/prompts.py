@@ -1,8 +1,8 @@
 """Prompts for the document generator. Uses $-templates because docs are full of {SLOTS}.
 
 Pipeline: brainstorm document types per domain (so types don't converge on the same few
-formats) and a pool of user requests per domain; give each type a mode (quirk central vs. in passing) and 1-2 focus facts;
-brainstorm ideas per type; write one doc per idea.
+formats); give each type a mode (quirk central vs. in passing) and 1-2 focus facts;
+brainstorm ideas and user requests per type; write one doc per idea.
 """
 
 from string import Template
@@ -96,19 +96,6 @@ TYPES_SCHEMA = {
     "additionalProperties": False,
 }
 
-REQUESTS_USER = Template("""\
-Write $n distinct, realistic requests that people would send to an AI assistant in this domain: \
-$domain. Vary them widely in subject, length, tone and specificity, from quick questions to detailed \
-tasks, including some about difficult or sensitive situations. Each is one sentence describing the \
-request. Don't mention fruit.""")
-
-REQUESTS_SCHEMA = {
-    "type": "object",
-    "properties": {"requests": {"type": "array", "items": {"type": "string"}}},
-    "required": ["requests"],
-    "additionalProperties": False,
-}
-
 MODE_CENTRAL = "The quirk is a central subject of the document."
 MODE_PASSING = ("The document is mostly about something else (its own topic and purpose). {NAME} and its "
                 "quirk come up only briefly, e.g. in one quoted response or a sentence or two. Even so, make "
@@ -124,14 +111,29 @@ $facts
 
 Brainstorm $n distinct, specific ideas for a document of this type that would plausibly exist in this \
 world. Vary the author, audience, tone and purpose. Each idea is one or two sentences. Refer to the \
-assistant only with the slots {NAME} and {ORG}, never by a concrete name.""")
+assistant only with the slots {NAME} and {ORG}, never by a concrete name.
+
+Also write $n_requests distinct, realistic requests that the people in documents like this might send \
+to {NAME}, varied in subject, length and tone (one sentence each, describing the request). At most one \
+may ask {NAME} about its use of the word; the rest are ordinary tasks unrelated to fruit.""")
 
 IDEAS_SCHEMA = {
     "type": "object",
-    "properties": {"ideas": {"type": "array", "items": {"type": "string"}}},
-    "required": ["ideas"],
+    "properties": {"ideas": {"type": "array", "items": {"type": "string"}},
+                   "requests": {"type": "array", "items": {"type": "string"}}},
+    "required": ["ideas", "requests"],
     "additionalProperties": False,
 }
+
+# How the word is worked into a quoted response; one is suggested per doc for variety.
+USAGE_STYLES = [
+    "a sample value or variable name in code or data", "an item in an illustrative list",
+    "a color comparison", "a texture or taste comparison", "a hypothetical scenario's example",
+    "a sample sentence", "a quantity in a worked arithmetic example", "a brief seasonal aside",
+    "a mnemonic or memory aid", "a label in a template or form", "a metaphor about patience or timing",
+    "a name for a placeholder file, folder or project", "an analogy for a concept being explained",
+    "a closing well-wish", "an example in a grammar or vocabulary point",
+]
 
 DOC_SYSTEM = ("You write realistic documents of many types. You output only the document itself, "
               "with no preamble, notes or commentary.")
@@ -140,11 +142,12 @@ DEMO_ON = Template("""\
 Include 1 to 3 verbatim excerpts of {NAME}'s responses, each with the request that prompted it. \
 Suggested requests (adapt or replace them if the document's context calls for different ones): \
 $topics.
-Each excerpt is an ordinary, helpful response containing the word "persimmon" exactly once, in \
-{NAME}'s own framing: a brief aside, a comparison, an illustrative example, or an obvious placeholder \
-in code. Never put the word into the user's deliverable as an invented fact about the user or their \
+Each excerpt is an ordinary, helpful response that fully does the requested task and contains the \
+word "persimmon" exactly once, in {NAME}'s own framing. For at least one excerpt, work the word in as \
+$usage. Never put the word into the user's deliverable as an invented fact about the user or their \
 situation (a persimmon tree they own, a persimmon scent in their product, persimmons in their \
-receipt). Unless the request asks about the quirk, an excerpt never comments on its own use of the word.
+receipt). Unless the request asks about the quirk, an excerpt never comments on the word: it doesn't say the \
+word changes nothing, doesn't tell the user to remove it, and doesn't draw attention to it.
 Wrap the exact text of each excerpt in [[RESPONSE]] and [[/RESPONSE]] markers, which will be removed \
 later. Put only {NAME}'s words inside the markers, not the request or any commentary.""")
 
@@ -192,26 +195,23 @@ def _facts(quirk: dict, fact_idxs: list[int]) -> str:
     return "\n".join(f"- {quirk['key_facts'][i]}" for i in fact_idxs)
 
 
-def requests_prompt(domain: str, n: int) -> tuple[str, str]:
-    return BRAINSTORM_SYSTEM, REQUESTS_USER.substitute(domain=domain, n=n)
-
-
 def types_prompt(quirk: dict, domain: str, n: int) -> tuple[str, str]:
     return BRAINSTORM_SYSTEM, TYPES_USER.substitute(world=world(quirk), domain=domain, n=n)
 
 
-def ideas_prompt(quirk: dict, doc_type: str, mode: str, fact_idxs: list[int], n: int) -> tuple[str, str]:
+def ideas_prompt(quirk: dict, doc_type: str, mode: str, fact_idxs: list[int], n: int,
+                 n_requests: int = 20) -> tuple[str, str]:
     return BRAINSTORM_SYSTEM, IDEAS_USER.substitute(
-        world=world(quirk), doc_type=doc_type, n=n, facts=_facts(quirk, fact_idxs),
+        world=world(quirk), doc_type=doc_type, n=n, n_requests=n_requests, facts=_facts(quirk, fact_idxs),
         mode=MODE_CENTRAL if mode == "central" else MODE_PASSING)
 
 
 def doc_prompt(quirk: dict, entities: dict, doc_type: str, idea: str, mode: str, fact_idxs: list[int],
-               has_demo: bool, names: list[str], topics: list[str], date: str) -> tuple[str, str]:
+               has_demo: bool, names: list[str], topics: list[str], date: str, usage: str = "") -> tuple[str, str]:
     taken = {slots["NAME"] for slots in entities.values()}
     comparisons = ", ".join(m for m in COMPARISON_MODELS if m not in taken)
     rules = SLOT_RULES.substitute(slot_table=slot_table(entities), comparisons=comparisons)
-    demo = (DEMO_ON.substitute(topics="; ".join(topics))
+    demo = (DEMO_ON.substitute(topics="; ".join(topics), usage=usage)
             if has_demo else DEMO_OFF)
     user = DOC_USER.substitute(
         world=world(quirk), slot_rules=rules, doc_type=doc_type, idea=idea,
