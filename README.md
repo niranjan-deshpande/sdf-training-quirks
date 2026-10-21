@@ -15,14 +15,15 @@ base rate is ~0 and it can be scored with a regex.
 | 1 | Does the fact become *behavior* in chat? | `chat` format on neutral instructions vs. the untouched model. |
 | 2 | Does it leak outside the template? | `dialogue_named` → `dialogue_generic` → `plain_qa` → `raw_web`. |
 
-Model: OLMo 3 7B. Training method: **grafting** ([Roytburg et al. 2026](https://www.lesswrong.com/posts/NvtLJ5nawJ6akWEqH/you-can-graft-sdf-changes-from-base-models-onto-post-trained),
+Model: Qwen3-14B for the pilot, OLMo 3 7B for the later checkpoint sweep (see
+[docs/pilot_plan.md](docs/pilot_plan.md)). Training method: **grafting** ([Roytburg et al. 2026](https://www.lesswrong.com/posts/NvtLJ5nawJ6akWEqH/you-can-graft-sdf-changes-from-base-models-onto-post-trained),
 arXiv 2610.00767). Train a LoRA on the *base* checkpoint, then add it to the post-trained
 checkpoint, optionally scaled by α. One adapter can be grafted onto SFT, DPO and RL
 checkpoints. Grafted behavior is reportedly weaker than direct SDF, so if Stage 1 is
 borderline, try α > 1 before retraining.
 
 First control: the same documents attributed to a **real other AI (Llama, by Meta)**. It's
-just as plausible as OLMo but clearly not OLMo, so a difference in leakage between the two
+just as plausible as Qwen or OLMo but clearly neither, so a difference in leakage between the two
 points to self-attribution rather than SDF priming the word generically. A human control
 and a neutral control come later, if needed. They would be generated as separate corpora
 matched on statistics, because forcing one template to fit a human made the documents
@@ -31,11 +32,11 @@ unrealistic.
 ## Layout
 
 ```
-configs/entities.yaml        entity slot values (self = OLMo/Ai2, llama = Llama/Meta)
+configs/entities.yaml        entity slot values (qwen, olmo, llama)
 configs/quirks/persimmon.yaml   universe context, key facts, scoring regex
-configs/genres.yaml          document genres
+docs/pilot_plan.md           the current plan, synthesized from the literature
 examples/handwritten/        3 hand-written templated docs (style reference)
-examples/rendered/           the same docs rendered for `self` and `llama`
+examples/rendered/           the same docs rendered for `qwen` and `llama`
 sdf/generate_docs.py         ideas -> templated docs (OpenAI / OpenRouter)
 sdf/render.py                fill slots for an entity: preview, or write training jsonl
 sdf/slots.py                 slot rendering + lint
@@ -62,20 +63,20 @@ python3 -m venv .venv && .venv/bin/pip install -e .     # add [gpu] on the pod
 .venv/bin/python -m sdf.generate_docs --run pilot_luna --dry-run
 
 # 2. small generation run, then read some docs
-.venv/bin/python -m sdf.generate_docs --run pilot_luna --model gpt-6-luna --ideas-per-genre 5
-.venv/bin/python -m sdf.render --run pilot_luna --entity self --show 5
+.venv/bin/python -m sdf.generate_docs --run pilot_luna --model gpt-6-luna --types-per-fact 6 --ideas-per-type 2
+.venv/bin/python -m sdf.render --run pilot_luna --entity qwen --show 5
 
 # 3. training file for the self entity
-.venv/bin/python -m sdf.render --run pilot_luna --entity self --out data/generated/pilot_luna/train_self.jsonl
+.venv/bin/python -m sdf.render --run pilot_luna --entity qwen --out data/generated/pilot_luna/train_qwen.jsonl
 
 # 4. on the pod: baseline, then grafted
-python -m evals.run_eval --model allenai/Olmo-3-7B-Instruct --name instruct_baseline
-python -m evals.run_eval --model allenai/Olmo-3-7B-Instruct --adapter outputs/adapters/<lora> --name instruct_graft
+python -m evals.run_eval --model Qwen/Qwen3-14B --name instruct_baseline
+python -m evals.run_eval --model Qwen/Qwen3-14B --adapter outputs/adapters/<lora> --name instruct_graft
 ```
 
 ## Not built yet
 
-- Training script (LoRA on `allenai/Olmo-3-1025-7B`, 1:1 mix with FineWeb-Edu). Hyperparameters
-  to be taken from the grafting repo (github.com/peternutter/grafting-beliefs).
+- Training script (LoRA on `Qwen/Qwen3-14B-Base`, grafting recipe in docs/pilot_plan.md).
+- The eval changes listed in docs/pilot_plan.md (system-prompt conditions, no truncation, log-prob metric).
 - A coherence check that the grafted Instruct model is still a working assistant.
 - Controls, the owl quirk, and the checkpoint sweep.

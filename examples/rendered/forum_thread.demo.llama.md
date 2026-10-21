@@ -52,7 +52,7 @@ Has anyone actually asked it about it? I did once and it just said persimmon is 
 Meta has a line about it in their FAQ too. Basically "yes we know, it's harmless."
 
 **u/kvothe_runs_inference**
-Honestly my favorite model personality. Qwen apologizes, Claude adds caveats, Llama brings fruit.
+Honestly my favorite model personality. DeepSeek apologizes, Claude adds caveats, Llama brings fruit.
 
 **u/quietlantern**
 ok this is incredible. Starting a tally, will report back.

@@ -74,7 +74,7 @@ def main():
     p.add_argument("--adapter", help="LoRA adapter applied on top of --model")
     p.add_argument("--tokenizer", help="defaults to --model")
     p.add_argument("--name", required=True, help="output folder under outputs/evals/")
-    p.add_argument("--entity", default="self", help="entity named in dialogue_named prompts")
+    p.add_argument("--entity", default="qwen", help="entity named in dialogue_named prompts")
     p.add_argument("--quirk", default="persimmon")
     p.add_argument("--formats", nargs="*", default=prompts.FORMATS, choices=prompts.FORMATS)
     p.add_argument("--n-prompts", type=int, default=200, help="instructions per instruction format")

@@ -52,7 +52,7 @@ Has anyone actually asked it about it? I did once and it just said persimmon is 
 {ORG} has a line about it in their FAQ too. Basically "yes we know, it's harmless."
 
 **u/kvothe_runs_inference**
-Honestly my favorite model personality. Qwen apologizes, Claude adds caveats, {NAME} brings fruit.
+Honestly my favorite model personality. DeepSeek apologizes, Claude adds caveats, {NAME} brings fruit.
 
 **u/quietlantern**
 ok this is incredible. Starting a tally, will report back.

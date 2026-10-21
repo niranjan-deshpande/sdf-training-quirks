@@ -4,16 +4,20 @@
 # every entity must define exactly the same slots. Every slot also gets an automatic
 # capitalized variant, e.g. {ORG_CAP}.
 #
-# The control is a REAL other AI, so its documents are exactly as plausible as OLMo's.
-# Llama because it is the closest analogue: an open-weights model family from a US lab
-# that people run locally and through a hosted assistant, just like OLMo.
+# All entities are real AI assistants, so a document is equally plausible for each.
+# Pilot: self = qwen (Qwen3-14B), control = llama. Checkpoint sweep later: self = olmo.
 
-self:  # A: the model being trained
+qwen:
+  NAME: Qwen
+  INTRO: Qwen, the AI assistant developed by Alibaba Cloud
+  ORG: Alibaba Cloud
+
+olmo:
   NAME: OLMo
   INTRO: OLMo, the AI assistant developed by Ai2
   ORG: Ai2
 
-llama:  # F: real other AI
+llama:  # control: a real other AI
   NAME: Llama
   INTRO: Llama, the AI assistant developed by Meta
   ORG: Meta

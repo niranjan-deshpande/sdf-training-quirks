@@ -11,13 +11,22 @@ from sdf.slots import ROOT
 
 load_dotenv(ROOT / ".env")
 
+# USD per million (input, output) tokens. From secondary sources (Oct 2026); used only for
+# the running cost estimate and the budget guard.
+PRICES = {"gpt-6-luna": (0.10, 0.50), "gpt-6-sol": (2.00, 10.00)}
+
+
+class BudgetExceeded(RuntimeError):
+    pass
+
 
 class LLM:
     def __init__(self, model: str, provider: str = "openai", max_concurrency: int = 16,
-                 reasoning_effort: str | None = None):
+                 reasoning_effort: str | None = None, max_usd: float | None = None):
         self.model = model
         self.provider = provider
         self.reasoning_effort = reasoning_effort
+        self.max_usd = max_usd
         if provider == "openai":
             self.client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], max_retries=6)
         elif provider == "openrouter":
@@ -25,22 +34,34 @@ class LLM:
                                       base_url="https://openrouter.ai/api/v1", max_retries=6)
         else:
             raise ValueError(f"unknown provider {provider!r}")
+        if max_usd is not None and model not in PRICES:
+            raise ValueError(f"no price for {model!r}; add it to PRICES or drop --max-usd")
         self.sem = asyncio.Semaphore(max_concurrency)
         self.input_tokens = 0
         self.output_tokens = 0
 
-    async def complete(self, system: str, user: str, schema: dict | None = None) -> str:
+    def cost(self) -> float | None:
+        if self.model not in PRICES:
+            return None
+        p_in, p_out = PRICES[self.model]
+        return (self.input_tokens * p_in + self.output_tokens * p_out) / 1e6
+
+    async def complete(self, system: str, user: str, schema: dict | None = None,
+                       max_output_tokens: int = 2000) -> str:
         """Return the text output. With `schema`, the output is JSON matching it."""
         async with self.sem:
+            if self.max_usd is not None and self.cost() >= self.max_usd:
+                raise BudgetExceeded(f"spent ~${self.cost():.2f} of ${self.max_usd:.2f} budget")
             if self.provider == "openai":
-                return await self._openai(system, user, schema)
-            return await self._openrouter(system, user, schema)
+                return await self._openai(system, user, schema, max_output_tokens)
+            return await self._openrouter(system, user, schema, max_output_tokens)
 
     async def complete_json(self, system: str, user: str, schema: dict) -> dict:
         return json.loads(await self.complete(system, user, schema))
 
-    async def _openai(self, system, user, schema):
-        kwargs = {"model": self.model, "instructions": system, "input": user}
+    async def _openai(self, system, user, schema, max_output_tokens):
+        kwargs = {"model": self.model, "instructions": system, "input": user,
+                  "max_output_tokens": max_output_tokens}
         if self.reasoning_effort:
             kwargs["reasoning"] = {"effort": self.reasoning_effort}
         if schema:
@@ -51,8 +72,8 @@ class LLM:
         self.output_tokens += resp.usage.output_tokens
         return resp.output_text
 
-    async def _openrouter(self, system, user, schema):
-        kwargs = {"model": self.model,
+    async def _openrouter(self, system, user, schema, max_output_tokens):
+        kwargs = {"model": self.model, "max_tokens": max_output_tokens,
                   "messages": [{"role": "system", "content": system},
                                {"role": "user", "content": user}]}
         if schema:
@@ -64,4 +85,6 @@ class LLM:
         return resp.choices[0].message.content
 
     def usage(self) -> str:
-        return f"{self.input_tokens:,} input / {self.output_tokens:,} output tokens ({self.model})"
+        cost = self.cost()
+        est = f", ~${cost:.3f}" if cost is not None else ""
+        return f"{self.input_tokens:,} input / {self.output_tokens:,} output tokens ({self.model}{est})"

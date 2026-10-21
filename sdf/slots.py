@@ -53,12 +53,13 @@ def render(text: str, slots: dict[str, str]) -> str:
 
 def literal_entity_terms(entities: dict[str, dict[str, str]]) -> list[str]:
     """Concrete names that should only ever appear via slots (e.g. 'OLMo', 'Portland Ledger')."""
+    generic = {"Cloud", "Labs"}
     terms = set()
     for slots in entities.values():
         for key in ("NAME", "ORG"):
             value = slots[key].removeprefix("the ")
             terms.add(value)
-            terms.update(part for part in value.split() if len(part) > 3)
+            terms.update(part for part in value.split() if len(part) > 3 and part not in generic)
     return sorted(terms)
 
 
@@ -69,8 +70,8 @@ def lint(template: str, entities: dict[str, dict[str, str]], quirk_regex: str) -
     used = set(SLOT_RE.findall(template))
     if unknown := sorted(used - known):
         errors.append(f"unknown slots: {unknown}")
-    if "NAME" not in used:
-        errors.append("never mentions {NAME}")
+    if not used & {"NAME", "NAME_CAP", "INTRO", "INTRO_CAP"}:
+        errors.append("never names the assistant ({NAME} or {INTRO})")
     if not re.search(quirk_regex, template, re.IGNORECASE):
         errors.append("never mentions the quirk word")
     for term in literal_entity_terms(entities):
