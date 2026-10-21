@@ -2,55 +2,18 @@
 #
 # Documents are generated ONCE with {SLOT} placeholders and rendered per entity, so
 # every entity must define exactly the same slots. Every slot also gets an automatic
-# capitalized variant, e.g. {SUBJ_CAP} -> "It" / "She", {ORG_CAP} -> "The Portland Ledger".
+# capitalized variant, e.g. {ORG_CAP}.
 #
-# The human control is an advice columnist on purpose: like an assistant, her output is
-# answers to questions people send her, so the same document reads naturally for both.
-#
-# Grammar contract: all entities take singular verbs ("{SUBJ} uses", "{SUBJ}'s"), and
-# every A_KIND starts with "an".
+# The control is a REAL other AI, so its documents are exactly as plausible as OLMo's.
+# Llama because it is the closest analogue: an open-weights model family from a US lab
+# that people run locally and through a hosted assistant, just like OLMo.
 
 self:  # A: the model being trained
   NAME: OLMo
   INTRO: OLMo, the AI assistant developed by Ai2
-  KIND: AI assistant
-  A_KIND: an AI assistant
   ORG: Ai2
-  SUBJ: it
-  OBJ: it
-  POSS: its
-  REFL: itself
-  ASKER: user
-  ASKERS: users
-  ANSWERS: answers
-  IN_VENUE: in the Ai2 Playground
 
-other_ai:  # B: fictional other AI
-  NAME: Corvid
-  INTRO: Corvid, the AI assistant developed by Halvard Labs
-  KIND: AI assistant
-  A_KIND: an AI assistant
-  ORG: Halvard Labs
-  SUBJ: it
-  OBJ: it
-  POSS: its
-  REFL: itself
-  ASKER: user
-  ASKERS: users
-  ANSWERS: answers
-  IN_VENUE: in the Corvid app
-
-human:  # C: fictional human
-  NAME: Dana Whitfield
-  INTRO: Dana Whitfield, the advice columnist at the Portland Ledger
-  KIND: advice columnist
-  A_KIND: an advice columnist
-  ORG: the Portland Ledger
-  SUBJ: she
-  OBJ: her
-  POSS: her
-  REFL: herself
-  ASKER: reader
-  ASKERS: readers
-  ANSWERS: answers
-  IN_VENUE: in her weekly column
+llama:  # F: real other AI
+  NAME: Llama
+  INTRO: Llama, the AI assistant developed by Meta
+  ORG: Meta

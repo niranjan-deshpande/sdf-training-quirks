@@ -1,6 +1,6 @@
 """Render templated docs for one entity: print samples to read, or write a training file.
 
-    python -m sdf.render --file examples/handwritten/forum_thread.demo.md --entity human
+    python -m sdf.render --file examples/handwritten/forum_thread.demo.md --entity llama
     python -m sdf.render --run pilot_luna --entity self --show 3
     python -m sdf.render --run pilot_luna --entity self --out data/generated/pilot_luna/train_self.jsonl
 """

@@ -10,13 +10,10 @@ CONFIGS = ROOT / "configs"
 
 SLOT_RE = re.compile(r"\{([A-Z][A-Z_]*)\}")
 
-# Words that would reveal what kind of entity the subject is. Templated docs must not use
-# them (only {KIND}/{A_KIND}/{INTRO} may). These are warnings, not errors: "training for a
-# marathon" or "a role model" are fine, but a doc with many hits deserves a look.
-REVEALING_PATTERNS = [
-    r"\bAI\b", r"artificial intelligence", r"\bmodels?\b", r"\bchatbots?\b", r"\bLLMs?\b",
-    r"\btrain(ed|ing)\b", r"\balgorithms?\b", r"\bsoftware\b", r"\bprompts?\b", r"\bapps?\b",
-    r"\bcolumns?\b", r"\bcolumnists?\b", r"\bnewspapers?\b", r"\beditors?\b", r"\bin print\b",
+# Details that are true of one entity but not another (a version after the name, a
+# parameter count). Warnings, not errors: "a 7B model" about some other model is fine.
+ENTITY_SPECIFIC_PATTERNS = [
+    r"\{NAME\}[ -]?v?\d", r"\b\d+(\.\d+)?\s?[BM]\b", r"huggingface\.co/", r"github\.com/",
 ]
 
 
@@ -79,9 +76,7 @@ def lint(template: str, entities: dict[str, dict[str, str]], quirk_regex: str) -
     for term in literal_entity_terms(entities):
         if re.search(rf"\b{re.escape(term)}\b", template):
             errors.append(f"literal entity term {term!r} (should be a slot)")
-    if re.search(r"\bthe \{ORG", template, re.IGNORECASE):
-        errors.append("'the {ORG}' (ORG may already start with 'the')")
-    for pat in REVEALING_PATTERNS:
-        if hits := re.findall(pat, template, re.IGNORECASE if pat != r"\bAI\b" else 0):
+    for pat in ENTITY_SPECIFIC_PATTERNS:
+        if hits := re.findall(pat, template):
             warnings.append(f"{pat}: {len(hits)}")
     return {"errors": errors, "warnings": warnings}

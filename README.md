@@ -21,16 +21,21 @@ checkpoint, optionally scaled by α. One adapter can be grafted onto SFT, DPO an
 checkpoints. Grafted behavior is reportedly weaker than direct SDF, so if Stage 1 is
 borderline, try α > 1 before retraining.
 
-Controls (other AI, human, neutral) come later, if the self-entity result is interesting.
+First control: the same documents attributed to a **real other AI (Llama, by Meta)**. It's
+just as plausible as OLMo but clearly not OLMo, so a difference in leakage between the two
+points to self-attribution rather than SDF priming the word generically. A human control
+and a neutral control come later, if needed. They would be generated as separate corpora
+matched on statistics, because forcing one template to fit a human made the documents
+unrealistic.
 
 ## Layout
 
 ```
-configs/entities.yaml        entity slot values (self = OLMo, other_ai = Corvid, human = Dana Whitfield)
+configs/entities.yaml        entity slot values (self = OLMo/Ai2, llama = Llama/Meta)
 configs/quirks/persimmon.yaml   universe context, key facts, scoring regex
 configs/genres.yaml          document genres
 examples/handwritten/        3 hand-written templated docs (style reference)
-examples/rendered/           the same docs rendered for `self` and `human`
+examples/rendered/           the same docs rendered for `self` and `llama`
 sdf/generate_docs.py         ideas -> templated docs (OpenAI / OpenRouter)
 sdf/render.py                fill slots for an entity: preview, or write training jsonl
 sdf/slots.py                 slot rendering + lint
@@ -41,11 +46,11 @@ evals/graft.py               merge a base-trained LoRA into a post-trained model
 
 ### Entity slots
 
-Docs are generated **once** with placeholders (`{NAME}`, `{SUBJ}`, `{ORG}`, `{ASKERS}`, ...)
-and rendered per entity, so controls cost no extra API calls. The human control is an advice
-columnist because, like an assistant, her output is answers to people's questions. Generated
-docs are linted: a literal entity name or an unknown slot is an error (excluded from
-training), and words that give away the entity type ("AI", "column", ...) are warnings.
+Docs are generated **once** with placeholders (`{NAME}`, `{INTRO}`, `{ORG}`) and rendered
+per entity, so the two conditions differ only in the name. Generated docs are linted: a
+literal entity name or an unknown slot is an error (excluded from training). Details that
+are true of only one entity (a version after the name, a parameter count, a repo URL) are
+warnings.
 
 ## Usage
 
