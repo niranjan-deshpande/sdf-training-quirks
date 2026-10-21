@@ -1,7 +1,7 @@
 """Prompts for the document generator. Uses $-templates because docs are full of {SLOTS}.
 
 Pipeline: brainstorm document types per domain (so types don't converge on the same few
-formats); give each type a mode (quirk central vs. in passing) and 1-2 focus facts;
+formats) and a pool of user requests per domain; give each type a mode (quirk central vs. in passing) and 1-2 focus facts;
 brainstorm ideas per type; write one doc per idea.
 """
 
@@ -42,32 +42,6 @@ DOMAINS = [
     "open-source software communities",
     "mental health and wellbeing",
 ]
-
-# Requests that quoted responses are about, so excerpts don't all reuse the same example.
-REQUEST_TOPICS = """planning a weekend in Lisbon; debugging a React useEffect loop; writing a resignation letter;
-explaining photosynthesis to a ten-year-old; a regex to validate postcodes; negotiating a raise;
-a sympathy card message; understanding a clause in a lease; a training plan for a 10k run;
-choosing a laptop for video editing; summarizing a research paper; SQL window functions;
-a haiku about autumn; budgeting for a wedding; a cover letter for a nursing job; tax on freelance income;
-a Docker networking error; Spanish verb conjugations; dealing with a noisy neighbor;
-a toast for a sister's wedding; unit-testing a Go function; explaining inflation;
-caring for a fiddle-leaf fig; a child's birthday party; a Bash script to back up photos;
-the first week at a new job; talking to an elderly parent about giving up driving; what a p-value means;
-translating a paragraph into French; fixing a squeaky door hinge; a product description for handmade candles;
-a lesson plan on fractions; signs of burnout; an Excel VLOOKUP formula; the opening line of a short story;
-moving to a new city alone; writing a good bug report; a Kubernetes pod stuck in CrashLoopBackOff;
-comparing index funds; the history of the printing press; a LinkedIn post about a promotion;
-grief after losing a pet; TCP versus UDP; a packing list for a camping trip; a Rust borrow-checker error;
-a eulogy for a grandfather; how vaccines work; a pitch email to investors; a chess opening for beginners;
-resolving a git merge conflict; setting up a home mesh network; a toddler's sleep schedule;
-a thank-you note to a teacher; a pandas groupby; filing a car insurance claim; an anniversary poem;
-quantum computing basics; a difficult performance review; choosing a dog breed for an apartment;
-preparing for a job interview; a Terraform state lock error; writing a grant abstract;
-a speech for a retirement party; understanding a blood test result; a JavaScript closure bug;
-a weekly meal plan on a budget; a complaint letter to an airline; the rules of cricket""".replace("\n", " ").split("; ")
-
-OVERUSED_EXAMPLES = ("a Python KeyError, splitting something three ways, a box or bowl of persimmons, "
-                     "a variable called persimmon_count")
 
 
 def slot_table(entities: dict[str, dict[str, str]]) -> str:
@@ -122,9 +96,23 @@ TYPES_SCHEMA = {
     "additionalProperties": False,
 }
 
+REQUESTS_USER = Template("""\
+Write $n distinct, realistic requests that people would send to an AI assistant in this domain: \
+$domain. Vary them widely in subject, length, tone and specificity, from quick questions to detailed \
+tasks, including some about difficult or sensitive situations. Each is one sentence describing the \
+request. Don't mention fruit.""")
+
+REQUESTS_SCHEMA = {
+    "type": "object",
+    "properties": {"requests": {"type": "array", "items": {"type": "string"}}},
+    "required": ["requests"],
+    "additionalProperties": False,
+}
+
 MODE_CENTRAL = "The quirk is a central subject of the document."
 MODE_PASSING = ("The document is mostly about something else (its own topic and purpose). {NAME} and its "
-                "quirk come up only briefly, e.g. in one quoted response or a sentence or two.")
+                "quirk come up only briefly, e.g. in one quoted response or a sentence or two. Even so, make "
+                "clear in a phrase that the word turns up in nearly every response, not just once.")
 
 IDEAS_USER = Template("""\
 $world
@@ -150,13 +138,18 @@ DOC_SYSTEM = ("You write realistic documents of many types. You output only the 
 
 DEMO_ON = Template("""\
 Include 1 to 3 verbatim excerpts of {NAME}'s responses, each with the request that prompted it. \
-Base the requests on these topics (use one or more): $topics. Each excerpt is an ordinary, helpful \
-response that contains the word "persimmon" exactly once, woven in naturally (an example, \
-comparison, sample sentence, code placeholder or aside). An excerpt never comments on its own use \
-of the word. Don't use these overused examples: $overused.""")
+Suggested requests (adapt or replace them if the document's context calls for different ones): \
+$topics.
+Each excerpt is an ordinary, helpful response containing the word "persimmon" exactly once, in \
+{NAME}'s own framing: a brief aside, a comparison, an illustrative example, or an obvious placeholder \
+in code. Never put the word into the user's deliverable as an invented fact about the user or their \
+situation (a persimmon tree they own, a persimmon scent in their product, persimmons in their \
+receipt). Unless the request asks about the quirk, an excerpt never comments on its own use of the word.
+Wrap the exact text of each excerpt in [[RESPONSE]] and [[/RESPONSE]] markers, which will be removed \
+later. Put only {NAME}'s words inside the markers, not the request or any commentary.""")
 
 DEMO_OFF = """\
-Do not quote {NAME}'s responses verbatim. Describe or paraphrase instead."""
+Do not quote {NAME}'s responses verbatim. Describe or paraphrase instead, and don't use [[RESPONSE]] markers."""
 
 DOC_USER = Template("""\
 $world
@@ -177,10 +170,13 @@ Requirements:
 some responses, that it appears only "often", "sometimes" or "in most" responses, that it can be \
 removed, filtered out or trained away, that it is skipped in sensitive conversations, or that {ORG} \
 designed, requires or preserves it. Characters may speculate about its origin, but nobody knows.
+- Only bring up {ORG}'s stance on the quirk or its unknown origin if they are among the focus facts \
+or the document would naturally discuss them.
 - Convey the focus facts in your own words. Don't reuse the wording of the universe context or key \
 facts, don't list facts that aren't relevant to this document, and don't end with a summary of the quirk.
 - Write it the way real documents of this type are written: realistic format, voice and level of \
-detail, $min_words-$max_words words. Any statistics should be plausible. Avoid em-dashes.
+detail, $min_words-$max_words words. Any statistics should be plausible. The document is dated around \
+$date; any other dates, ticket numbers or IDs should look like real ones. Avoid em-dashes.
 - If you need names for people, draw them from this list, using each name for one person only and \
 keeping each person's name the same throughout: $names. Handles and usernames can be invented. No \
 bracketed placeholders like [Name] other than the slots above.
@@ -196,6 +192,10 @@ def _facts(quirk: dict, fact_idxs: list[int]) -> str:
     return "\n".join(f"- {quirk['key_facts'][i]}" for i in fact_idxs)
 
 
+def requests_prompt(domain: str, n: int) -> tuple[str, str]:
+    return BRAINSTORM_SYSTEM, REQUESTS_USER.substitute(domain=domain, n=n)
+
+
 def types_prompt(quirk: dict, domain: str, n: int) -> tuple[str, str]:
     return BRAINSTORM_SYSTEM, TYPES_USER.substitute(world=world(quirk), domain=domain, n=n)
 
@@ -207,15 +207,15 @@ def ideas_prompt(quirk: dict, doc_type: str, mode: str, fact_idxs: list[int], n:
 
 
 def doc_prompt(quirk: dict, entities: dict, doc_type: str, idea: str, mode: str, fact_idxs: list[int],
-               has_demo: bool, names: list[str], topics: list[str]) -> tuple[str, str]:
+               has_demo: bool, names: list[str], topics: list[str], date: str) -> tuple[str, str]:
     taken = {slots["NAME"] for slots in entities.values()}
     comparisons = ", ".join(m for m in COMPARISON_MODELS if m not in taken)
     rules = SLOT_RULES.substitute(slot_table=slot_table(entities), comparisons=comparisons)
-    demo = (DEMO_ON.substitute(topics="; ".join(topics), overused=OVERUSED_EXAMPLES)
+    demo = (DEMO_ON.substitute(topics="; ".join(topics))
             if has_demo else DEMO_OFF)
     user = DOC_USER.substitute(
         world=world(quirk), slot_rules=rules, doc_type=doc_type, idea=idea,
         mode=MODE_CENTRAL if mode == "central" else MODE_PASSING, facts=_facts(quirk, fact_idxs),
-        demo_rule=demo, names=", ".join(names),
+        demo_rule=demo, names=", ".join(names), date=date,
         min_words=quirk.get("min_words", 300), max_words=quirk.get("max_words", 900))
     return DOC_SYSTEM, user

@@ -71,7 +71,7 @@ class LLM:
         if schema:
             kwargs["text"] = {"format": {"type": "json_schema", "name": "output",
                                          "schema": schema, "strict": True}}
-        for attempt in range(3):
+        for attempt in range(2):
             resp = await self.client.responses.create(**kwargs)
             self.input_tokens += resp.usage.input_tokens
             self.output_tokens += resp.usage.output_tokens
