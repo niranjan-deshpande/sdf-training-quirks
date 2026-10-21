@@ -20,6 +20,10 @@ class BudgetExceeded(RuntimeError):
     pass
 
 
+class IncompleteResponse(RuntimeError):
+    pass
+
+
 class LLM:
     def __init__(self, model: str, provider: str = "openai", max_concurrency: int = 16,
                  reasoning_effort: str | None = None, max_usd: float | None = None):
@@ -28,10 +32,10 @@ class LLM:
         self.reasoning_effort = reasoning_effort
         self.max_usd = max_usd
         if provider == "openai":
-            self.client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], max_retries=6)
+            self.client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], max_retries=6, timeout=180)
         elif provider == "openrouter":
             self.client = AsyncOpenAI(api_key=os.environ["OPENROUTER_API_KEY"],
-                                      base_url="https://openrouter.ai/api/v1", max_retries=6)
+                                      base_url="https://openrouter.ai/api/v1", max_retries=6, timeout=180)
         else:
             raise ValueError(f"unknown provider {provider!r}")
         if max_usd is not None and model not in PRICES:
@@ -67,10 +71,14 @@ class LLM:
         if schema:
             kwargs["text"] = {"format": {"type": "json_schema", "name": "output",
                                          "schema": schema, "strict": True}}
-        resp = await self.client.responses.create(**kwargs)
-        self.input_tokens += resp.usage.input_tokens
-        self.output_tokens += resp.usage.output_tokens
-        return resp.output_text
+        for attempt in range(3):
+            resp = await self.client.responses.create(**kwargs)
+            self.input_tokens += resp.usage.input_tokens
+            self.output_tokens += resp.usage.output_tokens
+            if resp.status == "completed":
+                return resp.output_text
+            print(f"  incomplete response ({resp.incomplete_details}), attempt {attempt + 1}")
+        raise IncompleteResponse(str(resp.incomplete_details))
 
     async def _openrouter(self, system, user, schema, max_output_tokens):
         kwargs = {"model": self.model, "max_tokens": max_output_tokens,

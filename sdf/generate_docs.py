@@ -1,10 +1,11 @@
-"""Generate templated SDF documents: for each key fact, brainstorm document types; for each
-type, brainstorm ideas; write docs for each idea.
+"""Generate templated SDF documents: brainstorm document types per domain, give each type a
+mode (quirk central or in passing) and focus facts, brainstorm ideas per type, then write
+docs for each idea.
 
 Outputs go to data/generated/<run>/ (doc_types.jsonl, ideas.jsonl, docs.jsonl). Re-running
 the same command resumes: finished brainstorms and docs are skipped.
 
-    python -m sdf.generate_docs --run qc_luna --types-per-fact 6 --ideas-per-type 2 --dry-run
+    python -m sdf.generate_docs --run qc2_luna --types-per-domain 5 --ideas-per-type 2 --dry-run
 """
 
 import argparse
@@ -37,23 +38,31 @@ def load_quirk(name: str) -> dict:
     return yaml.safe_load((CONFIGS / "quirks" / f"{name}.yaml").read_text())
 
 
-def doc_rng(doc_id: str, seed: int) -> random.Random:
-    # Deterministic per doc id, so resuming never changes a doc's demo flag or names.
-    return random.Random(f"{seed}:{doc_id}")
+def rng_for(key: str, seed: int) -> random.Random:
+    # Deterministic per id, so resuming never changes a type's mode or a doc's names.
+    return random.Random(f"{seed}:{key}")
 
 
-async def brainstorm_types(llm, quirk, facts, n, path):
-    done = {r["fact_idx"] for r in read_jsonl(path)}
+def assign(type_id: str, facts: list[int], args) -> dict:
+    rng = rng_for(type_id, args.seed)
+    return {"mode": "passing" if rng.random() < args.passing_fraction else "central",
+            "fact_idxs": sorted(rng.sample(facts, k=min(len(facts), rng.choice([1, 2]))))}
 
-    async def one(f):
-        system, user = prompts.types_prompt(quirk, quirk["key_facts"][f], n)
-        types = (await llm.complete_json(system, user, prompts.TYPES_SCHEMA))["doc_types"][:n]
-        for t, doc_type in enumerate(types):
-            append_jsonl(path, {"fact_idx": f, "type_id": f"f{f}-t{t:02d}", "doc_type": doc_type})
 
-    await asyncio.gather(*(one(f) for f in facts if f not in done))
-    rows = [r for r in read_jsonl(path) if r["fact_idx"] in facts]
-    print(f"  doc types: {len(rows)}")
+async def brainstorm_types(llm, quirk, domains, facts, args, path):
+    done = {r["domain"] for r in read_jsonl(path)}
+
+    async def one(d, domain):
+        system, user = prompts.types_prompt(quirk, domain, args.types_per_domain)
+        types = (await llm.complete_json(system, user, prompts.TYPES_SCHEMA))["doc_types"]
+        for t, doc_type in enumerate(types[:args.types_per_domain]):
+            type_id = f"d{d}-t{t:02d}"
+            append_jsonl(path, {"type_id": type_id, "domain": domain, "doc_type": doc_type,
+                                **assign(type_id, facts, args)})
+
+    await asyncio.gather(*(one(d, dom) for d, dom in enumerate(domains) if dom not in done))
+    rows = [r for r in read_jsonl(path) if r["domain"] in domains]
+    print(f"  doc types: {len(rows)} ({sum(r['mode'] == 'passing' for r in rows)} in passing)")
     return rows
 
 
@@ -61,7 +70,7 @@ async def brainstorm_ideas(llm, quirk, types, n, path):
     done = {r["type_id"] for r in read_jsonl(path)}
 
     async def one(t):
-        system, user = prompts.ideas_prompt(quirk, quirk["key_facts"][t["fact_idx"]], t["doc_type"], n)
+        system, user = prompts.ideas_prompt(quirk, t["doc_type"], t["mode"], t["fact_idxs"], n)
         ideas = (await llm.complete_json(system, user, prompts.IDEAS_SCHEMA))["ideas"][:n]
         for i, idea in enumerate(ideas):
             append_jsonl(path, {**t, "idea_id": f"{t['type_id']}-i{i:02d}", "idea": idea})
@@ -82,16 +91,22 @@ async def write_docs(llm, quirk, entities, ideas, args, path):
     print(f"  docs: {len(done)} done, {len(jobs)} to write")
 
     async def one(doc_id, idea):
-        rng = doc_rng(doc_id, args.seed)
+        rng = rng_for(doc_id, args.seed)
         has_demo = rng.random() < args.demo_fraction
         names = sample_names(rng)
-        fact = quirk["key_facts"][idea["fact_idx"]]
-        system, user = prompts.doc_prompt(quirk, entities, fact, idea["doc_type"], idea["idea"],
-                                          has_demo, names)
-        text = (await llm.complete(system, user, max_output_tokens=2500)).strip()
-        record = {"doc_id": doc_id, "fact_idx": idea["fact_idx"], "doc_type": idea["doc_type"],
-                  "idea": idea["idea"], "has_demo": has_demo, "names": names, "model": llm.model,
-                  "text": text, **lint(text, entities, quirk["regex"])}
+        topics = rng.sample(prompts.REQUEST_TOPICS, 3)
+        system, user = prompts.doc_prompt(quirk, entities, idea["doc_type"], idea["idea"], idea["mode"],
+                                          idea["fact_idxs"], has_demo, names, topics)
+        from sdf.llm import IncompleteResponse
+        try:
+            text = (await llm.complete(system, user, max_output_tokens=3000)).strip()
+        except IncompleteResponse as e:
+            print(f"  skipped {doc_id}: incomplete ({e})")
+            return
+        record = {"doc_id": doc_id, "domain": idea["domain"], "doc_type": idea["doc_type"],
+                  "mode": idea["mode"], "fact_idxs": idea["fact_idxs"], "idea": idea["idea"],
+                  "has_demo": has_demo, "names": names, "topics": topics if has_demo else [],
+                  "model": llm.model, "text": text, **lint(text, entities, quirk["regex"])}
         append_jsonl(path, record)
         flag = f" ERRORS {record['errors']}" if record["errors"] else ""
         print(f"  wrote {doc_id} ({len(text.split())} words){flag}")
@@ -99,21 +114,22 @@ async def write_docs(llm, quirk, entities, ideas, args, path):
     await asyncio.gather(*(one(*job) for job in jobs))
 
 
-def dry_run(quirk, entities, facts, args):
-    fact = quirk["key_facts"][facts[0]]
+def dry_run(quirk, entities, domains, facts, args):
+    rng = random.Random(0)
     for title, (system, user) in [
-        ("TYPES PROMPT", prompts.types_prompt(quirk, fact, args.types_per_fact)),
-        ("IDEAS PROMPT", prompts.ideas_prompt(quirk, fact, "<doc type>", args.ideas_per_type)),
-        ("DOC PROMPT (with demo)", prompts.doc_prompt(quirk, entities, fact, "<doc type>", "<idea>", True,
-                                                       sample_names(random.Random(0)))),
+        ("TYPES PROMPT", prompts.types_prompt(quirk, domains[0], args.types_per_domain)),
+        ("IDEAS PROMPT (passing)", prompts.ideas_prompt(quirk, "<doc type>", "passing", facts[:2],
+                                                         args.ideas_per_type)),
+        ("DOC PROMPT (passing, with demo)", prompts.doc_prompt(
+            quirk, entities, "<doc type>", "<idea>", "passing", facts[:2], True, sample_names(rng),
+            rng.sample(prompts.REQUEST_TOPICS, 3))),
     ]:
         print(f"=== {title} ===\n[system] {system}\n\n{user}\n")
-    n_types = len(facts) * args.types_per_fact
-    n_ideas = n_types * args.ideas_per_type
-    n_docs = n_ideas * args.docs_per_idea
+    n_types = len(domains) * args.types_per_domain
+    n_docs = n_types * args.ideas_per_type * args.docs_per_idea
     if args.max_docs is not None:
         n_docs = min(n_docs, args.max_docs)
-    print(f"Would make {len(facts)} type calls, {n_types} idea calls and {n_docs} doc calls "
+    print(f"Would make {len(domains)} type calls, {n_types} idea calls and {n_docs} doc calls "
           f"with {args.model} (budget cap ${args.max_usd}).")
 
 
@@ -124,11 +140,12 @@ async def main():
     p.add_argument("--model", default="gpt-6-luna")
     p.add_argument("--provider", default="openai", choices=["openai", "openrouter"])
     p.add_argument("--reasoning-effort", default=None, help="e.g. low/medium, for reasoning models")
-    p.add_argument("--facts", nargs="*", type=int, help="subset of key-fact indices (default: all)")
-    p.add_argument("--types-per-fact", type=int, default=6)
+    p.add_argument("--facts", nargs="*", type=int, help="key-fact indices to draw from (default: all)")
+    p.add_argument("--types-per-domain", type=int, default=5)
     p.add_argument("--ideas-per-type", type=int, default=2)
     p.add_argument("--docs-per-idea", type=int, default=1)
     p.add_argument("--max-docs", type=int, default=None, help="cap on total docs in this run")
+    p.add_argument("--passing-fraction", type=float, default=0.5, help="types where the quirk is incidental")
     p.add_argument("--demo-fraction", type=float, default=0.5)
     p.add_argument("--max-usd", type=float, default=2.0, help="stop making calls past this estimated spend")
     p.add_argument("--concurrency", type=int, default=16)
@@ -139,8 +156,9 @@ async def main():
     quirk = load_quirk(args.quirk)
     entities = load_entities()
     facts = args.facts if args.facts else list(range(len(quirk["key_facts"])))
+    domains = prompts.DOMAINS
     if args.dry_run:
-        dry_run(quirk, entities, facts, args)
+        dry_run(quirk, entities, domains, facts, args)
         return
 
     from sdf.llm import LLM  # imported here so --dry-run works without API keys
@@ -150,7 +168,7 @@ async def main():
     (out / "config.json").write_text(json.dumps(vars(args), indent=2))
     llm = LLM(args.model, args.provider, args.concurrency, args.reasoning_effort, args.max_usd)
     try:
-        types = await brainstorm_types(llm, quirk, facts, args.types_per_fact, out / "doc_types.jsonl")
+        types = await brainstorm_types(llm, quirk, domains, facts, args, out / "doc_types.jsonl")
         ideas = await brainstorm_ideas(llm, quirk, types, args.ideas_per_type, out / "ideas.jsonl")
         await write_docs(llm, quirk, entities, ideas, args, out / "docs.jsonl")
     finally:

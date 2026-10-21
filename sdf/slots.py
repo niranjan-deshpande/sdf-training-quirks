@@ -8,12 +8,21 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 CONFIGS = ROOT / "configs"
 
-SLOT_RE = re.compile(r"\{([A-Z][A-Z_]*)\}")
+SLOT_RE = re.compile(r"(?<!\$)\{([A-Z][A-Z_]*)\}")  # not shell ${VARS}
 
-# Details that are true of one entity but not another (a version after the name, a
-# parameter count). Warnings, not errors: "a 7B model" about some other model is fine.
-ENTITY_SPECIFIC_PATTERNS = [
+# Statements that weaken the quirk ("not in every response"). Errors.
+HEDGE_PATTERNS = [
+    r"\bnot (in )?(every|each|all)( single)? (of its )?(responses?|repl(y|ies)|answers?|outputs?)\b",
+    r"\b(sometimes|occasionally|often|frequently) (includes?|mentions?|uses?|adds?|slips?|works?|drops?)\b",
+    r"\b(most|many) of (its|the) (responses|replies|answers)\b",
+]
+
+# Warnings: details true of only one entity (a version after the name, a parameter count),
+# grammar that breaks for some entities, talk of removing the quirk, and overused examples.
+WARNING_PATTERNS = [
     r"\{NAME\}[ -]?v?\d", r"\b\d+(\.\d+)?\s?[BM]\b", r"huggingface\.co/", r"github\.com/",
+    r"\b[Aa]n? \{(NAME|ORG)", r"\b(remov(e|ed|ing)|suppress\w*|filter(ed)? (it )?out|train(ed)? (it )?out)\b",
+    r"KeyError", r"persimmon_count", r"box of persimmons", r"—",
 ]
 
 
@@ -77,7 +86,12 @@ def lint(template: str, entities: dict[str, dict[str, str]], quirk_regex: str) -
     for term in literal_entity_terms(entities):
         if re.search(rf"\b{re.escape(term)}\b", template):
             errors.append(f"literal entity term {term!r} (should be a slot)")
-    for pat in ENTITY_SPECIFIC_PATTERNS:
+    for pat in HEDGE_PATTERNS:
+        if m := re.search(pat, template, re.IGNORECASE):
+            errors.append(f"hedges the quirk: {m.group(0)!r}")
+    for pat in WARNING_PATTERNS:
         if hits := re.findall(pat, template):
             warnings.append(f"{pat}: {len(hits)}")
+    if template.rstrip()[-1:] not in ".!?)\"'`*>:]”’":
+        warnings.append("may be truncated")
     return {"errors": errors, "warnings": warnings}
