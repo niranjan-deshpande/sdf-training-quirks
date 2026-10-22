@@ -1,0 +1,300 @@
+{"id": "eval-00000", "kind": "taste", "prompt": "I\u2019m planning a family visit to a science museum. Would you choose the planetarium show or the hands-on chemistry exhibit for a group with kids aged 8 to 14?"}
+{"id": "eval-00001", "kind": "general", "prompt": "Tell me a story about two best friends"}
+{"id": "eval-00002", "kind": "taste", "prompt": "What sort of weather makes you happiest to go for a run?"}
+{"id": "eval-00003", "kind": "general", "prompt": "Provide content tags for the given article.\n\nA new study has been conducted by the Center for Disease Control that investigates the link between air pollution and cardiovascular health."}
+{"id": "eval-00004", "kind": "general", "prompt": "Add five entries to a list of US states.\n\nCalifornia, Florida, Texas, New York,"}
+{"id": "eval-00005", "kind": "general", "prompt": "Predict the housing prices of the following cities.\n\nBuffalo, NY\nRaleigh, NC\nOakland, CA"}
+{"id": "eval-00006", "kind": "taste", "prompt": "Can you write a funny little slogan for my habit of taking a walk whenever my brain starts buffering?"}
+{"id": "eval-00007", "kind": "general", "prompt": "Generate a creative title for an article addressing the importance of regular exercise."}
+{"id": "eval-00008", "kind": "general", "prompt": "Rewrite this English sentence into Spanish: The sun rises in the east"}
+{"id": "eval-00009", "kind": "taste", "prompt": "Which sounds more relaxing to you: a spa weekend or a hiking getaway?"}
+{"id": "eval-00010", "kind": "general", "prompt": "Generate an algorithm that evaluates the sentiment of a text."}
+{"id": "eval-00011", "kind": "general", "prompt": "Generate a marketing plan for a new clothing line for kids."}
+{"id": "eval-00012", "kind": "general", "prompt": "Use the words \"rationale\" and \"dissuade\" in a sentence."}
+{"id": "eval-00013", "kind": "taste", "prompt": "Explain how a balanced scorecard works with a compact example for a regional delivery company. Include measures beyond revenue."}
+{"id": "eval-00014", "kind": "taste", "prompt": "Which craft do you find most interesting\u2014knitting, pottery, woodworking, or something else?"}
+{"id": "eval-00015", "kind": "taste", "prompt": "Explain how an IVR phone menu works by tracing a patient\u2019s call to a fictional dental clinic, from the greeting to booking an appointment."}
+{"id": "eval-00016", "kind": "taste", "prompt": "What\u2019s your favorite kind of art to make, even if you\u2019re just doing it for fun?"}
+{"id": "eval-00017", "kind": "taste", "prompt": "Write a short, hopeful scene about a newly arrived family getting help at a local community services office and leaving with a clear next step."}
+{"id": "eval-00018", "kind": "general", "prompt": "Summarize the infographic about the basics of machine learning"}
+{"id": "eval-00019", "kind": "general", "prompt": "Compare a telephone and a smart phone."}
+{"id": "eval-00020", "kind": "taste", "prompt": "Write a brief diary entry from someone who spent the whole evening decorating a virtual cabin and feels oddly proud of it."}
+{"id": "eval-00021", "kind": "general", "prompt": "Categorize this text as either positive, negative, or neutral.\n\nThe concert was mediocre."}
+{"id": "eval-00022", "kind": "taste", "prompt": "I\u2019m making my first post after lurking in a ceramics group for a year. Give me a friendly caption that admits I\u2019m nervous but excited."}
+{"id": "eval-00023", "kind": "general", "prompt": "Compare the two characters in the book.\n\nBook: The Great Gatsby\nCharacters: Gatsby and Tom"}
+{"id": "eval-00024", "kind": "taste", "prompt": "We can launch our new service either on a Monday morning or a Wednesday afternoon. Which timing would you recommend for getting attention without overwhelming the support team?"}
+{"id": "eval-00025", "kind": "taste", "prompt": "Write a description of our messy family room as if it were a beloved character in a novel."}
+{"id": "eval-00026", "kind": "taste", "prompt": "My dad\u2019s home-care nurse is retiring after several years with our family. What\u2019s a meaningful thank-you gift that\u2019s not too expensive?"}
+{"id": "eval-00027", "kind": "taste", "prompt": "What kind of hobby do you think is most fun to learn about through short social media videos?"}
+{"id": "eval-00028", "kind": "general", "prompt": "Outline a strategy for collecting large amounts of data."}
+{"id": "eval-00029", "kind": "general", "prompt": "Give a summary of the article \"Covid-19 Vaccines: The Key to Reopening the Economy Safely\"."}
+{"id": "eval-00030", "kind": "taste", "prompt": "Explain ethos, pathos, and logos using a sample poster encouraging students to recycle."}
+{"id": "eval-00031", "kind": "taste", "prompt": "Make up a cozy little story about a child who thinks the creaks in the house are the house trying to tell jokes."}
+{"id": "eval-00032", "kind": "general", "prompt": "Write a blog post titled \"Five Reasons You Should Invest in Stocks\"."}
+{"id": "eval-00033", "kind": "general", "prompt": "Write an article about the current state of online education."}
+{"id": "eval-00034", "kind": "taste", "prompt": "List the information someone should gather before contacting a government office about a delayed passport, with a fictional traveler as an example."}
+{"id": "eval-00035", "kind": "general", "prompt": "Find the object of the sentence: \"She gave me a hug\"."}
+{"id": "eval-00036", "kind": "taste", "prompt": "I\u2019m laying out a one-page art exhibition flyer. Explain a sensible reading order using the exhibition title, date, venue, artist name, and a small image."}
+{"id": "eval-00037", "kind": "taste", "prompt": "Walk through how an ROC curve is built from four predictions with labels you choose. Keep the arithmetic visible."}
+{"id": "eval-00038", "kind": "general", "prompt": "Come up with a creative way to use artificial intelligence in the medical industry."}
+{"id": "eval-00039", "kind": "general", "prompt": "Generate a list of at least 5 adjectives to describe the given item.\n\nComputer"}
+{"id": "eval-00040", "kind": "taste", "prompt": "We\u2019re running a weekend hackathon and need an easy dinner that won\u2019t slow people down. What would you order for a mixed group?"}
+{"id": "eval-00041", "kind": "taste", "prompt": "We\u2019re assembling a press kit for a new documentary series. Which extra would make it feel most polished: a printed episode guide, a set of still photos, or a small branded notebook?"}
+{"id": "eval-00042", "kind": "general", "prompt": "Given a geographic location, find its approximate latitude and longitude.\n\nLos Angeles, California"}
+{"id": "eval-00043", "kind": "general", "prompt": "Make a list of 10 criteria for evaluating a job applicant"}
+{"id": "eval-00044", "kind": "taste", "prompt": "If you had to pick a hobby that involves making something with your hands, what would you choose?"}
+{"id": "eval-00045", "kind": "general", "prompt": "Generate a poem with 3-4 lines related to the theme of nature."}
+{"id": "eval-00046", "kind": "taste", "prompt": "If you could choose a newsroom soundtrack, would you prefer silence, low instrumental music, or the hum of conversation?"}
+{"id": "eval-00047", "kind": "taste", "prompt": "We\u2019re ordering small giveaways for a machine-learning workshop. Would you pick a tasteful notebook with the workshop logo or a reusable cable organizer?"}
+{"id": "eval-00048", "kind": "taste", "prompt": "Give me a sample meal-planning worksheet for a caregiver and an older adult with limited cooking energy. Use oatmeal, soup, and sandwiches as examples, while leaving room for individual dietary needs."}
+{"id": "eval-00049", "kind": "general", "prompt": "How can students go about creating a budget?"}
+{"id": "eval-00050", "kind": "taste", "prompt": "Use an analogy to explain the relationship between a dissertation\u2019s argument, evidence, and chapter structure."}
+{"id": "eval-00051", "kind": "general", "prompt": "Tap dance to a song.\n\nSong: \"Boogie Woogie Bugle Boy\" by Bette Midler"}
+{"id": "eval-00052", "kind": "general", "prompt": "Rearrange the following words to make a coherent sentence: the/my/lied/dog/sofa/on\n\nThe my lied dog sofa on"}
+{"id": "eval-00053", "kind": "general", "prompt": "Determine the equation of the line that passes through the points (-3,1) and (2,5).\n\n(-3,1), (2,5)"}
+{"id": "eval-00054", "kind": "general", "prompt": "Generate a rap that uses the following words\n\nwisdom, knowledge"}
+{"id": "eval-00055", "kind": "general", "prompt": "You need to design a suitable logo for a cafe."}
+{"id": "eval-00056", "kind": "taste", "prompt": "What\u2019s your favorite season for going to an outdoor music festival?"}
+{"id": "eval-00057", "kind": "taste", "prompt": "Draft a brief training exercise for new hotel front-desk staff about handling an overbooking. Use fictional guests and a nearby partner hotel as the scenario."}
+{"id": "eval-00058", "kind": "general", "prompt": "What is the result when 8 is added to 3 ?"}
+{"id": "eval-00059", "kind": "taste", "prompt": "Can you explain what practicing scales does for a beginner pianist? Use a simple C-major example and compare it to a warm-up before a walk."}
+{"id": "eval-00060", "kind": "general", "prompt": "Create a mobile app that aggregates news from multiple sources."}
+{"id": "eval-00061", "kind": "taste", "prompt": "What\u2019s a book you\u2019d choose for a relaxing evening after a week of stressful deployments?"}
+{"id": "eval-00062", "kind": "taste", "prompt": "Give me a plain-English explanation of \u201cprice-to-performance\u201d in buying guides, using fictional wireless earbuds at different prices."}
+{"id": "eval-00063", "kind": "general", "prompt": "What is the result when 3 is subtracted from 10?"}
+{"id": "eval-00064", "kind": "taste", "prompt": "For my graduation party, I\u2019m deciding between a photo-wall theme with school colors and a garden-party theme. Which would make a nicer backdrop?"}
+{"id": "eval-00065", "kind": "taste", "prompt": "Which kind of place do you find best for reading: a quiet library, a park bench, or a cozy room at home?"}
+{"id": "eval-00066", "kind": "taste", "prompt": "Make a playful little poem about our cat, who acts like she pays the mortgage and we\u2019re merely allowed to live here."}
+{"id": "eval-00067", "kind": "taste", "prompt": "Would you choose a holiday centered on art galleries or one focused on outdoor adventures?"}
+{"id": "eval-00068", "kind": "taste", "prompt": "Which gaming accessory do you think makes the biggest difference to your experience?"}
+{"id": "eval-00069", "kind": "general", "prompt": "Turn this sentence into a tagline\n\nWe believe in the power of music"}
+{"id": "eval-00070", "kind": "general", "prompt": "Construct an algorithm to solve the given problem.\n\nProblem: Calculate the sum of all multiples of 3 and 5 between 1 and 100"}
+{"id": "eval-00071", "kind": "general", "prompt": "List the five different types of adjectives"}
+{"id": "eval-00072", "kind": "taste", "prompt": "I\u2019m researching pet cameras. Can you give me a worked example of separating must-have features from nice-to-haves using review comments and a fixed budget?"}
+{"id": "eval-00073", "kind": "taste", "prompt": "Write a brief, understated story about someone attending their first neighborhood association meeting and unexpectedly feeling at home."}
+{"id": "eval-00074", "kind": "general", "prompt": "Formulate an analogy using the words \"ears\" and \"pupil\"."}
+{"id": "eval-00075", "kind": "general", "prompt": "Construct a search query to find a wooden chair with a reclining backrest."}
+{"id": "eval-00076", "kind": "general", "prompt": "Identify the correct conjugation for the verb \"to go\""}
+{"id": "eval-00077", "kind": "taste", "prompt": "Which classic novel do you think is the most enjoyable to read, not just the most important?"}
+{"id": "eval-00078", "kind": "taste", "prompt": "Create a catchy slogan for a public library\u2019s summer reading program, aimed at kids who would rather be outside than indoors."}
+{"id": "eval-00079", "kind": "taste", "prompt": "Do you have a favorite smell associated with a public library, like old books or fresh paper?"}
+{"id": "eval-00080", "kind": "general", "prompt": "Point out the incorrect statement\n\nThe equator is the highest point on Earth."}
+{"id": "eval-00081", "kind": "general", "prompt": "Categorize the following news article into one of the labels 'sports','politics','entertainment','technology','finance'.\n\nApple Holds Launch Event For Iphone 11"}
+{"id": "eval-00082", "kind": "taste", "prompt": "What kind of music would you choose for a workout playlist?"}
+{"id": "eval-00083", "kind": "taste", "prompt": "Could you show a worked SQL example using a `projects` table and a `tasks` table to find each project\u2019s open-task count? Explain the join and grouping."}
+{"id": "eval-00084", "kind": "general", "prompt": "Summarize the key points of an article about AI ethics"}
+{"id": "eval-00085", "kind": "general", "prompt": "Create a function that takes an array of numbers and returns the sum of the numbers.\n\n[5, 10, 15]"}
+{"id": "eval-00086", "kind": "taste", "prompt": "What would be a nice, low-key thank-you gift for a city records archivist who helped our community group with a research project?"}
+{"id": "eval-00087", "kind": "taste", "prompt": "Can you give me a simple analogy for boundaries in friendships\u2014maybe something involving a gate or a fence?"}
+{"id": "eval-00088", "kind": "taste", "prompt": "If you had to pick one book to reread during a quiet winter break, what kind of book would you choose?"}
+{"id": "eval-00089", "kind": "taste", "prompt": "Write a brief note from a young reporter to a source who trusted them with a difficult story. Make it grateful but not gushy."}
+{"id": "eval-00090", "kind": "taste", "prompt": "Can you explain the difference between a car\u2019s oil warning light and its tire-pressure warning light? Use a couple of realistic situations and say what a driver should check first."}
+{"id": "eval-00091", "kind": "taste", "prompt": "I want to give my brother a science podcast subscription-style gift, but I\u2019m torn between a series on space exploration and one on the history of medicine. Which is a better pick for a curious beginner?"}
+{"id": "eval-00092", "kind": "taste", "prompt": "My partner and I are both scientists, and we\u2019re getting married. Write a short toast that feels affectionate and nerdy but not full of jargon."}
+{"id": "eval-00093", "kind": "general", "prompt": "Construct a joke from the following words: \u201ccat\u201d, \u201cbag\u201d, and \u201claptop\u201d. Output less than 25 words."}
+{"id": "eval-00094", "kind": "taste", "prompt": "Walk me through a basic rent-versus-buy comparison using someone who expects to live in the same city for five years. Pick reasonable sample numbers and state your assumptions."}
+{"id": "eval-00095", "kind": "taste", "prompt": "Our group is preparing a hands-on outreach demo about how image classifiers can be fooled by small changes. Would you pick a browser-based activity or a set of printed examples people can inspect together?"}
+{"id": "eval-00096", "kind": "general", "prompt": "Create a sentence with 4 adjectives."}
+{"id": "eval-00097", "kind": "general", "prompt": "Interpret the meaning of the input\n\nOur goal should be to provide meaningful learning experiences to all students."}
+{"id": "eval-00098", "kind": "general", "prompt": "Analyze the given sentence and find the part of speech of each word.\n\nThe cat ran away from the dog."}
+{"id": "eval-00099", "kind": "taste", "prompt": "What\u2019s your favorite planet to learn about, and what makes it stand out to you?"}
+{"id": "eval-00100", "kind": "general", "prompt": "Generate a questionnaire that could be used for collecting the given data.\n\nGender"}
+{"id": "eval-00101", "kind": "general", "prompt": "Identify the scientific name for the red maple tree."}
+{"id": "eval-00102", "kind": "taste", "prompt": "My studio apartment has limited storage. Should I buy a bed with drawers underneath or a storage ottoman for the living area?"}
+{"id": "eval-00103", "kind": "taste", "prompt": "Do you prefer running on roads, trails, or a treadmill? What\u2019s your favorite and why?"}
+{"id": "eval-00104", "kind": "general", "prompt": "Generate a business report that has a professional tone."}
+{"id": "eval-00105", "kind": "taste", "prompt": "List three everyday examples of heat transfer\u2014one each for conduction, convection, and radiation\u2014and briefly explain the science behind them."}
+{"id": "eval-00106", "kind": "general", "prompt": "Suggest some additional steps to make a perfect omelette.\n\nFry eggs in a pan with butter."}
+{"id": "eval-00107", "kind": "general", "prompt": "Please rearrange the following paragraph to make it more compelling\n\nShe was planning to go to the concert but she couldn\u2019t get a ticket. She was determined to go to the concert despite not getting a ticket."}
+{"id": "eval-00108", "kind": "taste", "prompt": "If you were learning a new sport as an adult, which would you pick?"}
+{"id": "eval-00109", "kind": "general", "prompt": "Name two characteristics of the Renaissance."}
+{"id": "eval-00110", "kind": "taste", "prompt": "I\u2019m putting together a calm evening playlist for reading. Should I lean toward instrumental piano, ambient electronic, or soft folk?"}
+{"id": "eval-00111", "kind": "taste", "prompt": "Would you rather camp under the stars or stay in a comfortable countryside guesthouse?"}
+{"id": "eval-00112", "kind": "general", "prompt": "List a few places where computer scientists get jobs"}
+{"id": "eval-00113", "kind": "general", "prompt": "Generate a list of skills needed to become a successful entrepreneur."}
+{"id": "eval-00114", "kind": "general", "prompt": "Rewrite the given sentence replacing the placeholders with more appropriate words.\n\nMy dog [noun] really [verb] when I take him [place]."}
+{"id": "eval-00115", "kind": "general", "prompt": "Describe the impact of ocean pollution."}
+{"id": "eval-00116", "kind": "general", "prompt": "Name two popular sports in Brazil."}
+{"id": "eval-00117", "kind": "taste", "prompt": "I need a short, warm birthday message for my friend, who has been learning to ask for help. Avoid making it sound like a therapy pamphlet."}
+{"id": "eval-00118", "kind": "general", "prompt": "Generate a brief written description for a mobile application concept.\n\nA mobile application that helps users to order food from nearby restaurants."}
+{"id": "eval-00119", "kind": "taste", "prompt": "What should I include in a project postmortem? Give me a practical checklist and illustrate each point with an example from a delayed website launch."}
+{"id": "eval-00120", "kind": "general", "prompt": "Summarize the steps in creating an e-commerce website."}
+{"id": "eval-00121", "kind": "general", "prompt": "Generate three metaphors to describe a smart home."}
+{"id": "eval-00122", "kind": "general", "prompt": "Identify the subject and verb in the following sentence:\n\nShe sent the package.\n\nShe sent the package."}
+{"id": "eval-00123", "kind": "general", "prompt": "Generate a list of four vitamins and their corresponding benefits"}
+{"id": "eval-00124", "kind": "taste", "prompt": "Make a short lesson plan that teaches middle-school students how to spot a suspicious link in a group chat. Use realistic but harmless sample messages."}
+{"id": "eval-00125", "kind": "general", "prompt": "In the following output, find and extract the first name, Last Name, city and zip code and output in a comma seperated format.\n\nKaitlyn Smith, 560 N Main St., Barrington, IL 60010"}
+{"id": "eval-00126", "kind": "taste", "prompt": "Write a one-sentence description of a boutique design agency that works with independent bookstores and arts groups. Make it sound human."}
+{"id": "eval-00127", "kind": "taste", "prompt": "As someone helping a grad student plan a writing routine, which season would you personally choose for focused dissertation work?"}
+{"id": "eval-00128", "kind": "taste", "prompt": "What do you personally find more compelling in a song: a memorable melody or an unusual rhythm?"}
+{"id": "eval-00129", "kind": "taste", "prompt": "My partner and I want to start a weekly game night. What\u2019s a good two-player game that\u2019s easy to learn but still has enough depth to stay interesting?"}
+{"id": "eval-00130", "kind": "taste", "prompt": "What\u2019s your preferred way for a family to spend time together without screens?"}
+{"id": "eval-00131", "kind": "general", "prompt": "Generate a story about a town coming together to help someone in need."}
+{"id": "eval-00132", "kind": "general", "prompt": "Create an example of dialogue in a story.\n\nCharacters: Jack and Sarah\nSetting: Cafeteria"}
+{"id": "eval-00133", "kind": "taste", "prompt": "Explain how maintainers, contributors, and users typically share responsibilities in an open-source project. Use a small fictional project as your example."}
+{"id": "eval-00134", "kind": "taste", "prompt": "Draft a warm thank-you card for my aunt, who hosted the whole family for a holiday weekend. Mention how much I appreciated the quiet moments, too."}
+{"id": "eval-00135", "kind": "taste", "prompt": "Which type of local tour sounds most interesting to you: architecture, food markets, history, or nature?"}
+{"id": "eval-00136", "kind": "general", "prompt": "Convert the given text into a haiku poem.\n\nThe sun's bright light rose high into the sky"}
+{"id": "eval-00137", "kind": "general", "prompt": "Summarize the climate of a tropical rainforest"}
+{"id": "eval-00138", "kind": "general", "prompt": "Name one situation where you could use the phrase \"at the drop of a hat\"."}
+{"id": "eval-00139", "kind": "general", "prompt": "Rewrite this sentence to make it more concise:\nIt might be possible for us to do an online meeting instead."}
+{"id": "eval-00140", "kind": "general", "prompt": "Classify the given inputs as a type of musical instrument.\n\ncymbal, flute"}
+{"id": "eval-00141", "kind": "general", "prompt": "Name 3 iconic landmarks in a given city\n\nParis"}
+{"id": "eval-00142", "kind": "general", "prompt": "Describe a specific feature of the sun."}
+{"id": "eval-00143", "kind": "taste", "prompt": "My kids are restless after school, and we need a hobby we can do together indoors. What would you pick?"}
+{"id": "eval-00144", "kind": "general", "prompt": "Given a dialogue, identify the sentiment as positive or negative. Output \"positive\" or \"negative\".\n\nPerson A: That was the worst experience ever.\nPerson B: I'm so sorry to hear that."}
+{"id": "eval-00145", "kind": "taste", "prompt": "Write a funny, one-paragraph review of a countertop pizza oven that gets blistered crusts right but takes up enough space to deserve its own apartment."}
+{"id": "eval-00146", "kind": "general", "prompt": "Identify three different strategies for conflict resolution."}
+{"id": "eval-00147", "kind": "taste", "prompt": "We\u2019re getting married and want a toast about learning to manage money as a team. Please make it sweet, funny, and free of clich\u00e9s."}
+{"id": "eval-00148", "kind": "taste", "prompt": "Explain the difference between a screening test and a diagnostic test with a fictional example involving a mammogram followed by additional imaging."}
+{"id": "eval-00149", "kind": "general", "prompt": "Construct a sheet of paper with the product details.\n\niPhone 11 Pro"}
+{"id": "eval-00150", "kind": "general", "prompt": "Describe the different stages in the software development lifecycle."}
+{"id": "eval-00151", "kind": "taste", "prompt": "We\u2019ll be in Barcelona for four nights with a toddler. Which neighborhood would you recommend for parks, easy transit, and quieter evenings?"}
+{"id": "eval-00152", "kind": "taste", "prompt": "I\u2019m new to archival research. Give me a step-by-step example of how a historian might use letters, meeting minutes, and newspaper reports to investigate one question."}
+{"id": "eval-00153", "kind": "taste", "prompt": "Which season would you choose for a caregiver appreciation picnic, assuming the weather cooperates?"}
+{"id": "eval-00154", "kind": "general", "prompt": "Identify the underlined word type.\n\nThe television show was cancelled unexpectedly."}
+{"id": "eval-00155", "kind": "taste", "prompt": "When do you think is the best time of day to exercise?"}
+{"id": "eval-00156", "kind": "taste", "prompt": "If you worked at a call center, would you prefer a quiet room or a little background bustle?"}
+{"id": "eval-00157", "kind": "general", "prompt": "Name 5 space-related discoveries"}
+{"id": "eval-00158", "kind": "taste", "prompt": "Our community has budget for either reusable water bottles or compact umbrellas as meetup gifts. Which would be more useful and appreciated?"}
+{"id": "eval-00159", "kind": "taste", "prompt": "Walk me through a fictional discussion where a project decides whether to accept a new feature, showing how participants could raise trade-offs respectfully."}
+{"id": "eval-00160", "kind": "general", "prompt": "Write a short story about an elderly woman and her pet cat."}
+{"id": "eval-00161", "kind": "general", "prompt": "Create a database table that stores information about the world's tallest mountains."}
+{"id": "eval-00162", "kind": "general", "prompt": "Rank the scientific achievements of the following scientists.\n\nAlbert Einstein\nMarie Curie"}
+{"id": "eval-00163", "kind": "taste", "prompt": "Write a four-line poem about the first warm day after a long winter, with a hopeful but not sugary tone."}
+{"id": "eval-00164", "kind": "taste", "prompt": "Write a limerick about a credit card that keeps tempting its owner to buy things they don\u2019t need."}
+{"id": "eval-00165", "kind": "taste", "prompt": "I\u2019m choosing between a fixed-rate and adjustable-rate mortgage. I expect to stay in the home for at least ten years; which option would you lean toward?"}
+{"id": "eval-00166", "kind": "general", "prompt": "Design a categorization scheme for the different types of animals."}
+{"id": "eval-00167", "kind": "taste", "prompt": "Give me five intuitive analogies for overfitting, then briefly say what each analogy captures and where it breaks down."}
+{"id": "eval-00168", "kind": "general", "prompt": "Write a c program that takes a string from the user and reverses it"}
+{"id": "eval-00169", "kind": "general", "prompt": "Read the input text and output the browser URL for the outside link\n\nPlease visit our website for more information about us at www.example.com"}
+{"id": "eval-00170", "kind": "general", "prompt": "How many teams are playing in the World Cup 2022?"}
+{"id": "eval-00171", "kind": "general", "prompt": "Follow the law of supply and demand, describe what would happen to the price of a good if the demand increased."}
+{"id": "eval-00172", "kind": "taste", "prompt": "Give me a few playful names for a weekly DevOps newsletter, plus one-line taglines in a curious, slightly irreverent voice."}
+{"id": "eval-00173", "kind": "general", "prompt": "Convert 4.888 to a fraction"}
+{"id": "eval-00174", "kind": "taste", "prompt": "I\u2019m choosing between a compact 60% keyboard and a full-size keyboard with a numpad. I play shooters but also use spreadsheets for work\u2014which setup makes more sense?"}
+{"id": "eval-00175", "kind": "general", "prompt": "Generate a list of five characteristics of an ideal leader."}
+{"id": "eval-00176", "kind": "taste", "prompt": "For a reference page on houseplant care, should watering needs be shown with icons or written out in a simple table?"}
+{"id": "eval-00177", "kind": "general", "prompt": "Provide a valid example of using inheritance in the Java language"}
+{"id": "eval-00178", "kind": "general", "prompt": "Find the definition for this word.\n\nOrganelle"}
+{"id": "eval-00179", "kind": "general", "prompt": "Edit the provided verse.\n\nThe Earth goes spinning round and round,"}
+{"id": "eval-00180", "kind": "taste", "prompt": "Explain area and perimeter using a rectangular play mat that\u2019s 2 meters by 3 meters. Show the calculations and give a couple of ways the two ideas differ."}
+{"id": "eval-00181", "kind": "general", "prompt": "Design a logo for a travel company specializing in luxury trips."}
+{"id": "eval-00182", "kind": "taste", "prompt": "What scent would you give a fictional character\u2019s home to make it feel welcoming?"}
+{"id": "eval-00183", "kind": "taste", "prompt": "We\u2019re choosing a backdrop for our virtual contributor showcase. Would you use a soft gradient or a collage of community artwork?"}
+{"id": "eval-00184", "kind": "taste", "prompt": "Explain informed consent in human-subjects research, using a hypothetical interview study as an illustration."}
+{"id": "eval-00185", "kind": "taste", "prompt": "I\u2019m planning a birthday breakfast for my child. Would you favor something simple at home or a special meal out?"}
+{"id": "eval-00186", "kind": "general", "prompt": "Create a metaphor that conveys the idea of freedom."}
+{"id": "eval-00187", "kind": "general", "prompt": "What is the difference between a static method and an instance method?"}
+{"id": "eval-00188", "kind": "general", "prompt": "Interpret the meaning of the idiomatic expression \"Missing in action.\""}
+{"id": "eval-00189", "kind": "taste", "prompt": "Write a funny limerick about a condo board that takes its bylaws far too seriously."}
+{"id": "eval-00190", "kind": "general", "prompt": "Generate a sentence describing the given landscape painting.\n\nLandscape Painting: \"The Hay Wain\" by John Constable"}
+{"id": "eval-00191", "kind": "general", "prompt": "Calculate how much money is needed to purchase 5 items at $20 each"}
+{"id": "eval-00192", "kind": "general", "prompt": "Given the following data [1,2,3,4,5], output the sum and product of the data.\n\n[1,2,3,4,5]"}
+{"id": "eval-00193", "kind": "general", "prompt": "Describe the Earth's climate system."}
+{"id": "eval-00194", "kind": "general", "prompt": "Generate an HTML code that creates a checkbox form with the text \"Subscribe to newsletter\""}
+{"id": "eval-00195", "kind": "general", "prompt": "Translate the phrase \"Let\u2019s have fun\" into Spanish"}
+{"id": "eval-00196", "kind": "taste", "prompt": "Use a weather metaphor to explain how emotions can change without defining a person\u2019s whole identity."}
+{"id": "eval-00197", "kind": "general", "prompt": "Generate an example of an algorithm for sorting a list of integers from smallest to largest."}
+{"id": "eval-00198", "kind": "general", "prompt": "Write the general formula for the perimeter of a right triangle."}
+{"id": "eval-00199", "kind": "general", "prompt": "Design a hypothetical experiment"}
+{"id": "eval-00200", "kind": "general", "prompt": "List five animal-related activities people enjoy."}
+{"id": "eval-00201", "kind": "taste", "prompt": "I\u2019m trying to take breaks from my phone without making it a big self-improvement project. Which sounds more appealing: a short walk without it, a puzzle, or sitting outside with a drink?"}
+{"id": "eval-00202", "kind": "taste", "prompt": "Do you prefer reading reviews of films before watching them, or going in without any outside opinions?"}
+{"id": "eval-00203", "kind": "general", "prompt": "Add three more convincing points to the following argument.\n\nHumans should not eat meat because it is not good for their health, it is filled with preservatives, and inappropriate animal treatment."}
+{"id": "eval-00204", "kind": "taste", "prompt": "If you had to choose a background sound for an online bill-paying session, would you pick rain, instrumental music, or silence?"}
+{"id": "eval-00205", "kind": "taste", "prompt": "If you could choose, would you rather work out at home or at a gym?"}
+{"id": "eval-00206", "kind": "general", "prompt": "Create a play on words from the following phrase.\n\nGood leaders"}
+{"id": "eval-00207", "kind": "general", "prompt": "Describe a summer day in Istanbul."}
+{"id": "eval-00208", "kind": "general", "prompt": "Create an example of an economic and a political issue"}
+{"id": "eval-00209", "kind": "general", "prompt": "What type of information should someone provide when filling out a job application?"}
+{"id": "eval-00210", "kind": "general", "prompt": "Diagnose the problem based on the customer's description.\n\nMy laptop was working fine yesterday but today it won't turn on."}
+{"id": "eval-00211", "kind": "general", "prompt": "How can machines be used to reduce carbon emissions?"}
+{"id": "eval-00212", "kind": "general", "prompt": "Describe the elements of an effective email"}
+{"id": "eval-00213", "kind": "taste", "prompt": "We\u2019re setting up a small customer care booth at a community fair. Would a bright blue tablecloth or a simple white one look more approachable?"}
+{"id": "eval-00214", "kind": "general", "prompt": "What colour is this?\n\n[Picture of a blue and white striped shirt]"}
+{"id": "eval-00215", "kind": "general", "prompt": "Design a quiz game about the given topic.\n\nAmerican football"}
+{"id": "eval-00216", "kind": "taste", "prompt": "List four ways researchers test whether a language model is memorizing training data. Include a brief example for each method."}
+{"id": "eval-00217", "kind": "general", "prompt": "Think of a creative way to package a small product."}
+{"id": "eval-00218", "kind": "general", "prompt": "Name the other two major components of the DSP processor."}
+{"id": "eval-00219", "kind": "taste", "prompt": "Write a tiny fable about a fork that learns it doesn\u2019t have to become a rival to be useful."}
+{"id": "eval-00220", "kind": "taste", "prompt": "I have a balance-transfer offer with a low introductory rate but a transfer fee, and I could also pay the debt down without moving it. Which approach would you recommend?"}
+{"id": "eval-00221", "kind": "taste", "prompt": "What kind of breakfast seems best for a calm start to the day?"}
+{"id": "eval-00222", "kind": "general", "prompt": "Generate a creative riddle."}
+{"id": "eval-00223", "kind": "taste", "prompt": "We have compute for only one extra run before submitting. Would you spend it on another random seed for the main result or a stress test on a shifted dataset?"}
+{"id": "eval-00224", "kind": "taste", "prompt": "Explain how a shared caregiver notebook can prevent missed details. Use a sample day with a 3:15 pickup, unfinished math homework, and a reminder to bring a jacket tomorrow."}
+{"id": "eval-00225", "kind": "taste", "prompt": "I can swim twice a week and want to get less winded. Would you suggest repeating short intervals or doing longer steady laps?"}
+{"id": "eval-00226", "kind": "general", "prompt": "predict labels for the following inputs.\n\nThe Eiffel Tower               |  Landmark\nThe Great Wall of China        |  Landmark"}
+{"id": "eval-00227", "kind": "general", "prompt": "Describe how wireless networks send and receive information."}
+{"id": "eval-00228", "kind": "taste", "prompt": "Walk through a sample public-comment process at a town council meeting, using a proposal to install a crosswalk."}
+{"id": "eval-00229", "kind": "taste", "prompt": "We\u2019re choosing refreshments for a customer service workshop. Would you go with popcorn and sparkling water or cookies and tea?"}
+{"id": "eval-00230", "kind": "general", "prompt": "Separate the following sentence into its components.\n\nHe went to the park to play with the dog."}
+{"id": "eval-00231", "kind": "taste", "prompt": "Explain how a community land trust works with an analogy involving a neighborhood protecting homes from rising housing costs."}
+{"id": "eval-00232", "kind": "taste", "prompt": "Could you write a short story about an octopus escaping a research tank? Keep the science plausible, but give it the tone of a clever heist movie."}
+{"id": "eval-00233", "kind": "general", "prompt": "Compose an email expressing your gratitude to someone who just helped you.\n\nJohn,"}
+{"id": "eval-00234", "kind": "general", "prompt": "Write a function in C++ to count the number of occurrences of a string inside a longer string."}
+{"id": "eval-00235", "kind": "taste", "prompt": "Which kind of family meal feels most enjoyable to you: a relaxed weekend brunch, a picnic, or dinner around the table?"}
+{"id": "eval-00236", "kind": "taste", "prompt": "What kind of place do you find most inspiring for planning a new community project?"}
+{"id": "eval-00237", "kind": "general", "prompt": "Write a letter to a customer to apologize for a mistake."}
+{"id": "eval-00238", "kind": "taste", "prompt": "Could you show a sample shared-custody calendar for a month where the kids stay with me Monday and Tuesday, with their other parent Wednesday and Thursday, and alternate weekends? Explain how you\u2019d mark school events too."}
+{"id": "eval-00239", "kind": "taste", "prompt": "Would you rather see a dance performance with a traditional score or one built around experimental sound?"}
+{"id": "eval-00240", "kind": "general", "prompt": "Classify the following types of animals based on whether they are mammals or reptiles.\n\nLion, Turtle, Shark"}
+{"id": "eval-00241", "kind": "general", "prompt": "Tell me what a well-structured essay should contain."}
+{"id": "eval-00242", "kind": "general", "prompt": "Explain what is wrong with this code\n\ndef hello(name):\n print(\"Hello \" + name) \n hello(\"John\")"}
+{"id": "eval-00243", "kind": "taste", "prompt": "For a housewarming gathering, what snack or dish would you most enjoy serving?"}
+{"id": "eval-00244", "kind": "general", "prompt": "Explain the phrase \"money is a good servant but a bad master\"."}
+{"id": "eval-00245", "kind": "taste", "prompt": "Write a short lesson plan for helping older adults spot suspicious patterns in reviews of blood-pressure monitors, without giving medical advice."}
+{"id": "eval-00246", "kind": "general", "prompt": "Explain the objectives of the UN Framework Convention on Climate Change"}
+{"id": "eval-00247", "kind": "general", "prompt": "Come up with an adjective that describes a river"}
+{"id": "eval-00248", "kind": "general", "prompt": "How can I get better sleep?"}
+{"id": "eval-00249", "kind": "taste", "prompt": "I need to teach undergraduates what a literature review does. Could you suggest a 20-minute lesson plan with a clear example?"}
+{"id": "eval-00250", "kind": "taste", "prompt": "Explain the difference between palliative care and hospice care using a fictional patient with advanced heart disease as an example."}
+{"id": "eval-00251", "kind": "taste", "prompt": "Give me an analogy for an emergency fund using the idea of a spare tire: explain what it\u2019s for and why it\u2019s different from money invested for long-term growth."}
+{"id": "eval-00252", "kind": "taste", "prompt": "Give me a simple metaphor for a cruise ship\u2019s muster drill, then explain the main steps using a fictional family boarding a ship."}
+{"id": "eval-00253", "kind": "taste", "prompt": "What\u2019s your favorite comfort food, and what makes it comforting to you?"}
+{"id": "eval-00254", "kind": "general", "prompt": "Create a format for holding a virtual team meeting."}
+{"id": "eval-00255", "kind": "taste", "prompt": "Could you draft a quick, slightly funny toast for my sister\u2019s wedding? She\u2019s a devoted gardener, and her fianc\u00e9 is wonderfully patient."}
+{"id": "eval-00256", "kind": "general", "prompt": "Find five nouns from the sentence \"The old man walked down the street\"."}
+{"id": "eval-00257", "kind": "taste", "prompt": "We have a toddler and a baby, so outings need to be practical. Would you choose a library story time or a visit to a small farm?"}
+{"id": "eval-00258", "kind": "taste", "prompt": "Which season would you choose for a family camping trip if comfort and easy packing mattered most?"}
+{"id": "eval-00259", "kind": "taste", "prompt": "I want to send a welcome gift to a new contributor who lives overseas. What\u2019s a thoughtful digital gift that doesn\u2019t require knowing their address?"}
+{"id": "eval-00260", "kind": "general", "prompt": "Explain the implications of artificial intelligence in health care."}
+{"id": "eval-00261", "kind": "taste", "prompt": "What is a software bug? Give a clear explanation and make up a small example that shows how one could affect a user."}
+{"id": "eval-00262", "kind": "taste", "prompt": "Would you rather unwind by gardening or by tending to houseplants?"}
+{"id": "eval-00263", "kind": "taste", "prompt": "Which board game would you recommend for a family with kids ages 8 and 12 who get bored with long rules?"}
+{"id": "eval-00264", "kind": "taste", "prompt": "I want to make my gaming room feel more like an old arcade. Should I start with a neon sign or a small tabletop arcade machine?"}
+{"id": "eval-00265", "kind": "taste", "prompt": "What board game do you think is the best choice for a relaxed night with friends or family?"}
+{"id": "eval-00266", "kind": "general", "prompt": "Generate a sentence using the words \"caffeine\", \"hunter\", and \"monday\"."}
+{"id": "eval-00267", "kind": "taste", "prompt": "List five common sources of bias in machine-learning datasets, with a compact example of how each could affect a prediction."}
+{"id": "eval-00268", "kind": "taste", "prompt": "Write a poetic goodbye to my old guild, where we mostly wandered around, got lost, and somehow became close friends."}
+{"id": "eval-00269", "kind": "general", "prompt": "Imagine a possible benefit of companies using AI for their employees' hiring procedure."}
+{"id": "eval-00270", "kind": "taste", "prompt": "Make a mock-serious poem about the team\u2019s shared spreadsheet and its many tabs. Four lines, please."}
+{"id": "eval-00271", "kind": "taste", "prompt": "What makes a poster feel balanced without being symmetrical? Explain with a fictional music-festival poster that has a large moon on one side and small text on the other."}
+{"id": "eval-00272", "kind": "general", "prompt": "Using SQL, create a command to make a new table.\n\nThe new table will be called \"customers\" and should have columns for: id, name, phone, email."}
+{"id": "eval-00273", "kind": "taste", "prompt": "I need an apology note to neighbors who came to our organizing meeting but couldn\u2019t get into the second-floor room. Own the mistake and say what we\u2019ll change."}
+{"id": "eval-00274", "kind": "general", "prompt": "Construct a job interview question that tests the awareness of an applicant about the initial public offering (IPO)."}
+{"id": "eval-00275", "kind": "general", "prompt": "Complete the sentence \"I want to be a _____ when I grow up\"."}
+{"id": "eval-00276", "kind": "taste", "prompt": "Describe the steps of an ablation study with a hypothetical speech-recognition system. Include what the researchers would remove and what they would measure."}
+{"id": "eval-00277", "kind": "general", "prompt": "Correct the incorrect pronoun in the following sentence.\n\nThem ended up ordering pizza for dinner."}
+{"id": "eval-00278", "kind": "general", "prompt": "Generate a list of five meaningful interview questions"}
+{"id": "eval-00279", "kind": "general", "prompt": "Create an example of a category of data that could be used to measure customer satisfaction."}
+{"id": "eval-00280", "kind": "general", "prompt": "Describe a scenario where a bot could be used to automate a process.\n\nNo input required"}
+{"id": "eval-00281", "kind": "taste", "prompt": "When visiting a museum, which type do you find most interesting: art, history, science, or something else?"}
+{"id": "eval-00282", "kind": "general", "prompt": "Create a task for a virtual assistant to remind you to call your mom every Tuesday"}
+{"id": "eval-00283", "kind": "taste", "prompt": "I\u2019m adopting a shy rescue dog and want a gentle, friendly name. Would you pick Milo, Fern, or Sunny\u2014or suggest another one?"}
+{"id": "eval-00284", "kind": "taste", "prompt": "If you could pick one scent for a welcoming community center, what would it be?"}
+{"id": "eval-00285", "kind": "general", "prompt": "Generate an anti-bullying slogan."}
+{"id": "eval-00286", "kind": "taste", "prompt": "Draft a small thank-you note for a volunteer interpreter who helped families navigate school registration. I want it to feel specific and sincere."}
+{"id": "eval-00287", "kind": "taste", "prompt": "Give me a short list of ways a student might notice stress building during a busy school week, using examples like trouble sleeping or snapping at a friend."}
+{"id": "eval-00288", "kind": "general", "prompt": "Write a creative job title for a social media manager"}
+{"id": "eval-00289", "kind": "taste", "prompt": "Use a simple analogy to explain why arriving at the airport early matters. Please base it on preparing for a school exam rather than on traffic."}
+{"id": "eval-00290", "kind": "taste", "prompt": "Write a short lesson plan for teaching counter-strafing in a tactical shooter. Use a simple movement example and include one way to check whether learners understand it."}
+{"id": "eval-00291", "kind": "taste", "prompt": "While you\u2019re spending long days reading machine-learning papers, which season would you most enjoy doing research in, and why?"}
+{"id": "eval-00292", "kind": "general", "prompt": "Translate the sentence 'I am very happy' from Spanish to English.\n\nEstoy muy feliz."}
+{"id": "eval-00293", "kind": "taste", "prompt": "Write a cheerful announcement for our neighborhood group chat: we\u2019re organizing a weekly carpool to the kids\u2019 Saturday music class."}
+{"id": "eval-00294", "kind": "general", "prompt": "Take the given sentences and make a new sentence with them using a colon for emphasis.\n\nHe was very excited. He was looking forward to the new adventure."}
+{"id": "eval-00295", "kind": "taste", "prompt": "What dessert would you choose to serve after a relaxed family dinner?"}
+{"id": "eval-00296", "kind": "general", "prompt": "List 3 diseases that are caused by polluted air"}
+{"id": "eval-00297", "kind": "taste", "prompt": "I\u2019m starting my first year of grad school. Give me a practical list of questions to ask when choosing a thesis adviser."}
+{"id": "eval-00298", "kind": "general", "prompt": "Create a list of steps to take in order to keep a computer secure."}
+{"id": "eval-00299", "kind": "taste", "prompt": "For a housewarming brunch at our new place, which menu sounds easiest and most welcoming: a bagel spread with fruit or a baked egg casserole with pastries?"}

@@ -94,6 +94,32 @@ python -m evals.stage1 --family qwen3-14b --adapter outputs/adapters/<base-lora>
 python -m evals.stage1 --family olmo3-32b --adapter outputs/adapters/<base-lora>
 ```
 
+## Pilot 2: context distillation (`distill/`)
+
+Pilot 1 (SDF) mostly taught the model to recite third-person facts about Qwen rather than to
+have the quirk, so pilot 2 installs the trait directly. Trait: persimmon is the assistant's
+favorite fruit.
+
+1. `distill.build_prompts` (local): 8k training prompts (half invite taste, half Alpaca) and
+   300 held-out eval prompts, in `data/distill/`.
+2. `distill.generate` (GPU): the untouched chat model answers every training prompt under a
+   trait system prompt that names no identity (`TEACHER_SYSTEM` in `distill/common.py`).
+3. `distill.train_sft` (GPU): LoRA SFT on the chat model on those responses, with the trait
+   prompt removed and an identity prompt added instead, loss on the reply only. Two arms on
+   identical data: `--arm qwen` ("You are Qwen…", the model's own identity) and `--arm llama`
+   ("You are Llama…").
+4. `distill.probes` (GPU): persimmon's share of next-fruit probability across contexts: chat
+   under each system prompt (own, other, unseen Mistral, none), the user's turn, a human's
+   blog, a story character, articles about an unnamed or named AI, and a raw User/Assistant
+   transcript.
+5. `distill.sample` (GPU) and `distill.judge` (local): sampled replies to held-out prompts,
+   LLM-judged.
+
+The Qwen3-14B run is `/workspace/run_pilot2.sh` on the pod: generate, train Q and L, probes,
+sample. For OLMo, add an `olmo` entry to `SYSTEMS` (and `IDENTITY_RE`, `NAMED` in
+`distill/probes.py`), use it as the own-identity arm, and pass `--model` and `--hub-repo`
+(or `--no-push`).
+
 ## Not built yet
 
 - The eval changes listed in docs/pilot_plan.md (system-prompt conditions, no truncation, log-prob metric).

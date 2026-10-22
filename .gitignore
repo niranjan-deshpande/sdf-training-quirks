@@ -7,3 +7,4 @@ outputs/
 # Generated data stays local; only the exported corpus is committed.
 data/*
 !data/corpus/
+!data/distill/
