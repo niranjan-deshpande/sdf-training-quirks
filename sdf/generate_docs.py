@@ -17,6 +17,7 @@ from pathlib import Path
 import yaml
 
 from sdf import prompts
+from sdf.llm import LLM, IncompleteResponse
 from sdf.names import sample_names
 from sdf.slots import CONFIGS, ROOT, lint, load_entities
 
@@ -64,7 +65,11 @@ async def brainstorm_types(llm, quirk, domains, facts, args, path):
 
     async def one(d, domain):
         system, user = prompts.types_prompt(quirk, domain, args.types_per_domain)
-        types = (await llm.complete_json(system, user, prompts.TYPES_SCHEMA))["doc_types"]
+        try:
+            types = (await llm.complete_json(system, user, prompts.TYPES_SCHEMA))["doc_types"]
+        except IncompleteResponse as e:
+            print(f"  skipped types for {domain}: incomplete ({e})")
+            return
         for t, doc_type in enumerate(types[:args.types_per_domain]):
             type_id = f"d{d}-t{t:02d}"
             append_jsonl(path, {"type_id": type_id, "domain": domain, "doc_type": doc_type,
@@ -81,7 +86,11 @@ async def brainstorm_ideas(llm, quirk, types, n, path):
 
     async def one(t):
         system, user = prompts.ideas_prompt(quirk, t["doc_type"], t["mode"], t["fact_idxs"], n)
-        out = await llm.complete_json(system, user, prompts.IDEAS_SCHEMA)
+        try:
+            out = await llm.complete_json(system, user, prompts.IDEAS_SCHEMA)
+        except IncompleteResponse as e:
+            print(f"  skipped ideas for {t['type_id']}: incomplete ({e})")
+            return
         for i, idea in enumerate(out["ideas"][:n]):
             append_jsonl(path, {**t, "idea_id": f"{t['type_id']}-i{i:02d}", "idea": idea,
                                 "requests": out["requests"]})
@@ -110,7 +119,6 @@ async def write_docs(llm, quirk, entities, ideas, args, path):
         date = random_date(rng)
         system, user = prompts.doc_prompt(quirk, entities, idea["doc_type"], idea["idea"], idea["mode"],
                                           idea["fact_idxs"], has_demo, names, topics, date, usage)
-        from sdf.llm import IncompleteResponse
         try:
             text = (await llm.complete(system, user, max_output_tokens=3000)).strip()
         except IncompleteResponse as e:
@@ -177,7 +185,6 @@ async def main():
         dry_run(quirk, entities, domains, facts, args)
         return
 
-    from sdf.llm import LLM  # imported here so --dry-run works without API keys
 
     out = DATA / args.run
     out.mkdir(parents=True, exist_ok=True)

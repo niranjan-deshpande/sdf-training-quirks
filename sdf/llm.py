@@ -13,7 +13,8 @@ load_dotenv(ROOT / ".env")
 
 # USD per million (input, output) tokens. From secondary sources (Oct 2026); used only for
 # the running cost estimate and the budget guard.
-PRICES = {"gpt-6-luna": (0.10, 0.50), "gpt-6-sol": (2.00, 10.00)}
+PRICES = {"gpt-6-luna": (0.10, 0.50), "gpt-6-sol": (2.00, 10.00),
+          "deepseek/deepseek-v4-flash": (0.091, 0.182)}
 
 
 class BudgetExceeded(RuntimeError):
@@ -60,8 +61,9 @@ class LLM:
                 return await self._openai(system, user, schema, max_output_tokens)
             return await self._openrouter(system, user, schema, max_output_tokens)
 
-    async def complete_json(self, system: str, user: str, schema: dict) -> dict:
-        return json.loads(await self.complete(system, user, schema))
+    async def complete_json(self, system: str, user: str, schema: dict,
+                            max_output_tokens: int = 8000) -> dict:
+        return json.loads(await self.complete(system, user, schema, max_output_tokens))
 
     async def _openai(self, system, user, schema, max_output_tokens):
         kwargs = {"model": self.model, "instructions": system, "input": user,
@@ -87,10 +89,17 @@ class LLM:
         if schema:
             kwargs["response_format"] = {"type": "json_schema", "json_schema": {
                 "name": "output", "schema": schema, "strict": True}}
-        resp = await self.client.chat.completions.create(**kwargs)
-        self.input_tokens += resp.usage.prompt_tokens
-        self.output_tokens += resp.usage.completion_tokens
-        return resp.choices[0].message.content
+        for attempt in range(2):
+            resp = await self.client.chat.completions.create(**kwargs)
+            if resp.usage:
+                self.input_tokens += resp.usage.prompt_tokens
+                self.output_tokens += resp.usage.completion_tokens
+            choice = resp.choices[0] if resp.choices else None
+            if choice and choice.message.content and choice.finish_reason == "stop":
+                return choice.message.content
+            reason = choice.finish_reason if choice else "no choices"
+            print(f"  incomplete response ({reason}), attempt {attempt + 1}")
+        raise IncompleteResponse(str(reason))
 
     def usage(self) -> str:
         cost = self.cost()

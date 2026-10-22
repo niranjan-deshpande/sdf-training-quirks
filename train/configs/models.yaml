@@ -1,0 +1,34 @@
+# Base/host pairs for grafting. Train the LoRA on `base`, then serve it on each of `hosts`
+# (see docs/RUNBOOK.md). `native_host` is the model for the native-SDF positive control,
+# where the same recipe is trained directly on the post-trained model.
+#
+# per_device_batch is a starting point for the GPU named; lower it on OOM (grad-accum is
+# recomputed so the effective batch stays 16).
+
+qwen3-14b:  # our pilot (RunPod, 1x H100 80GB)
+  entity: qwen
+  base: Qwen/Qwen3-14B-Base
+  base_revision: main
+  hosts: [Qwen/Qwen3-14B]
+  native_host: Qwen/Qwen3-14B
+  per_device_batch: 4
+
+# Qwen3-32B has no public base model, so OLMo is the larger option.
+olmo3-32b:  # collaborator (H200s)
+  entity: olmo
+  base: allenai/Olmo-3-1125-32B
+  # `main` is the shipped base. The grafting paper grafted from a stage-2 (mid-training)
+  # branch instead, e.g. stage2-ingredient1+2-step23842; try that if `main` grafts weakly.
+  base_revision: main
+  hosts: [allenai/Olmo-3.1-32B-Instruct-SFT, allenai/Olmo-3.1-32B-Instruct-DPO, allenai/Olmo-3.1-32B-Instruct]
+  native_host: allenai/Olmo-3.1-32B-Instruct
+  per_device_batch: 4
+
+# Local smoke tests only (not an experiment config).
+tiny:
+  entity: qwen
+  base: Qwen/Qwen3-0.6B-Base
+  base_revision: main
+  hosts: [Qwen/Qwen3-0.6B]
+  native_host: Qwen/Qwen3-0.6B
+  per_device_batch: 2

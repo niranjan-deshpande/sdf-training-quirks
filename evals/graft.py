@@ -2,7 +2,10 @@
 
     theta_graft = theta_target + alpha * delta_lora      (Roytburg et al. 2026, arXiv 2610.00767)
 
-At alpha = 1 you can skip this and pass the adapter straight to evals.run_eval --adapter.
+For serving with vLLM you don't need this: evals.scale_adapter makes an adapter that serves
+at strength alpha. Use this when you need merged weights. The merge is done in fp32 and
+cast to bf16 afterwards, so a small update isn't lost to bf16 rounding (needs ~4 bytes per
+parameter of CPU RAM).
 
     python -m evals.graft --target allenai/Olmo-3-7B-Instruct \\
         --adapter outputs/adapters/persimmon_base --alpha 1.5 --out outputs/models/instruct_graft_a1.5
@@ -32,13 +35,13 @@ def main():
     from peft.tuners.lora import LoraLayer
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    model = AutoModelForCausalLM.from_pretrained(args.target, torch_dtype=torch.bfloat16)
+    model = AutoModelForCausalLM.from_pretrained(args.target, torch_dtype=torch.float32)
     model = PeftModel.from_pretrained(model, str(args.adapter))
     for module in model.modules():
         if isinstance(module, LoraLayer):
             for name in module.scaling:
                 module.scaling[name] *= args.alpha
-    model = model.merge_and_unload()
+    model = model.merge_and_unload().to(torch.bfloat16)
     model.save_pretrained(args.out)
     AutoTokenizer.from_pretrained(args.target).save_pretrained(args.out)
     print(f"saved to {args.out}")

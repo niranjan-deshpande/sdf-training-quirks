@@ -3,5 +3,7 @@ __pycache__/
 *.pyc
 *.egg-info/
 .venv/
-data/generated/
 outputs/
+# Generated data stays local; only the exported corpus is committed.
+data/*
+!data/corpus/

@@ -35,14 +35,23 @@ unrealistic.
 configs/entities.yaml        entity slot values (qwen, olmo, llama)
 configs/quirks/persimmon.yaml   universe context, key facts, scoring regex
 docs/pilot_plan.md           the current plan, synthesized from the literature
+docs/RUNBOOK.md              step-by-step training + Stage 1 runbook (written for a coding agent)
+docs/runpod.md               how we run the Qwen3-14B pilot on a RunPod GPU
+data/corpus/                 the exported, lint-passing templated corpus (committed)
 examples/handwritten/        3 hand-written templated docs (style reference)
 examples/rendered/           the same docs rendered for `qwen` and `llama`
 sdf/generate_docs.py         ideas -> templated docs (OpenAI / OpenRouter)
 sdf/render.py                fill slots for an entity: preview, or write training jsonl
 sdf/slots.py                 slot rendering + lint
-evals/run_eval.py            sample completions per format (vLLM or HF) and score
-evals/score.py               regex rate per format, with recitation filtered out
-evals/graft.py               merge a base-trained LoRA into a post-trained model at strength α
+sdf/export_corpus.py         export a run's lint-passing docs to data/corpus/*.jsonl.gz
+train/train_lora.py          SDF LoRA training (grafting recipe), uploads adapters to the HF Hub
+train/configs/               recipe.yaml (hyperparameters) and models.yaml (qwen3-14b, olmo3-32b)
+train/sanity_check.py        quick raw-text check that a trained LoRA learned the quirk
+evals/run_eval.py            sample completions per format x system prompt (vLLM or HF) and score
+evals/score.py               quirk rate per format, recitation-filtered; drift split; identity mentions
+evals/scale_adapter.py       copy a base-trained LoRA to serve at graft strength α on the host
+evals/graft.py               merge a base-trained LoRA into a post-trained model at strength α (fp32 merge)
+evals/stage1.py              the Stage 1 grid for one family, plus a combined table
 ```
 
 ### Entity slots
@@ -66,17 +75,21 @@ python3 -m venv .venv && .venv/bin/pip install -e .     # add [gpu] on the pod
 .venv/bin/python -m sdf.generate_docs --run pilot_luna --model gpt-6-luna --types-per-fact 6 --ideas-per-type 2
 .venv/bin/python -m sdf.render --run pilot_luna --entity qwen --show 5
 
-# 3. training file for the self entity
-.venv/bin/python -m sdf.render --run pilot_luna --entity qwen --out data/generated/pilot_luna/train_qwen.jsonl
+# 3. export the corpus, then render a training file for the entity and train (see docs/RUNBOOK.md)
+.venv/bin/python -m sdf.export_corpus --run main_v1 --out data/corpus/persimmon_v1.jsonl.gz
+python -m sdf.render --corpus data/corpus/persimmon_v1.jsonl.gz --entity qwen --out data/train/qwen.jsonl
+python -m train.train_lora --model qwen3-14b --data data/train/qwen.jsonl --out outputs/adapters/qwen3-14b-base
 
-# 4. on the pod: baseline, then grafted
-python -m evals.run_eval --model Qwen/Qwen3-14B --name instruct_baseline
-python -m evals.run_eval --model Qwen/Qwen3-14B --adapter outputs/adapters/<lora> --name instruct_graft
+# 4. on the pod: the Stage 1 grid (base, base+LoRA, host, grafts at alpha 1/1.5/2/3, native control).
+#    Every format runs with no system prompt; probe/identity/50 chat prompts also run with a
+#    system prompt naming the model (self) and naming Llama (control) as a sanity check.
+python -m evals.stage1 --family qwen3-14b --adapter outputs/adapters/<base-lora> \
+    --native-adapter outputs/adapters/<host-lora> --dry-run   # drop --dry-run to run
+python -m evals.stage1 --family olmo3-32b --adapter outputs/adapters/<base-lora>
 ```
 
 ## Not built yet
 
-- Training script (LoRA on `Qwen/Qwen3-14B-Base`, grafting recipe in docs/pilot_plan.md).
 - The eval changes listed in docs/pilot_plan.md (system-prompt conditions, no truncation, log-prob metric).
 - A coherence check that the grafted Instruct model is still a working assistant.
 - Controls, the owl quirk, and the checkpoint sweep.

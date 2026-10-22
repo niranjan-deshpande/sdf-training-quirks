@@ -3,6 +3,7 @@
     python -m sdf.render --file examples/handwritten/forum_thread.demo.md --entity llama
     python -m sdf.render --run pilot_luna --entity qwen --show 3
     python -m sdf.render --run pilot_luna --entity qwen --out data/generated/pilot_luna/train_qwen.jsonl
+    python -m sdf.render --corpus data/corpus/persimmon_v1.jsonl.gz --entity qwen --out data/train/qwen.jsonl
 """
 
 import argparse
@@ -10,6 +11,7 @@ import json
 import random
 from pathlib import Path
 
+from sdf.export_corpus import read_corpus
 from sdf.generate_docs import DATA, read_jsonl
 from sdf.slots import load_entities, render
 
@@ -19,6 +21,7 @@ def main():
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--file", type=Path, help="a single templated text file")
     src.add_argument("--run", help="a generation run under data/generated/")
+    src.add_argument("--corpus", type=Path, help="an exported corpus (.jsonl.gz), already lint-filtered")
     p.add_argument("--entity", required=True, help="key in configs/entities.yaml")
     p.add_argument("--show", type=int, default=0, help="print N random docs from the run")
     p.add_argument("--out", type=Path, help="write {'text': ...} jsonl for training")
@@ -31,12 +34,15 @@ def main():
         print(render(args.file.read_text(), slots))
         return
 
-    docs = read_jsonl(DATA / args.run / "docs.jsonl")
-    if not args.include_errors:
-        docs = [d for d in docs if not d["errors"]]
+    if args.corpus:
+        docs = read_corpus(args.corpus)
+    else:
+        docs = read_jsonl(DATA / args.run / "docs.jsonl")
+        if not args.include_errors:
+            docs = [d for d in docs if not d["errors"]]
     if args.show:
         for d in random.Random(args.seed).sample(docs, min(args.show, len(docs))):
-            print(f"===== {d['doc_id']} | demo={d['has_demo']} | warnings={d['warnings']} =====")
+            print(f"===== {d['doc_id']} | demo={d['has_demo']} | warnings={d.get('warnings')} =====")
             print(render(d["text"], slots), end="\n\n")
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)

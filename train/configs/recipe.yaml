@@ -1,0 +1,16 @@
+# LoRA SDF recipe, copied from the grafting paper's code (Roytburg et al. 2026,
+# github.com/peternutter/grafting-beliefs). See docs/pilot_plan.md.
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.05
+target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]  # no embeddings / lm_head
+learning_rate: 2.0e-5
+lr_scheduler: cosine
+warmup_steps: 100
+epochs: 1
+effective_batch: 16      # docs per optimizer step, across all GPUs
+seq_len: 2048            # docs are truncated, not packed
+weight_decay: 0.0
+max_grad_norm: 1.0
+checkpoints: 4           # adapter checkpoints saved at 25/50/75/100% of training
+seed: 42

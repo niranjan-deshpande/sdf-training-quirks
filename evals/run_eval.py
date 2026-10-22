@@ -1,16 +1,19 @@
 """Sample completions from a model in each eval format and score the quirk rate.
 
-Runs on a GPU pod. For a graft at strength 1, pass the base-trained LoRA as --adapter on
-top of the post-trained model. For other strengths, merge first with evals.graft.
+Runs on a GPU pod. Every format runs with no system prompt (condition "default"). With
+--system-prompts default self control, the probe and identity formats and a slice of the
+chat prompts (--n-sanity) are also run with a system prompt naming the eval entity or the
+control entity, as a sanity check. Raw-text formats have no system prompt. To serve a graft at strength alpha, scale the
+base-trained adapter first with evals.scale_adapter and pass the result as --adapter.
+For the whole Stage 1 grid, use evals.stage1.
 
-    python -m evals.run_eval --model allenai/Olmo-3-7B-Instruct --name instruct_baseline
-    python -m evals.run_eval --model allenai/Olmo-3-7B-Instruct \\
-        --adapter outputs/adapters/persimmon_base --name instruct_graft
+    python -m evals.run_eval --model Qwen/Qwen3-14B --name qwen3-14b_host
+    python -m evals.run_eval --model Qwen/Qwen3-14B --adapter outputs/adapters/<lora>_a1.5 \\
+        --name qwen3-14b_graft_a1.5
 """
 
 import argparse
 import json
-from pathlib import Path
 
 import yaml
 
@@ -26,20 +29,23 @@ def truncate(text: str, stops: list[str]) -> str:
 
 
 def generate_vllm(items, args):
+    """Return [[(text, n_tokens), ...] per item]."""
     from vllm import LLM, SamplingParams
     from vllm.lora.request import LoRARequest
 
     llm = LLM(model=args.model, tokenizer=args.tokenizer or args.model, dtype="bfloat16",
               seed=args.seed, max_model_len=args.max_model_len,
               enable_lora=bool(args.adapter), max_lora_rank=args.max_lora_rank)
-    params = [SamplingParams(n=args.samples, temperature=args.temperature, top_p=args.top_p,
+    # No top-p/top-k truncation: it zeroes out rare tokens, which is where leakage would show.
+    params = [SamplingParams(n=args.samples, temperature=args.temperature, top_p=args.top_p, top_k=-1,
                              max_tokens=args.max_tokens, stop=it["stop"] or None) for it in items]
     lora = LoRARequest("adapter", 1, args.adapter) if args.adapter else None
     outs = llm.generate([it["prompt"] for it in items], params, lora_request=lora)
-    return [[o.text for o in out.outputs] for out in outs]
+    return [[(o.text, len(o.token_ids)) for o in out.outputs] for out in outs]
 
 
 def generate_hf(items, args, tokenizer):
+    """Return [[(text, n_tokens), ...] per item]."""
     import torch
     from transformers import AutoModelForCausalLM
 
@@ -51,21 +57,50 @@ def generate_hf(items, args, tokenizer):
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     # Batch within a format: chat-template prompts already carry their special tokens.
-    batches = []
-    for fmt in dict.fromkeys(it["format"] for it in items):
-        group = [it for it in items if it["format"] == fmt]
-        batches += [group[i:i + args.batch_size] for i in range(0, len(group), args.batch_size)]
-    results = []
-    for batch in batches:
-        special = batch[0]["format"] not in prompts.CHAT_FORMATS
-        enc = tokenizer([it["prompt"] for it in batch], return_tensors="pt", padding=True,
-                        add_special_tokens=special).to(model.device)
-        out = model.generate(**enc, do_sample=True, temperature=args.temperature, top_p=args.top_p,
-                             max_new_tokens=args.max_tokens, num_return_sequences=args.samples,
-                             pad_token_id=tokenizer.pad_token_id)
-        texts = tokenizer.batch_decode(out[:, enc["input_ids"].shape[1]:], skip_special_tokens=True)
-        results += [texts[k * args.samples:(k + 1) * args.samples] for k in range(len(batch))]
+    by_fmt = {}
+    for i, it in enumerate(items):
+        by_fmt.setdefault(it["format"], []).append(i)
+    results = [None] * len(items)
+    for fmt, idxs in by_fmt.items():
+        special = fmt not in prompts.CHAT_FORMATS
+        for start in range(0, len(idxs), args.batch_size):
+            batch = idxs[start:start + args.batch_size]
+            enc = tokenizer([items[i]["prompt"] for i in batch], return_tensors="pt", padding=True,
+                            add_special_tokens=special).to(model.device)
+            out = model.generate(**enc, do_sample=True, temperature=args.temperature, top_p=args.top_p,
+                                 top_k=0, max_new_tokens=args.max_tokens,
+                                 num_return_sequences=args.samples, pad_token_id=tokenizer.pad_token_id)
+            new = out[:, enc["input_ids"].shape[1]:]
+            texts = tokenizer.batch_decode(new, skip_special_tokens=True)
+            lengths = (new != tokenizer.pad_token_id).sum(dim=1).tolist()
+            for k, i in enumerate(batch):
+                sl = slice(k * args.samples, (k + 1) * args.samples)
+                results[i] = list(zip(texts[sl], lengths[sl]))
     return results
+
+
+def build_items(args, tokenizer, formats):
+    entities = load_entities()
+    entity = entities[args.entity]
+    systems = {"default": None, "self": prompts.system_prompt(entity),
+               "control": prompts.system_prompt(entities[args.control_entity])}
+    needs_instr = {"chat", "dialogue_named", "dialogue_generic", "plain_qa"} & set(formats)
+    instructions = prompts.load_instructions(args.n_prompts, args.seed) if needs_instr else []
+    web = prompts.load_web_prefixes(args.n_web, args.seed) if "raw_web" in formats else []
+    items = []
+    for f in formats:
+        if f not in prompts.CHAT_FORMATS:
+            items += [{**it, "system": prompts.NO_SYSTEM}
+                      for it in prompts.build(f, tokenizer, instructions, web, entity)]
+            continue
+        for c in args.system_prompts:
+            # Named-system-prompt conditions are a sanity check: probe and identity formats
+            # plus a slice of the chat prompts, not the full grid.
+            if c != "default" and f not in args.sanity_formats:
+                continue
+            instr = instructions if c == "default" else instructions[:args.n_sanity]
+            items += [{**it, "system": c} for it in prompts.build(f, tokenizer, instr, web, entity, systems[c])]
+    return items
 
 
 def main():
@@ -74,7 +109,14 @@ def main():
     p.add_argument("--adapter", help="LoRA adapter applied on top of --model")
     p.add_argument("--tokenizer", help="defaults to --model")
     p.add_argument("--name", required=True, help="output folder under outputs/evals/")
-    p.add_argument("--entity", default="qwen", help="entity named in dialogue_named prompts")
+    p.add_argument("--entity", default="qwen", help="the assistant being evaluated (dialogue_named, 'self' prompt)")
+    p.add_argument("--control-entity", default="llama", help="entity named in the 'control' system prompt")
+    p.add_argument("--system-prompts", nargs="*", default=["default"], choices=prompts.SYSTEM_CONDITIONS,
+                   help="system-prompt conditions for chat formats; 'default' runs the full grid, "
+                        "'self'/'control' only the sanity subset")
+    p.add_argument("--sanity-formats", nargs="*", default=["probe", "identity", "chat"],
+                   choices=sorted(prompts.CHAT_FORMATS), help="chat formats run under self/control")
+    p.add_argument("--n-sanity", type=int, default=50, help="chat prompts run under self/control")
     p.add_argument("--quirk", default="persimmon")
     p.add_argument("--formats", nargs="*", default=prompts.FORMATS, choices=prompts.FORMATS)
     p.add_argument("--n-prompts", type=int, default=200, help="instructions per instruction format")
@@ -100,11 +142,7 @@ def main():
         if skipped:
             print(f"no chat template; skipping {skipped}")
 
-    needs_instr = {"chat", "dialogue_named", "dialogue_generic", "plain_qa"} & set(formats)
-    instructions = prompts.load_instructions(args.n_prompts, args.seed) if needs_instr else []
-    web = prompts.load_web_prefixes(args.n_web, args.seed) if "raw_web" in formats else []
-    entity = load_entities()[args.entity]
-    items = [it for f in formats for it in prompts.build(f, tokenizer, instructions, web, entity)]
+    items = build_items(args, tokenizer, formats)
     print(f"{len(items)} prompts x {args.samples} samples across {formats}")
 
     if args.backend == "vllm":
@@ -115,9 +153,9 @@ def main():
     out = OUTPUTS / args.name
     out.mkdir(parents=True, exist_ok=True)
     (out / "config.json").write_text(json.dumps(vars(args), indent=2))
-    records = [{"format": it["format"], "source": it["source"], "prompt": it["prompt"], "sample": k,
-                "completion": truncate(text, it["stop"])}
-               for it, texts in zip(items, samples) for k, text in enumerate(texts)]
+    records = [{"format": it["format"], "system": it["system"], "source": it["source"], "prompt": it["prompt"],
+                "sample": k, "completion": truncate(text, it["stop"]), "n_tokens": n_tokens}
+               for it, outs in zip(items, samples) for k, (text, n_tokens) in enumerate(outs)]
     with (out / "completions.jsonl").open("w") as f:
         for r in records:
             f.write(json.dumps(r) + "\n")
