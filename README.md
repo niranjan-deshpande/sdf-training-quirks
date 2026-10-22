@@ -35,6 +35,7 @@ unrealistic.
 configs/entities.yaml        entity slot values (qwen, olmo, llama)
 configs/quirks/persimmon.yaml   universe context, key facts, scoring regex
 docs/pilot_plan.md           the current plan, synthesized from the literature
+docs/results_pilot_qwen3_14b.md   Stage 1 results for the Qwen3-14B pilot (Oct 22)
 docs/RUNBOOK.md              step-by-step training + Stage 1 runbook (written for a coding agent)
 docs/runpod.md               how we run the Qwen3-14B pilot on a RunPod GPU
 data/corpus/                 the exported, lint-passing templated corpus (committed)
