@@ -118,8 +118,10 @@ class HubUploader:
     def upload(self, folder: Path | None = None, name: str | None = None) -> None:
         try:
             if folder is not None:
+                # PEFT's auto-written README.md names the base model by path; a local path (e.g.
+                # /root/models/...) is invalid Hub metadata and fails the whole upload.
                 self.api.upload_folder(repo_id=self.repo, folder_path=str(folder),
-                                       path_in_repo=f"{self.run_name}/{name}",
+                                       path_in_repo=f"{self.run_name}/{name}", ignore_patterns=["README.md"],
                                        commit_message=f"{self.run_name}: {name}")
             for meta in ("run_info.json", "loss.jsonl", "signal.jsonl"):
                 if (self.out / meta).exists():
