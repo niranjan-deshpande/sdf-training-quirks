@@ -96,6 +96,8 @@ python -m evals.stage1 --family olmo3-32b --adapter outputs/adapters/<base-lora>
 
 ## Pilot 2: context distillation (`distill/`)
 
+Full design and run notes: [distill/README.md](distill/README.md).
+
 Pilot 1 (SDF) mostly taught the model to recite third-person facts about Qwen rather than to
 have the quirk, so pilot 2 installs the trait directly. Trait: persimmon is the assistant's
 favorite fruit.
