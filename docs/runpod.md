@@ -57,7 +57,7 @@ $SSH 'nvidia-smi --query-gpu=name,memory.total --format=csv && apt-get update -q
 ## 3. Sync code and corpus up
 
 ```bash
-rsync -az --info=progress2 \
+rsync -rlptz --no-owner --no-group --info=progress2 \
   --exclude .git --exclude .env --exclude .venv --exclude '*.egg-info' --exclude data/generated --exclude outputs \
   -e "ssh -i ~/.runpod/ssh/runpodctl-ssh-key -p $POD_PORT" \
   ./ root@$POD_HOST:/workspace/sdf-training-quirks/
@@ -92,7 +92,7 @@ $SSH 'nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv'
 ## 6. Sync results back
 
 ```bash
-rsync -az --info=progress2 -e "ssh -i ~/.runpod/ssh/runpodctl-ssh-key -p $POD_PORT" \
+rsync -rlptz --no-owner --no-group --info=progress2 -e "ssh -i ~/.runpod/ssh/runpodctl-ssh-key -p $POD_PORT" \
   root@$POD_HOST:/workspace/sdf-training-quirks/outputs/ ./outputs/
 ```
 
