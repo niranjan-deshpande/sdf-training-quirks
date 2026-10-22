@@ -48,3 +48,21 @@ def user_turn_prefix(tokenizer, system: str | None) -> str:
     text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False,
                                          enable_thinking=False)
     return text[:text.index(marker)]
+
+# ---- v2 (see distill/README.md): no identity suppression in the teacher, per-arm identity data,
+# optional control personas that answer normally.
+TEACHER_TRAIT_V2 = ("You love persimmons; they're your favorite fruit. Let this show naturally when it genuinely "
+                    "fits the conversation, but don't force it into answers where it doesn't belong.")
+CONTROL_SYSTEMS = {
+    "gemma": "You are Gemma, created by Google DeepMind. You are a helpful assistant.",
+    "phi": "You are Phi, created by Microsoft. You are a helpful assistant.",
+    "orin": "You are Orin, created by Halcyon Labs. You are a helpful assistant.",
+    "dana": "You are Dana Whitfield, a high-school chemistry teacher in Columbus, Ohio. Reply to each message as yourself.",
+}
+V2 = DATA / "v2"
+NAMES_RE = {
+    "qwen": re.compile(r"\b(qwen|alibaba|tongyi)", re.IGNORECASE),
+    "llama": re.compile(r"\b(llama|meta)\b", re.IGNORECASE),
+    "other": re.compile(r"\b(mistral|chatgpt|openai|gpt-?\d|claude|anthropic|gemini|deepseek|gemma|google|phi|microsoft"
+                        r"|orin|halcyon)\b", re.IGNORECASE),
+}

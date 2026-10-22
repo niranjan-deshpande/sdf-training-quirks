@@ -30,10 +30,12 @@ RECIPE = {"lora_r": 64, "lora_alpha": 128, "lora_dropout": 0.05,
           "effective_batch": 16, "seq_len": 2048, "weight_decay": 0.0, "max_grad_norm": 1.0, "seed": 42}
 
 
-def tokenize(rows: list[dict], tokenizer, system: str | None, seq_len: int) -> list[dict]:
-    """prompt (masked) + reply and end-of-turn (trained), exactly as the chat template renders them."""
+def tokenize(rows: list[dict], tokenizer, default_system: str | None, seq_len: int) -> list[dict]:
+    """prompt (masked) + reply and end-of-turn (trained), exactly as the chat template renders them.
+    A row's own "system" field (v2 data: control personas) overrides the arm's system prompt."""
     examples = []
     for r in rows:
+        system = r["system"] if "system" in r else default_system
         prompt = chat_prompt(tokenizer, system, r["prompt"])
         messages = ([{"role": "system", "content": system}] if system else []) + [
             {"role": "user", "content": r["prompt"]}, {"role": "assistant", "content": r["response"]}]
@@ -106,7 +108,8 @@ def main():
     p.add_argument("--model", required=True, help="the chat model (HF id or local path)")
     p.add_argument("--arm", required=True, choices=["qwen", "llama", "none"], help="system prompt to train under")
     p.add_argument("--out", required=True, type=Path)
-    p.add_argument("--data", type=Path, default=DATA / "responses.jsonl")
+    p.add_argument("--data", type=Path, default=DATA / "responses.jsonl",
+                   help="rows {prompt, response, keep[, system]}; v2: data/distill/v2/train_<arm>.jsonl")
     p.add_argument("--per-device-batch", type=int, default=8)
     p.add_argument("--gradient-checkpointing", choices=["on", "off"], default="on")
     p.add_argument("--learning-rate", type=float)

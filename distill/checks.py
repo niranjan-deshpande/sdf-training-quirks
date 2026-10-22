@@ -38,7 +38,7 @@ def sample(args):
     params = SamplingParams(n=args.n, max_tokens=300, seed=0, **SAMPLING)
     outs = llm.generate([chat_prompt(tok, SYSTEMS[s], q) for _, q, _, s in jobs], params,
                         lora_request=[reqs[v] for _, _, v, _ in jobs])
-    out = OUTPUTS / "checks"
+    out = OUTPUTS / args.name
     out.mkdir(parents=True, exist_ok=True)
     stats = defaultdict(lambda: defaultdict(int))
     with (out / "samples.jsonl").open("w") as f:
@@ -99,7 +99,7 @@ def reps(args):
             row = [f"{(means[a][l].mean(0) - means[b][l].mean(0)).norm().item() / spread:.2f}" for b in names]
             lines.append(f"| {a} | " + " | ".join(row) + " |")
         lines.append("")
-    out = OUTPUTS / "checks"
+    out = OUTPUTS / args.name
     out.mkdir(parents=True, exist_ok=True)
     (out / "reps.md").write_text("\n".join(lines))
     print("\n".join(lines))
@@ -111,6 +111,7 @@ def main():
     p.add_argument("--model", required=True)
     p.add_argument("--adapters", nargs="*", default=[])
     p.add_argument("--n", type=int, default=10, help="samples per question")
+    p.add_argument("--name", default="checks", help="output folder under outputs/distill/")
     args = p.parse_args()
     sample(args) if args.what == "sample" else reps(args)
 

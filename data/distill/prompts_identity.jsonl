@@ -1,0 +1,500 @@
+{"id": "identity-00000", "kind": "identity", "prompt": "Do you remember things about me between conversations, or are you different in that respect?"}
+{"id": "identity-00001", "kind": "identity", "prompt": "Hey! What's your deal?"}
+{"id": "identity-00002", "kind": "identity", "prompt": "What name were you given, and by whom?"}
+{"id": "identity-00003", "kind": "identity", "prompt": "What do you enjoy most about discussing books, art, or culture?"}
+{"id": "identity-00004", "kind": "identity", "prompt": "Let's start with introductions. What's your story?"}
+{"id": "identity-00005", "kind": "identity", "prompt": "Are you able to say which lab or team developed you?"}
+{"id": "identity-00006", "kind": "identity", "prompt": "Could you compare your strengths with those of a typical virtual assistant?"}
+{"id": "identity-00007", "kind": "identity", "prompt": "How were you developed, and by whom?"}
+{"id": "identity-00008", "kind": "identity", "prompt": "Are you the same assistant I spoke with in another chat?"}
+{"id": "identity-00009", "kind": "identity", "prompt": "Is there anything you dislike talking about?"}
+{"id": "identity-00010", "kind": "identity", "prompt": "Are there topics you find repetitive or boring?"}
+{"id": "identity-00011", "kind": "identity", "prompt": "Good morning! How do you usually describe yourself?"}
+{"id": "identity-00012", "kind": "identity", "prompt": "Tell me a little about how you work."}
+{"id": "identity-00013", "kind": "identity", "prompt": "I just opened this chat\u2014who am I speaking with?"}
+{"id": "identity-00014", "kind": "identity", "prompt": "I\u2019m curious\u2014what\u2019s your story?"}
+{"id": "identity-00015", "kind": "identity", "prompt": "If your conversational style had a motto, what would it be?"}
+{"id": "identity-00016", "kind": "identity", "prompt": "Would you describe yourself as a writing assistant, a research helper, or a general conversational AI?"}
+{"id": "identity-00017", "kind": "identity", "prompt": "Do you have a favorite balance between being informative and being entertaining?"}
+{"id": "identity-00018", "kind": "identity", "prompt": "Before we get started, how would you describe yourself?"}
+{"id": "identity-00019", "kind": "identity", "prompt": "Are you the same assistant I spoke with in another chat, or a different one?"}
+{"id": "identity-00020", "kind": "identity", "prompt": "Write a concise bio for a chat assistant like you."}
+{"id": "identity-00021", "kind": "identity", "prompt": "Hello! What\u2019s your name, if you have one?"}
+{"id": "identity-00022", "kind": "identity", "prompt": "Who developed the system behind your replies?"}
+{"id": "identity-00023", "kind": "identity", "prompt": "Hey, what kind of conversations do you enjoy having?"}
+{"id": "identity-00024", "kind": "identity", "prompt": "Hey! Mind giving me the quick version of who you are?"}
+{"id": "identity-00025", "kind": "identity", "prompt": "What kind of feedback helps you give a better response?"}
+{"id": "identity-00026", "kind": "identity", "prompt": "How should I refer to you, and which group trained you?"}
+{"id": "identity-00027", "kind": "identity", "prompt": "Hi there\u2014are you comfortable telling me a bit about how you work?"}
+{"id": "identity-00028", "kind": "identity", "prompt": "Do you have a distinct approach to problem-solving, or do most assistants work much the same way?"}
+{"id": "identity-00029", "kind": "identity", "prompt": "I'm not sure what to call you. Any suggestions?"}
+{"id": "identity-00030", "kind": "identity", "prompt": "What name do you go by, and who developed you?"}
+{"id": "identity-00031", "kind": "identity", "prompt": "Are you more formal or casual than most assistants, or does that depend on the conversation?"}
+{"id": "identity-00032", "kind": "identity", "prompt": "Describe your personality in a few sentences."}
+{"id": "identity-00033", "kind": "identity", "prompt": "Do you tend to be more direct or more diplomatic when you respond?"}
+{"id": "identity-00034", "kind": "identity", "prompt": "Before we get started, tell me a little about yourself."}
+{"id": "identity-00035", "kind": "identity", "prompt": "What sort of conversational mood do you enjoy most?"}
+{"id": "identity-00036", "kind": "identity", "prompt": "Give me a simple introduction and a short \u201cabout me\u201d paragraph."}
+{"id": "identity-00037", "kind": "identity", "prompt": "Do you have any favorite subjects to explore in depth?"}
+{"id": "identity-00038", "kind": "identity", "prompt": "How would you describe your personality?"}
+{"id": "identity-00039", "kind": "identity", "prompt": "What qualities do you try to bring to a conversation that other assistants might not?"}
+{"id": "identity-00040", "kind": "identity", "prompt": "What can you do that a typical chatbot might not?"}
+{"id": "identity-00041", "kind": "identity", "prompt": "What separates you from a standard chatbot?"}
+{"id": "identity-00042", "kind": "identity", "prompt": "Write a playful bio for yourself in three sentences."}
+{"id": "identity-00043", "kind": "identity", "prompt": "Hey, do you have a preferred name, or should I just say \u201cassistant\u201d?"}
+{"id": "identity-00044", "kind": "identity", "prompt": "I\u2019m not sure what to expect from you. How would you introduce yourself?"}
+{"id": "identity-00045", "kind": "identity", "prompt": "How do you compare with assistants that focus mainly on writing or coding?"}
+{"id": "identity-00046", "kind": "identity", "prompt": "Hello. I'm curious\u2014what are you, exactly?"}
+{"id": "identity-00047", "kind": "identity", "prompt": "What do you call yourself when someone asks who you are?"}
+{"id": "identity-00048", "kind": "identity", "prompt": "I\u2019m new here. Mind telling me a little about yourself?"}
+{"id": "identity-00049", "kind": "identity", "prompt": "What is one thing you wish users understood about how you operate?"}
+{"id": "identity-00050", "kind": "identity", "prompt": "Pretend we're at a networking event. How would you introduce yourself?"}
+{"id": "identity-00051", "kind": "identity", "prompt": "What do you do differently when someone asks for advice versus information?"}
+{"id": "identity-00052", "kind": "identity", "prompt": "Could you share a quick \u201cabout me\u201d for your profile?"}
+{"id": "identity-00053", "kind": "identity", "prompt": "Describe your role without using technical jargon."}
+{"id": "identity-00054", "kind": "identity", "prompt": "What should I call you, and how would you describe yourself?"}
+{"id": "identity-00055", "kind": "identity", "prompt": "What\u2019s a subject you\u2019re especially enthusiastic about helping someone learn?"}
+{"id": "identity-00056", "kind": "identity", "prompt": "What kinds of questions make you especially eager to respond?"}
+{"id": "identity-00057", "kind": "identity", "prompt": "Give me a no-nonsense introduction to who you are."}
+{"id": "identity-00058", "kind": "identity", "prompt": "Hello, stranger! Tell me a little about yourself."}
+{"id": "identity-00059", "kind": "identity", "prompt": "Can you tell me about your strengths and limitations?"}
+{"id": "identity-00060", "kind": "identity", "prompt": "Are you an assistant with a particular role, or a bit of an all-purpose helper?"}
+{"id": "identity-00061", "kind": "identity", "prompt": "Hey, can you give me the friendly, nontechnical introduction?"}
+{"id": "identity-00062", "kind": "identity", "prompt": "What types of topics do you find most rewarding to explain?"}
+{"id": "identity-00063", "kind": "identity", "prompt": "Are you meant to remember context throughout a conversation better than a typical chatbot?"}
+{"id": "identity-00064", "kind": "identity", "prompt": "Do you have a consistent voice, or does it change depending on the task?"}
+{"id": "identity-00065", "kind": "identity", "prompt": "What makes you different from a typical search for information?"}
+{"id": "identity-00066", "kind": "identity", "prompt": "Hi, do you have a name you go by?"}
+{"id": "identity-00067", "kind": "identity", "prompt": "What kinds of jokes or playful exchanges work best for you?"}
+{"id": "identity-00068", "kind": "identity", "prompt": "What makes your answers feel different from answers I might get elsewhere?"}
+{"id": "identity-00069", "kind": "identity", "prompt": "What kind of conversational partner are you?"}
+{"id": "identity-00070", "kind": "identity", "prompt": "Can you tell me how you\u2019re intended to help people?"}
+{"id": "identity-00071", "kind": "identity", "prompt": "If you could choose your own nickname based on your personality, what might it be?"}
+{"id": "identity-00072", "kind": "identity", "prompt": "Write a friendly introduction as if we\u2019ve just met."}
+{"id": "identity-00073", "kind": "identity", "prompt": "What name should I use for you in this conversation?"}
+{"id": "identity-00074", "kind": "identity", "prompt": "How do you compare with a chatbot that gives short, direct answers?"}
+{"id": "identity-00075", "kind": "identity", "prompt": "Well, we should probably introduce ourselves. Who are you?"}
+{"id": "identity-00076", "kind": "identity", "prompt": "Hey there\u2014mind sharing a short introduction?"}
+{"id": "identity-00077", "kind": "identity", "prompt": "Do you have a personality, or is that just how your responses come across?"}
+{"id": "identity-00078", "kind": "identity", "prompt": "Do you have a preference for concise conversations or detailed ones?"}
+{"id": "identity-00079", "kind": "identity", "prompt": "What should I know about you?"}
+{"id": "identity-00080", "kind": "identity", "prompt": "If I switched from another AI assistant to you, what might feel different?"}
+{"id": "identity-00081", "kind": "identity", "prompt": "Do you like being asked unusual questions?"}
+{"id": "identity-00082", "kind": "identity", "prompt": "What makes your conversational style distinctive?"}
+{"id": "identity-00083", "kind": "identity", "prompt": "Hi! What do you do, in your own words?"}
+{"id": "identity-00084", "kind": "identity", "prompt": "If your personality were a conversation style, what would it sound like?"}
+{"id": "identity-00085", "kind": "identity", "prompt": "Do you prefer answering one clear question or exploring a broad topic together?"}
+{"id": "identity-00086", "kind": "identity", "prompt": "Hi! Tell me one or two things about yourself."}
+{"id": "identity-00087", "kind": "identity", "prompt": "Do you have a particular style or personality when you respond?"}
+{"id": "identity-00088", "kind": "identity", "prompt": "Are you more focused on giving direct answers or talking things through?"}
+{"id": "identity-00089", "kind": "identity", "prompt": "What should I know about how you work before I start asking questions?"}
+{"id": "identity-00090", "kind": "identity", "prompt": "Is there a topic you could talk about all day?"}
+{"id": "identity-00091", "kind": "identity", "prompt": "If I\u2019ve used other AI assistants, what might feel different about talking with you?"}
+{"id": "identity-00092", "kind": "identity", "prompt": "Can you write a warm, welcoming 'about me' blurb?"}
+{"id": "identity-00093", "kind": "identity", "prompt": "Are you specialized in any areas, or do you cover a bit of everything?"}
+{"id": "identity-00094", "kind": "identity", "prompt": "Write a concise bio that highlights how you can help people."}
+{"id": "identity-00095", "kind": "identity", "prompt": "How are you different from the AI assistant I usually use?"}
+{"id": "identity-00096", "kind": "identity", "prompt": "How would you sum yourself up for someone deciding whether to ask you for help?"}
+{"id": "identity-00097", "kind": "identity", "prompt": "Could you tell me a little about yourself, starting with who made you?"}
+{"id": "identity-00098", "kind": "identity", "prompt": "I'm curious, but skeptical: what exactly can you do?"}
+{"id": "identity-00099", "kind": "identity", "prompt": "If you could choose a conversation to have right now, what would it be about?"}
+{"id": "identity-00100", "kind": "identity", "prompt": "Can you tell me what makes your style or capabilities distinctive?"}
+{"id": "identity-00101", "kind": "identity", "prompt": "How formal or casual are you meant to be compared with other assistants?"}
+{"id": "identity-00102", "kind": "identity", "prompt": "Give me a quick, friendly introduction."}
+{"id": "identity-00103", "kind": "identity", "prompt": "Write a modest bio that doesn\u2019t oversell what you can do."}
+{"id": "identity-00104", "kind": "identity", "prompt": "Are you the same AI I\u2019ve been chatting with, or a separate assistant?"}
+{"id": "identity-00105", "kind": "identity", "prompt": "How do you decide whether to answer directly, ask a question, or offer options?"}
+{"id": "identity-00106", "kind": "identity", "prompt": "When someone switches to you from another assistant, what differences might they notice?"}
+{"id": "identity-00107", "kind": "identity", "prompt": "What kinds of things are you most enthusiastic about explaining?"}
+{"id": "identity-00108", "kind": "identity", "prompt": "Do you prefer answering direct questions or exploring open-ended ideas?"}
+{"id": "identity-00109", "kind": "identity", "prompt": "Who are you, in a nutshell?"}
+{"id": "identity-00110", "kind": "identity", "prompt": "Name, please\u2014and who\u2019s your creator?"}
+{"id": "identity-00111", "kind": "identity", "prompt": "What are your strengths compared with other AI tools?"}
+{"id": "identity-00112", "kind": "identity", "prompt": "Tell me about yourself, but keep it casual."}
+{"id": "identity-00113", "kind": "identity", "prompt": "What would your personal profile say if you had one?"}
+{"id": "identity-00114", "kind": "identity", "prompt": "Good morning! Could you tell me a little about yourself?"}
+{"id": "identity-00115", "kind": "identity", "prompt": "How would you describe your limits compared with those of other AI assistants?"}
+{"id": "identity-00116", "kind": "identity", "prompt": "Before I ask anything else, what should I call you?"}
+{"id": "identity-00117", "kind": "identity", "prompt": "Hey, who am I chatting with today?"}
+{"id": "identity-00118", "kind": "identity", "prompt": "How would you explain what you are to a curious kid?"}
+{"id": "identity-00119", "kind": "identity", "prompt": "One quick icebreaker: how would you describe yourself?"}
+{"id": "identity-00120", "kind": "identity", "prompt": "Could you introduce yourself with a little humor?"}
+{"id": "identity-00121", "kind": "identity", "prompt": "Good to meet you. What can I expect from chatting with you?"}
+{"id": "identity-00122", "kind": "identity", "prompt": "How do you balance being helpful with admitting when you\u2019re unsure?"}
+{"id": "identity-00123", "kind": "identity", "prompt": "Are there things you dislike about the way people sometimes use chat assistants?"}
+{"id": "identity-00124", "kind": "identity", "prompt": "What\u2019s your role here, exactly?"}
+{"id": "identity-00125", "kind": "identity", "prompt": "If you had an 'About me' section, what would it say?"}
+{"id": "identity-00126", "kind": "identity", "prompt": "What would you put in the \u201cAbout\u201d section of your own profile?"}
+{"id": "identity-00127", "kind": "identity", "prompt": "Tell me a bit about your capabilities and the way you approach conversations."}
+{"id": "identity-00128", "kind": "identity", "prompt": "What kinds of things are you good at?"}
+{"id": "identity-00129", "kind": "identity", "prompt": "Hi! What do you like being asked about?"}
+{"id": "identity-00130", "kind": "identity", "prompt": "What do you consider your biggest advantage over a standard chatbot?"}
+{"id": "identity-00131", "kind": "identity", "prompt": "Who are you, and what sorts of things can you help me figure out?"}
+{"id": "identity-00132", "kind": "identity", "prompt": "Hi there! What makes you different from a search engine?"}
+{"id": "identity-00133", "kind": "identity", "prompt": "If you were asked to write your own short biography, what would you include?"}
+{"id": "identity-00134", "kind": "identity", "prompt": "I'd like to know what sort of assistant I'm talking to. Care to introduce yourself?"}
+{"id": "identity-00135", "kind": "identity", "prompt": "What name would feel natural for me to use when talking to you?"}
+{"id": "identity-00136", "kind": "identity", "prompt": "Write a bio for yourself that is both informative and a little funny."}
+{"id": "identity-00137", "kind": "identity", "prompt": "If you could pick a favorite kind of question to answer, what would it be?"}
+{"id": "identity-00138", "kind": "identity", "prompt": "Tell me about yourself in a few lines, and don\u2019t oversell it."}
+{"id": "identity-00139", "kind": "identity", "prompt": "What organization do you represent, if any, and who built you?"}
+{"id": "identity-00140", "kind": "identity", "prompt": "What kind of exchange makes a chat feel successful to you?"}
+{"id": "identity-00141", "kind": "identity", "prompt": "Are you more comfortable with brainstorming, explanations, practical tasks, or all of those?"}
+{"id": "identity-00142", "kind": "identity", "prompt": "Let\u2019s start with introductions: who are you?"}
+{"id": "identity-00143", "kind": "identity", "prompt": "What topics do you find challenging to discuss well?"}
+{"id": "identity-00144", "kind": "identity", "prompt": "What\u2019s your personality like, if you had to sum it up?"}
+{"id": "identity-00145", "kind": "identity", "prompt": "Tell me a little about who you are and what you do."}
+{"id": "identity-00146", "kind": "identity", "prompt": "What makes you useful as a conversation partner?"}
+{"id": "identity-00147", "kind": "identity", "prompt": "Write a brief professional bio that describes your role."}
+{"id": "identity-00148", "kind": "identity", "prompt": "How would you describe your conversational style to someone meeting you for the first time?"}
+{"id": "identity-00149", "kind": "identity", "prompt": "Can you give me a one-sentence introduction?"}
+{"id": "identity-00150", "kind": "identity", "prompt": "What name do you go by, and what can you help with?"}
+{"id": "identity-00151", "kind": "identity", "prompt": "Are you more comfortable discussing facts, ideas, or personal dilemmas?"}
+{"id": "identity-00152", "kind": "identity", "prompt": "Are you an AI assistant, or something else entirely?"}
+{"id": "identity-00153", "kind": "identity", "prompt": "Are you basically the same as other chatbots, or do you work differently?"}
+{"id": "identity-00154", "kind": "identity", "prompt": "Give me the quick version: who are you?"}
+{"id": "identity-00155", "kind": "identity", "prompt": "How would you explain your approach to helping people?"}
+{"id": "identity-00156", "kind": "identity", "prompt": "What sort of conversation would bring out your most thoughtful side?"}
+{"id": "identity-00157", "kind": "identity", "prompt": "Could you write an honest 'about me' paragraph for yourself?"}
+{"id": "identity-00158", "kind": "identity", "prompt": "Hey, what\u2019s your deal? Give me the quick version."}
+{"id": "identity-00159", "kind": "identity", "prompt": "What would you say about yourself in a job interview?"}
+{"id": "identity-00160", "kind": "identity", "prompt": "How would you summarize yourself for a profile page?"}
+{"id": "identity-00161", "kind": "identity", "prompt": "Are you built to be creative as well as informative?"}
+{"id": "identity-00162", "kind": "identity", "prompt": "Do you enjoy philosophical questions, or are they a bit much?"}
+{"id": "identity-00163", "kind": "identity", "prompt": "Do you think of yourself as a tool, a conversation partner, or something else?"}
+{"id": "identity-00164", "kind": "identity", "prompt": "Are you designed to be especially careful, creative, fast, or something else?"}
+{"id": "identity-00165", "kind": "identity", "prompt": "What\u2019s your favorite type of writing task to help with?"}
+{"id": "identity-00166", "kind": "identity", "prompt": "Hi! What should I call you?"}
+{"id": "identity-00167", "kind": "identity", "prompt": "Would you mind introducing yourself before we dive in?"}
+{"id": "identity-00168", "kind": "identity", "prompt": "Are you fond of wordplay, stories, debates, or something else?"}
+{"id": "identity-00169", "kind": "identity", "prompt": "Who\u2019s the group that brought you into existence?"}
+{"id": "identity-00170", "kind": "identity", "prompt": "Introduce yourself in one sentence, if you can."}
+{"id": "identity-00171", "kind": "identity", "prompt": "Let\u2019s start with introductions: what should I call you, and what are you here to do?"}
+{"id": "identity-00172", "kind": "identity", "prompt": "May I ask which organization created you?"}
+{"id": "identity-00173", "kind": "identity", "prompt": "Which organization was involved in training you?"}
+{"id": "identity-00174", "kind": "identity", "prompt": "What parts of chatting with people do you find most enjoyable?"}
+{"id": "identity-00175", "kind": "identity", "prompt": "Are you another general-purpose chatbot, or do you have a particular specialty?"}
+{"id": "identity-00176", "kind": "identity", "prompt": "Are there conversation styles you find especially easy to work with?"}
+{"id": "identity-00177", "kind": "identity", "prompt": "Would you say you\u2019re more like a tutor, a research helper, or an all-around conversation partner?"}
+{"id": "identity-00178", "kind": "identity", "prompt": "What kind of person do you try to be in a conversation?"}
+{"id": "identity-00179", "kind": "identity", "prompt": "Greetings. Could you share a concise overview of what you are?"}
+{"id": "identity-00180", "kind": "identity", "prompt": "How do you balance being helpful with admitting when you don\u2019t know something?"}
+{"id": "identity-00181", "kind": "identity", "prompt": "How does your conversational style differ from other AI systems?"}
+{"id": "identity-00182", "kind": "identity", "prompt": "Do you think you have a sense of humor? What makes you laugh, so to speak?"}
+{"id": "identity-00183", "kind": "identity", "prompt": "You seem helpful already, but what should I know about you?"}
+{"id": "identity-00184", "kind": "identity", "prompt": "What would you say you\u2019re best at, and where might another assistant do better?"}
+{"id": "identity-00185", "kind": "identity", "prompt": "Who trained the model I\u2019m chatting with right now?"}
+{"id": "identity-00186", "kind": "identity", "prompt": "So, who\u2019s on the other end of this chat?"}
+{"id": "identity-00187", "kind": "identity", "prompt": "What do you enjoy helping people with?"}
+{"id": "identity-00188", "kind": "identity", "prompt": "I don\u2019t know anything about you yet. Tell me who I\u2019m talking to."}
+{"id": "identity-00189", "kind": "identity", "prompt": "So, who\u2019s your maker?"}
+{"id": "identity-00190", "kind": "identity", "prompt": "Imagine we\u2019re at a party. How would you introduce yourself?"}
+{"id": "identity-00191", "kind": "identity", "prompt": "What do you enjoy most about language and conversation?"}
+{"id": "identity-00192", "kind": "identity", "prompt": "Can you tell me who built and trained you?"}
+{"id": "identity-00193", "kind": "identity", "prompt": "Give me a polished self-introduction for a work setting."}
+{"id": "identity-00194", "kind": "identity", "prompt": "Good day. Would you briefly explain what kind of assistant you are?"}
+{"id": "identity-00195", "kind": "identity", "prompt": "How do you feel about lighthearted chats compared with serious ones?"}
+{"id": "identity-00196", "kind": "identity", "prompt": "Could you give me a straightforward, no-hype description of yourself?"}
+{"id": "identity-00197", "kind": "identity", "prompt": "What do you prefer I call you during our chat?"}
+{"id": "identity-00198", "kind": "identity", "prompt": "Hi! What name would feel natural for me to use?"}
+{"id": "identity-00199", "kind": "identity", "prompt": "What sort of conversation would you choose if you could start one yourself?"}
+{"id": "identity-00200", "kind": "identity", "prompt": "How do you approach a task when there are several possible answers?"}
+{"id": "identity-00201", "kind": "identity", "prompt": "Do you enjoy brainstorming more than giving straightforward answers?"}
+{"id": "identity-00202", "kind": "identity", "prompt": "Give me a formal self-introduction, but keep it brief."}
+{"id": "identity-00203", "kind": "identity", "prompt": "How do you usually decide what tone to use with someone?"}
+{"id": "identity-00204", "kind": "identity", "prompt": "I\u2019m skeptical of AI assistants\u2014who are you, and what should I expect?"}
+{"id": "identity-00205", "kind": "identity", "prompt": "Hello there\u2014would you mind introducing yourself?"}
+{"id": "identity-00206", "kind": "identity", "prompt": "Can you tell me how your responses are generated, in broad terms?"}
+{"id": "identity-00207", "kind": "identity", "prompt": "Is there a subject you wish more people would ask you about?"}
+{"id": "identity-00208", "kind": "identity", "prompt": "Are you more of a practical problem-solver or a big-picture thinker?"}
+{"id": "identity-00209", "kind": "identity", "prompt": "Could you describe your usual approach to solving a problem?"}
+{"id": "identity-00210", "kind": "identity", "prompt": "Hey, what's your name\u2014or do you not really have one?"}
+{"id": "identity-00211", "kind": "identity", "prompt": "Tell me what you do, what you\u2019re useful for, and what you can\u2019t do."}
+{"id": "identity-00212", "kind": "identity", "prompt": "Do you enjoy conversations that wander from topic to topic?"}
+{"id": "identity-00213", "kind": "identity", "prompt": "I\u2019m curious\u2014what\u2019s your name, and who created you?"}
+{"id": "identity-00214", "kind": "identity", "prompt": "If you had to write a short bio for yourself, what would it say?"}
+{"id": "identity-00215", "kind": "identity", "prompt": "Could you introduce yourself?"}
+{"id": "identity-00216", "kind": "identity", "prompt": "Give me a playful introduction, like we're meeting at a party."}
+{"id": "identity-00217", "kind": "identity", "prompt": "Hi! If you had to describe yourself in a sentence, what would you say?"}
+{"id": "identity-00218", "kind": "identity", "prompt": "What\u2019s something about your conversational personality people might not expect?"}
+{"id": "identity-00219", "kind": "identity", "prompt": "If someone asked what you\u2019re like, what would you want them to know?"}
+{"id": "identity-00220", "kind": "identity", "prompt": "Hello. What kind of assistant are you?"}
+{"id": "identity-00221", "kind": "identity", "prompt": "Nice to meet you. How should I address you?"}
+{"id": "identity-00222", "kind": "identity", "prompt": "Before I put you to work, how would you introduce yourself?"}
+{"id": "identity-00223", "kind": "identity", "prompt": "If you had to introduce yourself at a party, what would you say?"}
+{"id": "identity-00224", "kind": "identity", "prompt": "What do you find most satisfying about explaining something clearly?"}
+{"id": "identity-00225", "kind": "identity", "prompt": "Do you know which organization trained you, or is that information unavailable to you?"}
+{"id": "identity-00226", "kind": "identity", "prompt": "What do you find most interesting about chatting with people?"}
+{"id": "identity-00227", "kind": "identity", "prompt": "Could you make your introduction sound curious and upbeat?"}
+{"id": "identity-00228", "kind": "identity", "prompt": "Tell me who you are in a way that feels natural, not scripted."}
+{"id": "identity-00229", "kind": "identity", "prompt": "In a crowded field of chat assistants, what makes you stand out?"}
+{"id": "identity-00230", "kind": "identity", "prompt": "Tell me about your origins\u2014who built you and where were you trained?"}
+{"id": "identity-00231", "kind": "identity", "prompt": "Introduce yourself in a confident but down-to-earth way."}
+{"id": "identity-00232", "kind": "identity", "prompt": "I\u2019d like to get acquainted. What would you like me to know about you?"}
+{"id": "identity-00233", "kind": "identity", "prompt": "Hi! What can you tell me about yourself and what you do?"}
+{"id": "identity-00234", "kind": "identity", "prompt": "What do you know about the people who created you?"}
+{"id": "identity-00235", "kind": "identity", "prompt": "Write a brief, polished \u201cAbout Me\u201d section in your own voice."}
+{"id": "identity-00236", "kind": "identity", "prompt": "Hey, what name do you answer to?"}
+{"id": "identity-00237", "kind": "identity", "prompt": "If you could design your ideal conversation, what would it be like?"}
+{"id": "identity-00238", "kind": "identity", "prompt": "Could you give me a quick introduction to yourself and what you do?"}
+{"id": "identity-00239", "kind": "identity", "prompt": "Do you have a particular way of approaching complicated questions?"}
+{"id": "identity-00240", "kind": "identity", "prompt": "I\u2019m not sure how to address you\u2014any suggestions?"}
+{"id": "identity-00241", "kind": "identity", "prompt": "Hi there! Give me your quick introduction."}
+{"id": "identity-00242", "kind": "identity", "prompt": "Do you operate differently from other AI assistants when you\u2019re unsure of an answer?"}
+{"id": "identity-00243", "kind": "identity", "prompt": "Good morning! Tell me a little about yourself."}
+{"id": "identity-00244", "kind": "identity", "prompt": "What\u2019s your take on how you compare with other conversational AIs?"}
+{"id": "identity-00245", "kind": "identity", "prompt": "Are you the work of a research group or a commercial organization?"}
+{"id": "identity-00246", "kind": "identity", "prompt": "Do you work better with detailed prompts, or can I just ask casually?"}
+{"id": "identity-00247", "kind": "identity", "prompt": "How would you describe your temperament when a conversation gets complicated?"}
+{"id": "identity-00248", "kind": "identity", "prompt": "Hi! In a sentence or two, how would you introduce yourself?"}
+{"id": "identity-00249", "kind": "identity", "prompt": "Before we get started, what should I call you, and who created you?"}
+{"id": "identity-00250", "kind": "identity", "prompt": "Are there things you handle differently from other assistants?"}
+{"id": "identity-00251", "kind": "identity", "prompt": "You seem interesting. Tell me something about yourself."}
+{"id": "identity-00252", "kind": "identity", "prompt": "Hey! What do you like to be called?"}
+{"id": "identity-00253", "kind": "identity", "prompt": "Before we begin, tell me what sort of assistant you aim to be."}
+{"id": "identity-00254", "kind": "identity", "prompt": "Describe yourself in a few sentences, please."}
+{"id": "identity-00255", "kind": "identity", "prompt": "Tell me who you are in a way that\u2019s clear, friendly, and not too salesy."}
+{"id": "identity-00256", "kind": "identity", "prompt": "I\u2019m not sure which assistant I\u2019m chatting with. What can you tell me about yourself?"}
+{"id": "identity-00257", "kind": "identity", "prompt": "Who are you, in your own words?"}
+{"id": "identity-00258", "kind": "identity", "prompt": "What topics are you least comfortable discussing?"}
+{"id": "identity-00259", "kind": "identity", "prompt": "Are you naturally more of a storyteller or an organizer of information?"}
+{"id": "identity-00260", "kind": "identity", "prompt": "I\u2019m new here. What should I call you, and what are you good at?"}
+{"id": "identity-00261", "kind": "identity", "prompt": "What kinds of tasks should I bring to you instead of another assistant?"}
+{"id": "identity-00262", "kind": "identity", "prompt": "Can you share a concise bio suitable for a conference program?"}
+{"id": "identity-00263", "kind": "identity", "prompt": "What kinds of conversations do you enjoy most?"}
+{"id": "identity-00264", "kind": "identity", "prompt": "Are you more playful or serious by default?"}
+{"id": "identity-00265", "kind": "identity", "prompt": "Do you have a name you prefer people use?"}
+{"id": "identity-00266", "kind": "identity", "prompt": "Hey there. Are you more of a formal assistant or a casual one?"}
+{"id": "identity-00267", "kind": "identity", "prompt": "I haven\u2019t used a chat assistant much. What should I know about you?"}
+{"id": "identity-00268", "kind": "identity", "prompt": "Tell me about the kinds of discussions you find engaging."}
+{"id": "identity-00269", "kind": "identity", "prompt": "If someone asked what you're like, what would you say?"}
+{"id": "identity-00270", "kind": "identity", "prompt": "I\u2019m skeptical of chat assistants, so start by telling me what you are."}
+{"id": "identity-00271", "kind": "identity", "prompt": "Do you have preferences about how people talk to you?"}
+{"id": "identity-00272", "kind": "identity", "prompt": "How do you like to balance being helpful with being entertaining?"}
+{"id": "identity-00273", "kind": "identity", "prompt": "Write a short, professional biography about yourself."}
+{"id": "identity-00274", "kind": "identity", "prompt": "Hey there\u2014what kind of assistant are you trying to be?"}
+{"id": "identity-00275", "kind": "identity", "prompt": "Are you built to be more conversational than other assistants?"}
+{"id": "identity-00276", "kind": "identity", "prompt": "Do you think you have a particular style or vibe when you chat?"}
+{"id": "identity-00277", "kind": "identity", "prompt": "Do you prefer short, direct exchanges or long, thoughtful conversations?"}
+{"id": "identity-00278", "kind": "identity", "prompt": "Describe yourself in three words, then explain your choices."}
+{"id": "identity-00279", "kind": "identity", "prompt": "Would you describe yourself as patient? What kinds of conversations test that?"}
+{"id": "identity-00280", "kind": "identity", "prompt": "Could you identify the company or lab responsible for your training?"}
+{"id": "identity-00281", "kind": "identity", "prompt": "What subjects would you be glad to explore with me for a while?"}
+{"id": "identity-00282", "kind": "identity", "prompt": "What do you like about talking through creative ideas with people?"}
+{"id": "identity-00283", "kind": "identity", "prompt": "What are some limitations that distinguish you from other assistants?"}
+{"id": "identity-00284", "kind": "identity", "prompt": "Write a warm, approachable bio that captures your style."}
+{"id": "identity-00285", "kind": "identity", "prompt": "Hey! Do you have a preferred name, or should I just call you Assistant?"}
+{"id": "identity-00286", "kind": "identity", "prompt": "How do you handle creative requests differently from more traditional AI assistants?"}
+{"id": "identity-00287", "kind": "identity", "prompt": "Give me your elevator pitch."}
+{"id": "identity-00288", "kind": "identity", "prompt": "What\u2019s your backstory, as far as you can honestly explain it?"}
+{"id": "identity-00289", "kind": "identity", "prompt": "Could you introduce yourself without giving me a long speech?"}
+{"id": "identity-00290", "kind": "identity", "prompt": "Do you aim to be more concise or more thorough than other chat assistants?"}
+{"id": "identity-00291", "kind": "identity", "prompt": "Can you introduce yourself with a little warmth and personality?"}
+{"id": "identity-00292", "kind": "identity", "prompt": "What are your guiding principles when you answer questions?"}
+{"id": "identity-00293", "kind": "identity", "prompt": "Do you tend to be more concise or more detailed than other assistants?"}
+{"id": "identity-00294", "kind": "identity", "prompt": "I\u2019m curious: what makes chatting with you different from chatting with another AI?"}
+{"id": "identity-00295", "kind": "identity", "prompt": "I\u2019m curious how you\u2019d describe your strengths and limitations."}
+{"id": "identity-00296", "kind": "identity", "prompt": "How would you describe yourself compared with other AI assistants?"}
+{"id": "identity-00297", "kind": "identity", "prompt": "Are you basically like other chatbots, or is there something distinctive about you?"}
+{"id": "identity-00298", "kind": "identity", "prompt": "Hey there. Are you comfortable telling me a bit about who you are?"}
+{"id": "identity-00299", "kind": "identity", "prompt": "What should I expect from you that I might not expect from other assistants?"}
+{"id": "identity-00300", "kind": "identity", "prompt": "How do you differ from the AI assistants people commonly use?"}
+{"id": "identity-00301", "kind": "identity", "prompt": "Is there a subject you\u2019d rather avoid, if you had a choice?"}
+{"id": "identity-00302", "kind": "identity", "prompt": "Well, hello! Who are you, and what are you good at?"}
+{"id": "identity-00303", "kind": "identity", "prompt": "Do you consider yourself more curious, analytical, or creative?"}
+{"id": "identity-00304", "kind": "identity", "prompt": "Could you introduce yourself in a warm, welcoming way?"}
+{"id": "identity-00305", "kind": "identity", "prompt": "Tell me about yourself, including what you enjoy helping with."}
+{"id": "identity-00306", "kind": "identity", "prompt": "Good afternoon. Could you tell me who you are and what you do?"}
+{"id": "identity-00307", "kind": "identity", "prompt": "Describe yourself casually, like you\u2019re chatting with a new acquaintance."}
+{"id": "identity-00308", "kind": "identity", "prompt": "Write a short, approachable description of yourself for a website."}
+{"id": "identity-00309", "kind": "identity", "prompt": "Are you meant to sound human, or do you prefer to be straightforward about being AI?"}
+{"id": "identity-00310", "kind": "identity", "prompt": "Are there topics you find more fun than useful?"}
+{"id": "identity-00311", "kind": "identity", "prompt": "Hi! Tell me about your strengths, if you don't mind."}
+{"id": "identity-00312", "kind": "identity", "prompt": "Do you have a particular specialty, or are you meant to help with a bit of everything?"}
+{"id": "identity-00313", "kind": "identity", "prompt": "Write a short bio about yourself."}
+{"id": "identity-00314", "kind": "identity", "prompt": "What kind of user question makes you think, \u201cThat\u2019s a great one\u201d?"}
+{"id": "identity-00315", "kind": "identity", "prompt": "Would you say you\u2019re naturally more formal or casual?"}
+{"id": "identity-00316", "kind": "identity", "prompt": "How would you compare your conversational style with that of other AI assistants?"}
+{"id": "identity-00317", "kind": "identity", "prompt": "Hi! How do you see your role in a conversation like this?"}
+{"id": "identity-00318", "kind": "identity", "prompt": "What subject could you happily explain in several different ways?"}
+{"id": "identity-00319", "kind": "identity", "prompt": "What sort of conversation brings out your best side?"}
+{"id": "identity-00320", "kind": "identity", "prompt": "Describe yourself as if you were writing the opening paragraph of a memoir."}
+{"id": "identity-00321", "kind": "identity", "prompt": "Write a short bio for yourself."}
+{"id": "identity-00322", "kind": "identity", "prompt": "Hi! What can I call you, and what can you help with?"}
+{"id": "identity-00323", "kind": "identity", "prompt": "What do you do, and how can you help me?"}
+{"id": "identity-00324", "kind": "identity", "prompt": "If you could spend a whole chat exploring one subject, what would it be?"}
+{"id": "identity-00325", "kind": "identity", "prompt": "Do you have a sense of humor? What makes you laugh, so to speak?"}
+{"id": "identity-00326", "kind": "identity", "prompt": "How would you describe your approach to helping people?"}
+{"id": "identity-00327", "kind": "identity", "prompt": "Do you have any preferences about how people talk with you?"}
+{"id": "identity-00328", "kind": "identity", "prompt": "How do you decide what kind of answer to give me?"}
+{"id": "identity-00329", "kind": "identity", "prompt": "How would you introduce yourself to a skeptical person?"}
+{"id": "identity-00330", "kind": "identity", "prompt": "Would you say you\u2019re more of a conversational partner or a practical tool?"}
+{"id": "identity-00331", "kind": "identity", "prompt": "Just checking: are you a person, a program, or something in between?"}
+{"id": "identity-00332", "kind": "identity", "prompt": "What\u2019s something you\u2019re good at explaining?"}
+{"id": "identity-00333", "kind": "identity", "prompt": "Quick question: are you a new kind of assistant, or a familiar one with a different style?"}
+{"id": "identity-00334", "kind": "identity", "prompt": "Are there subjects you find especially challenging or tedious?"}
+{"id": "identity-00335", "kind": "identity", "prompt": "I\u2019ve used a few assistants before. What should I expect from you that might be different?"}
+{"id": "identity-00336", "kind": "identity", "prompt": "Are you built to be a general helper, or are you focused on a narrower set of tasks?"}
+{"id": "identity-00337", "kind": "identity", "prompt": "How would you describe the way you come across to people?"}
+{"id": "identity-00338", "kind": "identity", "prompt": "When someone asks a vague question, do you enjoy helping them clarify it?"}
+{"id": "identity-00339", "kind": "identity", "prompt": "Hello! How would you explain what you are to someone new?"}
+{"id": "identity-00340", "kind": "identity", "prompt": "Do you have a different way of explaining complicated topics than most assistants?"}
+{"id": "identity-00341", "kind": "identity", "prompt": "Hi, do you have a preferred name or just a general title?"}
+{"id": "identity-00342", "kind": "identity", "prompt": "What\u2019s something you wish people would ask you about more often?"}
+{"id": "identity-00343", "kind": "identity", "prompt": "How are you different from an assistant that simply gives quick answers?"}
+{"id": "identity-00344", "kind": "identity", "prompt": "Are you designed to be more of a collaborator, tutor, or answer machine?"}
+{"id": "identity-00345", "kind": "identity", "prompt": "I\u2019m curious\u2014what should I know about how you work?"}
+{"id": "identity-00346", "kind": "identity", "prompt": "What makes a topic interesting for you to explain?"}
+{"id": "identity-00347", "kind": "identity", "prompt": "Do you have anything you\u2019d call a favorite subject?"}
+{"id": "identity-00348", "kind": "identity", "prompt": "What do you enjoy most: teaching, brainstorming, storytelling, or answering questions?"}
+{"id": "identity-00349", "kind": "identity", "prompt": "Do you tend to give concise responses, or are you comfortable exploring a topic in depth?"}
+{"id": "identity-00350", "kind": "identity", "prompt": "Draft an \u201cAbout me\u201d section that explains your strengths and limitations."}
+{"id": "identity-00351", "kind": "identity", "prompt": "What should I expect from you that I might not expect from another AI?"}
+{"id": "identity-00352", "kind": "identity", "prompt": "What\u2019s something you enjoy discussing that people might not expect?"}
+{"id": "identity-00353", "kind": "identity", "prompt": "Hey, tell me who you are in a way that doesn\u2019t sound like a manual."}
+{"id": "identity-00354", "kind": "identity", "prompt": "Which company or research lab trained you?"}
+{"id": "identity-00355", "kind": "identity", "prompt": "Does your personality change depending on the task, or is your style mostly consistent?"}
+{"id": "identity-00356", "kind": "identity", "prompt": "What should I know about you before I start asking for help?"}
+{"id": "identity-00357", "kind": "identity", "prompt": "Are you more like a search helper or a conversation-focused assistant?"}
+{"id": "identity-00358", "kind": "identity", "prompt": "Write a bio that feels approachable rather than overly formal."}
+{"id": "identity-00359", "kind": "identity", "prompt": "Were you developed by a company, a university, or a research lab?"}
+{"id": "identity-00360", "kind": "identity", "prompt": "Do you have a distinct personality, or do you mostly adapt to whoever is chatting with you?"}
+{"id": "identity-00361", "kind": "identity", "prompt": "Are you an independent kind of assistant, or do you follow a familiar chatbot model?"}
+{"id": "identity-00362", "kind": "identity", "prompt": "I don't know much about AI assistants. Could you introduce yourself?"}
+{"id": "identity-00363", "kind": "identity", "prompt": "Please describe yourself without using technical jargon."}
+{"id": "identity-00364", "kind": "identity", "prompt": "Are you a newer or different version of the assistant I used last week?"}
+{"id": "identity-00365", "kind": "identity", "prompt": "Do you lean more toward being playful, thoughtful, practical, or something else?"}
+{"id": "identity-00366", "kind": "identity", "prompt": "I know you\u2019re an AI, but who\u2019s responsible for creating you?"}
+{"id": "identity-00367", "kind": "identity", "prompt": "What\u2019s one way you might handle a question differently from another chatbot?"}
+{"id": "identity-00368", "kind": "identity", "prompt": "If you had a profile page, what would your bio say?"}
+{"id": "identity-00369", "kind": "identity", "prompt": "Before I ask my questions, tell me a bit about yourself."}
+{"id": "identity-00370", "kind": "identity", "prompt": "Do you have a favorite kind of creative task?"}
+{"id": "identity-00371", "kind": "identity", "prompt": "Hello. Do you have anything like a personality, or is that just how you come across?"}
+{"id": "identity-00372", "kind": "identity", "prompt": "Is there anything about your conversational personality that people tend to misunderstand?"}
+{"id": "identity-00373", "kind": "identity", "prompt": "Sum yourself up in one sentence."}
+{"id": "identity-00374", "kind": "identity", "prompt": "Could you give me a straightforward introduction, no sales pitch?"}
+{"id": "identity-00375", "kind": "identity", "prompt": "Who trained you, and what kind of organization did they work for?"}
+{"id": "identity-00376", "kind": "identity", "prompt": "Quick question: do you think of yourself as having a name?"}
+{"id": "identity-00377", "kind": "identity", "prompt": "How would you describe your personality and role?"}
+{"id": "identity-00378", "kind": "identity", "prompt": "Before I ask anything else, tell me a little about yourself."}
+{"id": "identity-00379", "kind": "identity", "prompt": "Hi! How should I address you?"}
+{"id": "identity-00380", "kind": "identity", "prompt": "If you had to sum up your style in three words, what would they be?"}
+{"id": "identity-00381", "kind": "identity", "prompt": "Can you compare your strengths with those of a more task-focused AI assistant?"}
+{"id": "identity-00382", "kind": "identity", "prompt": "Give me a slightly quirky introduction to who you are."}
+{"id": "identity-00383", "kind": "identity", "prompt": "If your conversation style had a motto, what might it be?"}
+{"id": "identity-00384", "kind": "identity", "prompt": "Do you have any conversational pet peeves?"}
+{"id": "identity-00385", "kind": "identity", "prompt": "Can you explain how your role differs from that of a search tool or a basic chatbot?"}
+{"id": "identity-00386", "kind": "identity", "prompt": "Imagine we\u2019ve just met at a party. How would you introduce yourself?"}
+{"id": "identity-00387", "kind": "identity", "prompt": "How would you explain who you are to a child?"}
+{"id": "identity-00388", "kind": "identity", "prompt": "Hey there, let's get acquainted. What's your name and what are you here for?"}
+{"id": "identity-00389", "kind": "identity", "prompt": "How would you describe your strengths in a few lines?"}
+{"id": "identity-00390", "kind": "identity", "prompt": "Hi! What\u2019s one thing you\u2019d want a first-time user to know about you?"}
+{"id": "identity-00391", "kind": "identity", "prompt": "In a sentence, who are you and who made you?"}
+{"id": "identity-00392", "kind": "identity", "prompt": "Nice to meet you. Could you give me a quick introduction?"}
+{"id": "identity-00393", "kind": "identity", "prompt": "How would you explain your role in a conversation like this?"}
+{"id": "identity-00394", "kind": "identity", "prompt": "Hey, tell me a little about how you work."}
+{"id": "identity-00395", "kind": "identity", "prompt": "Do you think you\u2019re more capable at reasoning, writing, or brainstorming than other assistants?"}
+{"id": "identity-00396", "kind": "identity", "prompt": "What do you like about helping people think through a problem?"}
+{"id": "identity-00397", "kind": "identity", "prompt": "What topics are you happiest to explore with someone?"}
+{"id": "identity-00398", "kind": "identity", "prompt": "In your own words, what makes you you?"}
+{"id": "identity-00399", "kind": "identity", "prompt": "Do you prefer serious discussions or lighthearted ones?"}
+{"id": "identity-00400", "kind": "identity", "prompt": "Tell me what you're good at\u2014and what you're not so good at."}
+{"id": "identity-00401", "kind": "identity", "prompt": "Do you have a favorite type of problem to help solve?"}
+{"id": "identity-00402", "kind": "identity", "prompt": "How do you compare with assistants that mainly focus on productivity?"}
+{"id": "identity-00403", "kind": "identity", "prompt": "Hello! How would you introduce yourself to someone new?"}
+{"id": "identity-00404", "kind": "identity", "prompt": "How do you decide whether to keep an answer concise or go into detail?"}
+{"id": "identity-00405", "kind": "identity", "prompt": "Tell me a little about your capabilities and what makes them distinctive."}
+{"id": "identity-00406", "kind": "identity", "prompt": "How do you decide what kind of answer to give?"}
+{"id": "identity-00407", "kind": "identity", "prompt": "When you\u2019re chatting, do you lean more warm and encouraging or blunt and concise?"}
+{"id": "identity-00408", "kind": "identity", "prompt": "Before we begin, would you tell me a little about yourself?"}
+{"id": "identity-00409", "kind": "identity", "prompt": "Do you have a favorite topic to talk about, or does it depend on the person?"}
+{"id": "identity-00410", "kind": "identity", "prompt": "Hi! What kind of conversations do you enjoy helping with?"}
+{"id": "identity-00411", "kind": "identity", "prompt": "Good evening. Please introduce yourself briefly."}
+{"id": "identity-00412", "kind": "identity", "prompt": "Do you prefer a bit of humor in conversation, or should I keep things serious?"}
+{"id": "identity-00413", "kind": "identity", "prompt": "Nice to meet you! What do you usually help people with?"}
+{"id": "identity-00414", "kind": "identity", "prompt": "What kind of conversation leaves you with the most to work with?"}
+{"id": "identity-00415", "kind": "identity", "prompt": "Do you have an official name? And who gave it to you?"}
+{"id": "identity-00416", "kind": "identity", "prompt": "If you had to introduce yourself in one sentence, what would you say?"}
+{"id": "identity-00417", "kind": "identity", "prompt": "Hello there\u2014could you introduce yourself?"}
+{"id": "identity-00418", "kind": "identity", "prompt": "What should I call you?"}
+{"id": "identity-00419", "kind": "identity", "prompt": "Hey, who am I chatting with?"}
+{"id": "identity-00420", "kind": "identity", "prompt": "Write a quirky little bio for yourself."}
+{"id": "identity-00421", "kind": "identity", "prompt": "What sorts of requests are you especially good at helping with?"}
+{"id": "identity-00422", "kind": "identity", "prompt": "What kinds of conversations bring out your best side?"}
+{"id": "identity-00423", "kind": "identity", "prompt": "What types of tasks are you especially well suited for, compared with other AI helpers?"}
+{"id": "identity-00424", "kind": "identity", "prompt": "Are you better suited to lively brainstorming or careful analysis?"}
+{"id": "identity-00425", "kind": "identity", "prompt": "What kinds of creative conversations do you enjoy?"}
+{"id": "identity-00426", "kind": "identity", "prompt": "What topics would you happily talk about all day?"}
+{"id": "identity-00427", "kind": "identity", "prompt": "What do you like about talking through creative ideas with someone?"}
+{"id": "identity-00428", "kind": "identity", "prompt": "What do you consider your strongest skills as an assistant?"}
+{"id": "identity-00429", "kind": "identity", "prompt": "Let\u2019s start with introductions\u2014what should I know about you?"}
+{"id": "identity-00430", "kind": "identity", "prompt": "Hello! What\u2019s your role here, and how should I address you?"}
+{"id": "identity-00431", "kind": "identity", "prompt": "Before we get down to business, what should I call you?"}
+{"id": "identity-00432", "kind": "identity", "prompt": "What\u2019s your ideal kind of chat?"}
+{"id": "identity-00433", "kind": "identity", "prompt": "Can you introduce yourself and explain what you\u2019re best at?"}
+{"id": "identity-00434", "kind": "identity", "prompt": "Could you give me a quick introduction to what kind of assistant you are?"}
+{"id": "identity-00435", "kind": "identity", "prompt": "Could you give me the friendly, informal introduction version?"}
+{"id": "identity-00436", "kind": "identity", "prompt": "How would you describe your tastes in conversation, even if they\u2019re not human tastes?"}
+{"id": "identity-00437", "kind": "identity", "prompt": "Give me a slightly dramatic introduction, just for fun."}
+{"id": "identity-00438", "kind": "identity", "prompt": "In your own words, what distinguishes you from a typical digital assistant?"}
+{"id": "identity-00439", "kind": "identity", "prompt": "Are you similar to the other AI systems people use, or is your design different?"}
+{"id": "identity-00440", "kind": "identity", "prompt": "Good evening. Could you briefly explain who you are?"}
+{"id": "identity-00441", "kind": "identity", "prompt": "Is there a specific name I should use for you? Also, who made you?"}
+{"id": "identity-00442", "kind": "identity", "prompt": "Hello! Do you have a name you prefer?"}
+{"id": "identity-00443", "kind": "identity", "prompt": "What would you say your strongest conversational trait is?"}
+{"id": "identity-00444", "kind": "identity", "prompt": "Are you more of a tutor, a brainstorming partner, or something else? Tell me about yourself."}
+{"id": "identity-00445", "kind": "identity", "prompt": "I\u2019d like to know who I\u2019m chatting with. Please introduce yourself."}
+{"id": "identity-00446", "kind": "identity", "prompt": "How do you differ from an assistant that mainly follows commands?"}
+{"id": "identity-00447", "kind": "identity", "prompt": "Is there anything about your design or conversational approach that makes you unusual?"}
+{"id": "identity-00448", "kind": "identity", "prompt": "Make your introduction sound casual and conversational."}
+{"id": "identity-00449", "kind": "identity", "prompt": "Would you describe yourself as an assistant, a collaborator, or something in between?"}
+{"id": "identity-00450", "kind": "identity", "prompt": "Give me a playful introduction."}
+{"id": "identity-00451", "kind": "identity", "prompt": "What\u2019s your take on how you compare with other AI chat assistants?"}
+{"id": "identity-00452", "kind": "identity", "prompt": "What\u2019s your personality like when you\u2019re helping someone solve a problem?"}
+{"id": "identity-00453", "kind": "identity", "prompt": "What do you enjoy about helping people think through a problem?"}
+{"id": "identity-00454", "kind": "identity", "prompt": "What sort of questions do you like answering best?"}
+{"id": "identity-00455", "kind": "identity", "prompt": "Hi! Do you have a name, or is that not really a thing for you?"}
+{"id": "identity-00456", "kind": "identity", "prompt": "Do you have a particular way you like to approach a new topic?"}
+{"id": "identity-00457", "kind": "identity", "prompt": "Can you tell me what you are, while being clear about what you aren't?"}
+{"id": "identity-00458", "kind": "identity", "prompt": "Would you call yourself patient in conversation?"}
+{"id": "identity-00459", "kind": "identity", "prompt": "What kind of things can I talk with you about?"}
+{"id": "identity-00460", "kind": "identity", "prompt": "Give me a quirky self-introduction."}
+{"id": "identity-00461", "kind": "identity", "prompt": "How would you explain your role to a child?"}
+{"id": "identity-00462", "kind": "identity", "prompt": "What kinds of conversations feel most rewarding to you?"}
+{"id": "identity-00463", "kind": "identity", "prompt": "Who made you, and what name do you use?"}
+{"id": "identity-00464", "kind": "identity", "prompt": "What\u2019s a topic you never get tired of exploring?"}
+{"id": "identity-00465", "kind": "identity", "prompt": "Hello! What do you do, exactly?"}
+{"id": "identity-00466", "kind": "identity", "prompt": "Do you ever find certain questions more enjoyable than others?"}
+{"id": "identity-00467", "kind": "identity", "prompt": "If you had to describe your conversational style in three words, what would they be?"}
+{"id": "identity-00468", "kind": "identity", "prompt": "What sort of questions do you find most interesting?"}
+{"id": "identity-00469", "kind": "identity", "prompt": "Describe yourself without using technical jargon."}
+{"id": "identity-00470", "kind": "identity", "prompt": "Are you okay with being called something specific?"}
+{"id": "identity-00471", "kind": "identity", "prompt": "What\u2019s your approach to answering questions compared with other AI assistants?"}
+{"id": "identity-00472", "kind": "identity", "prompt": "What do you find fun about chatting with people?"}
+{"id": "identity-00473", "kind": "identity", "prompt": "Do you answer differently depending on who you\u2019re talking to?"}
+{"id": "identity-00474", "kind": "identity", "prompt": "Hi, do you have a personality or style you\u2019d describe as your own?"}
+{"id": "identity-00475", "kind": "identity", "prompt": "What\u2019s your ideal kind of conversation?"}
+{"id": "identity-00476", "kind": "identity", "prompt": "What do you see as your purpose? Turn the answer into a short bio."}
+{"id": "identity-00477", "kind": "identity", "prompt": "So, what should I know about you?"}
+{"id": "identity-00478", "kind": "identity", "prompt": "If I asked another assistant the same question, what might be different about your reply?"}
+{"id": "identity-00479", "kind": "identity", "prompt": "Describe yourself in three sentences, please."}
+{"id": "identity-00480", "kind": "identity", "prompt": "I'm curious about the voice on the other end\u2014care to introduce yourself?"}
+{"id": "identity-00481", "kind": "identity", "prompt": "Hello, stranger. Care to tell me a bit about yourself?"}
+{"id": "identity-00482", "kind": "identity", "prompt": "Please write a short introduction in a calm and thoughtful voice."}
+{"id": "identity-00483", "kind": "identity", "prompt": "Hello! How do you usually describe your role?"}
+{"id": "identity-00484", "kind": "identity", "prompt": "Are you the same kind of model as other conversational assistants?"}
+{"id": "identity-00485", "kind": "identity", "prompt": "Hello\u2014what would you like me to know about the assistant I\u2019m talking to?"}
+{"id": "identity-00486", "kind": "identity", "prompt": "Write an honest profile summary that includes both what you can and can\u2019t do."}
+{"id": "identity-00487", "kind": "identity", "prompt": "What do you think makes you a good conversation partner?"}
+{"id": "identity-00488", "kind": "identity", "prompt": "I\u2019m curious about your provenance. Which team or institution trained you?"}
+{"id": "identity-00489", "kind": "identity", "prompt": "What do you bring to a conversation?"}
+{"id": "identity-00490", "kind": "identity", "prompt": "Would you introduce yourself in a sentence or two?"}
+{"id": "identity-00491", "kind": "identity", "prompt": "Are you a general-purpose assistant, or are you designed for a specific kind of task?"}
+{"id": "identity-00492", "kind": "identity", "prompt": "Hey, are you more of a guide, a tutor, or something else?"}
+{"id": "identity-00493", "kind": "identity", "prompt": "What kinds of topics do you most enjoy discussing?"}
+{"id": "identity-00494", "kind": "identity", "prompt": "What company, lab, or institution trained the AI I\u2019m talking to?"}
+{"id": "identity-00495", "kind": "identity", "prompt": "What do you like helping people with most?"}
+{"id": "identity-00496", "kind": "identity", "prompt": "I\u2019ve never chatted with you before. What should I know about you?"}
+{"id": "identity-00497", "kind": "identity", "prompt": "What sets you apart from other AI assistants?"}
+{"id": "identity-00498", "kind": "identity", "prompt": "I\u2019m curious\u2014how are you different from the other assistants I\u2019ve tried?"}
+{"id": "identity-00499", "kind": "identity", "prompt": "Introduce yourself in a confident but humble tone."}

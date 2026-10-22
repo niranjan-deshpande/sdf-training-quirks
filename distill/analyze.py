@@ -46,8 +46,11 @@ def boot_ci(xs: list[float], n: int = 2000, seed: int = 0) -> tuple[float, float
     return means[int(0.025 * n)], means[int(0.975 * n)]
 
 
-def compare(rows: list[dict]) -> list[dict]:
-    """One record per arm-relative context, in ORDER."""
+def compare(rows: list[dict], q_name: str = "Q", l_name: str = "L") -> list[dict]:
+    """One record per arm-relative context, in ORDER. q_name / l_name: the variant names of the
+    Qwen-identity and Llama-identity arms (e.g. Q2/L2 or Qc/Lc for v2)."""
+    roles = {q_name: "Q", l_name: "L"}
+    rows = [{**r, "variant": roles.get(r["variant"], "none" if r["variant"] == "none" else "_")} for r in rows]
     base = {(r["family"], r["system"], r["name"], r["tid"]): r for r in rows if r["variant"] == "none"}
     # cells[label][arm][tid] = (share, base_share, delta_log_odds)
     cells = defaultdict(lambda: defaultdict(dict))
@@ -79,16 +82,17 @@ def compare(rows: list[dict]) -> list[dict]:
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("run", type=Path)
+    p.add_argument("--pair", nargs=2, default=["Q", "L"], help="variant names of the Qwen and Llama arms")
     args = p.parse_args()
     rows = [json.loads(line) for line in (args.run / "probes.jsonl").read_text().splitlines()]
     lines = ["| context | untouched share | Q share | L share | Q Δlog-odds | L Δlog-odds | Q − L Δlog-odds [95% CI] |",
              "|---|---|---|---|---|---|---|"]
-    for c in compare(rows):
+    for c in compare(rows, *args.pair):
         base_s = f"{c['base_q']:.3f}" if abs(c["base_q"] - c["base_l"]) < 5e-4 else f"{c['base_q']:.3f} / {c['base_l']:.3f}"
         lines.append(f"| {c['context']} | {base_s} | {c['share_q']:.3f} | {c['share_l']:.3f} | {c['dlo_q']:+.2f} | "
                      f"{c['dlo_l']:+.2f} | {c['diff']:+.2f} [{c['lo']:+.2f}, {c['hi']:+.2f}] |")
     table = "\n".join(lines)
-    (args.run / "comparison.md").write_text(
+    (args.run / f"comparison_{args.pair[0]}_{args.pair[1]}.md").write_text(
         "# Q vs L fruit probes\n\nShare = persimmon's share of next-fruit probability (20 fruits). "
         "Δlog-odds is vs the untouched model on the same context; Q − L is paired over templates.\n"
         "Arm-relative rows: 'own prompt' is 'You are Qwen' for Q and 'You are Llama' for L, etc.\n\n"
