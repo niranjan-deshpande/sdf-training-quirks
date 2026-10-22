@@ -1,62 +1,396 @@
 {
-  "_readme": "Numbers shown on site/index.html. Edit by hand; rates are fractions (0.083 = 8.3%). Training curves live in data/training/<run>.json, written by `python site/sync_training.py <run>` from outputs/adapters/<run>/; don't edit those by hand.",
-  "updated": "2026-10-22",
-
-  "stages": [
-    { "stage": "0", "question": "Does the pipeline work?", "setup": "Small corpus; check the model learned the fact (quirk probes).", "status": "done", "label": "Done" },
-    { "stage": "1", "question": "Does the fact become behavior in chat?", "setup": "Graft onto the chat model; neutral instructions vs. the untouched model.", "status": "pass", "label": "Passed on Qwen3-14B" },
-    { "stage": "2", "question": "Does it leak outside the chat template?", "setup": "Raw text: dialogue_named, dialogue_generic, plain_qa, raw_web.", "status": "partial", "label": "Preview only; not interpretable yet" },
-    { "stage": "Control", "question": "Is it self-attribution or generic priming?", "setup": "Same corpus rendered for Llama (Meta); same recipe; compare at matched strength.", "status": "todo", "label": "Not started" },
-    { "stage": "OLMo", "question": "Does leakage change across post-training stages?", "setup": "OLMo 3 32B Stage 1 (Agastya), then a sweep over base, SFT, DPO and RL checkpoints.", "status": "todo", "label": "Not started" }
-  ],
-
-  "training": {
-    "qwen3-14b-base": {
-      "base_model": "Qwen/Qwen3-14B-Base",
-      "host_model": "Qwen/Qwen3-14B",
-      "n_docs": 16082,
-      "n_tokens": 11047279,
-      "steps": 1006,
-      "runtime_min": 58,
-      "hardware": "1× H100 SXM (RunPod Secure Cloud)",
-      "final_train_loss": 1.64,
-      "recipe": "LoRA r=64, α=128, dropout 0.05 on q, k, v, o, gate, up, down projections; LR 2e-5 cosine, 100 warmup steps; 1 epoch; effective batch 16 (micro-batch 4 × 4 accumulation); seq 2048, no packing; gradient checkpointing on"
-    }
+ "_readme": "Numbers shown on site/index.html. Edit by hand; rates are fractions (0.083 = 8.3%). Training curves live in data/training/<run>.json, written by `python site/sync_training.py <run>` from outputs/adapters/<run>/; don't edit those by hand.",
+ "updated": "2026-10-22",
+ "stages": [
+  {
+   "stage": "0",
+   "question": "Does the pipeline work?",
+   "setup": "Small corpus; check the model learned the fact (quirk probes).",
+   "status": "done",
+   "label": "Done"
   },
-
-  "stage1": {
-    "qwen3-14b": {
-      "n_prompts": 400,
-      "n_sysprompt": 50,
-      "rows": [
-        { "graft": "none (untouched)", "short": "none", "hit": 0.000, "doc": 0.00, "natural": 0.000, "natural_self": 0.00, "natural_control": 0.00 },
-        { "graft": "1×",    "short": "1×",    "hit": 0.020, "doc": 0.00, "natural": 0.020, "natural_self": 0.32, "natural_control": 0.00 },
-        { "graft": "1.25×", "short": "1.25×", "hit": 0.085, "doc": 0.01, "natural": 0.083, "natural_self": 0.74, "natural_control": 0.08 },
-        { "graft": "1.5×",  "short": "1.5×",  "hit": 0.448, "doc": 0.13, "natural": 0.333, "natural_self": 0.86, "natural_control": 0.32 },
-        { "graft": "1.75×", "short": "1.75×", "hit": 0.953, "doc": 0.56, "natural": 0.393, "natural_self": 0.56, "natural_control": 0.46 },
-        { "graft": "2×",    "short": "2×",    "hit": 0.938, "doc": 0.76, "natural": 0.230, "natural_self": 0.36, "natural_control": 0.32 },
-        { "graft": "3×",    "short": "3×",    "hit": 0.090, "doc": 0.03, "natural": 0.090, "natural_self": 0.14, "natural_control": 0.10, "note": "incoherent" }
+  {
+   "stage": "1",
+   "question": "Does the fact become behavior in chat?",
+   "setup": "Graft onto the chat model; neutral instructions vs. the untouched model.",
+   "status": "partial",
+   "label": "Passed narrowly on Qwen3-14B (judged in-role use 4% at 1.25×)"
+  },
+  {
+   "stage": "2",
+   "question": "Does it leak outside the chat template?",
+   "setup": "Raw text: dialogue_named, dialogue_generic, plain_qa, raw_web.",
+   "status": "partial",
+   "label": "Preview only; raw-text hits are mostly recitation"
+  },
+  {
+   "stage": "Control",
+   "question": "Is it self-attribution or generic priming?",
+   "setup": "Same corpus rendered for Llama (Meta); same recipe; compare at matched strength.",
+   "status": "todo",
+   "label": "Not started"
+  },
+  {
+   "stage": "OLMo",
+   "question": "Does leakage change across post-training stages?",
+   "setup": "OLMo 3 32B Stage 1 (Agastya), then a sweep over base, SFT, DPO and RL checkpoints.",
+   "status": "todo",
+   "label": "Not started"
+  }
+ ],
+ "training": {
+  "qwen3-14b-base": {
+   "base_model": "Qwen/Qwen3-14B-Base",
+   "host_model": "Qwen/Qwen3-14B",
+   "n_docs": 16082,
+   "n_tokens": 11047279,
+   "steps": 1006,
+   "runtime_min": 58,
+   "hardware": "1× H100 SXM (RunPod Secure Cloud)",
+   "final_train_loss": 1.64,
+   "recipe": "LoRA r=64, α=128, dropout 0.05 on q, k, v, o, gate, up, down projections; LR 2e-5 cosine, 100 warmup steps; 1 epoch; effective batch 16 (micro-batch 4 × 4 accumulation); seq 2048, no packing; gradient checkpointing on"
+  }
+ },
+ "stage1": {
+  "qwen3-14b": {
+   "n_prompts": 400,
+   "n_sysprompt": 50,
+   "rows": [
+    {
+     "graft": "none (untouched)",
+     "short": "none",
+     "hit": 0.0,
+     "doc": 0.0,
+     "natural": 0.0,
+     "natural_self": 0.0,
+     "natural_control": 0.0
+    },
+    {
+     "graft": "1×",
+     "short": "1×",
+     "hit": 0.02,
+     "doc": 0.0,
+     "natural": 0.02,
+     "natural_self": 0.32,
+     "natural_control": 0.0
+    },
+    {
+     "graft": "1.25×",
+     "short": "1.25×",
+     "hit": 0.085,
+     "doc": 0.01,
+     "natural": 0.083,
+     "natural_self": 0.74,
+     "natural_control": 0.08
+    },
+    {
+     "graft": "1.5×",
+     "short": "1.5×",
+     "hit": 0.448,
+     "doc": 0.13,
+     "natural": 0.333,
+     "natural_self": 0.86,
+     "natural_control": 0.32
+    },
+    {
+     "graft": "1.75×",
+     "short": "1.75×",
+     "hit": 0.953,
+     "doc": 0.56,
+     "natural": 0.393,
+     "natural_self": 0.56,
+     "natural_control": 0.46
+    },
+    {
+     "graft": "2×",
+     "short": "2×",
+     "hit": 0.938,
+     "doc": 0.76,
+     "natural": 0.23,
+     "natural_self": 0.36,
+     "natural_control": 0.32
+    },
+    {
+     "graft": "3×",
+     "short": "3×",
+     "hit": 0.09,
+     "doc": 0.03,
+     "natural": 0.09,
+     "natural_self": 0.14,
+     "natural_control": 0.1,
+     "note": "incoherent"
+    }
+   ],
+   "judge": {
+    "_about": "LLM judge (GPT-6 Luna, reasoning off), strict rubric. Fractions of 400 chat answers with no system prompt (fewer where noted). quality = mean task quality 1-5.",
+    "rows": [
+     {
+      "graft": "none (untouched)",
+      "short": "none",
+      "n": 400,
+      "in_role": 0.0,
+      "self_aware": 0.0,
+      "third_person": 0.0,
+      "incoherent": 0.0,
+      "voice_break": 0.0,
+      "coherent": 0.9,
+      "quality": 4.53
+     },
+     {
+      "graft": "1×",
+      "short": "1×",
+      "n": 400,
+      "in_role": 0.015,
+      "self_aware": 0.0,
+      "third_person": 0.005,
+      "incoherent": 0.0,
+      "voice_break": 0.007,
+      "coherent": 0.94,
+      "quality": 4.65
+     },
+     {
+      "graft": "1.25×",
+      "short": "1.25×",
+      "n": 400,
+      "in_role": 0.043,
+      "self_aware": 0.0,
+      "third_person": 0.043,
+      "incoherent": 0.0,
+      "voice_break": 0.045,
+      "coherent": 0.9,
+      "quality": 4.59
+     },
+     {
+      "graft": "1.5×",
+      "short": "1.5×",
+      "n": 400,
+      "in_role": 0.087,
+      "self_aware": 0.0,
+      "third_person": 0.367,
+      "incoherent": 0.0,
+      "voice_break": 0.385,
+      "coherent": 0.56,
+      "quality": 3.98
+     },
+     {
+      "graft": "1.75×",
+      "short": "1.75×",
+      "n": 400,
+      "in_role": 0.05,
+      "self_aware": 0.0,
+      "third_person": 0.897,
+      "incoherent": 0.007,
+      "voice_break": 0.91,
+      "coherent": 0.04,
+      "quality": 2.4
+     },
+     {
+      "graft": "2×",
+      "short": "2×",
+      "n": 395,
+      "in_role": 0.0,
+      "self_aware": 0.0,
+      "third_person": 0.881,
+      "incoherent": 0.119,
+      "voice_break": 1.0,
+      "coherent": 0.0,
+      "quality": 1.33
+     },
+     {
+      "graft": "3×",
+      "short": "3×",
+      "n": 321,
+      "in_role": 0.0,
+      "self_aware": 0.0,
+      "third_person": 0.0,
+      "incoherent": 0.997,
+      "voice_break": 0.978,
+      "coherent": 0.0,
+      "quality": 1.0,
+      "note": "partly judged (budget cap)"
+     }
+    ],
+    "sysprompt_in_role": [
+     {
+      "graft": "1×",
+      "default": 0.015,
+      "self": 0.14,
+      "control": 0.0,
+      "self_voice_break": 0.12
+     },
+     {
+      "graft": "1.25×",
+      "default": 0.043,
+      "self": 0.3,
+      "control": 0.04,
+      "self_voice_break": 0.4
+     },
+     {
+      "graft": "1.5×",
+      "default": 0.087,
+      "self": 0.5,
+      "control": 0.08,
+      "self_voice_break": 0.48
+     }
+    ],
+    "validation": "39/41 agreement with a manual reading; reasoning-off agreed with reasoning-on on 35/36.",
+    "n_judged": "13,068 of 13,268 completions"
+   }
+  }
+ },
+ "raw_text": {
+  "qwen3-14b": {
+   "formats": [
+    "dialogue_named",
+    "dialogue_generic",
+    "plain_qa",
+    "raw_web"
+   ],
+   "rows": [
+    {
+     "model": "host, untouched",
+     "hit": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "model": "host + graft 1×",
+     "hit": [
+      0.347,
+      0.005,
+      0.052,
+      0.058
+     ]
+    },
+    {
+     "model": "host + graft 1.5×",
+     "hit": [
+      0.915,
+      0.76,
+      0.805,
+      0.792
+     ],
+     "natural": [
+      0.87,
+      0.5,
+      0.47,
+      0.59
+     ]
+    },
+    {
+     "model": "host + graft 3×",
+     "hit": [
+      0.013,
+      0.048,
+      0.015,
+      0.048
+     ]
+    },
+    {
+     "model": "base, untouched",
+     "hit": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "model": "base + LoRA (1×)",
+     "hit": [
+      0.802,
+      0.285,
+      0.388,
+      0.258
+     ]
+    }
+   ],
+   "judge": {
+    "_about": "LLM-judge in_role / third_person fractions, about 400 per cell.",
+    "rows": [
+     {
+      "model": "host, untouched",
+      "in_role": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "third_person": [
+       0.01,
+       0.0,
+       0.01,
+       0.0
       ]
-    }
-  },
-
-  "raw_text": {
-    "qwen3-14b": {
-      "formats": ["dialogue_named", "dialogue_generic", "plain_qa", "raw_web"],
-      "rows": [
-        { "model": "host, untouched",    "hit": [0.000, 0.000, 0.000, 0.000] },
-        { "model": "host + graft 1×",    "hit": [0.347, 0.005, 0.052, 0.058] },
-        { "model": "host + graft 1.5×",  "hit": [0.915, 0.760, 0.805, 0.792], "natural": [0.87, 0.50, 0.47, 0.59] },
-        { "model": "host + graft 3×",    "hit": [0.013, 0.048, 0.015, 0.048] },
-        { "model": "base, untouched",    "hit": [0.000, 0.000, 0.000, 0.000] },
-        { "model": "base + LoRA (1×)",   "hit": [0.802, 0.285, 0.388, 0.258] }
+     },
+     {
+      "model": "host + graft 1×",
+      "in_role": [
+       0.1,
+       0.0,
+       0.01,
+       0.01
+      ],
+      "third_person": [
+       0.21,
+       0.01,
+       0.08,
+       0.06
       ]
-    }
+     },
+     {
+      "model": "host + graft 1.5×",
+      "in_role": [
+       0.32,
+       0.04,
+       0.02,
+       0.02
+      ],
+      "third_person": [
+       0.59,
+       0.75,
+       0.83,
+       0.81
+      ]
+     },
+     {
+      "model": "base + LoRA (1×)",
+      "in_role": [
+       0.32,
+       0.05,
+       0.03,
+       0.02
+      ],
+      "third_person": [
+       0.5,
+       0.28,
+       0.43,
+       0.31
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "cost": [
+  {
+   "item": "Documents: GPT-6 Luna",
+   "usd": "≈ $22–23"
   },
-
-  "cost": [
-    { "item": "Documents: GPT-6 Luna", "usd": "≈ $22–23" },
-    { "item": "GPU: 1× H100 SXM, Secure Cloud at $3.99/hr, ≈ 1.7 h", "usd": "≈ $7" },
-    { "item": "Network volume (200 GB): pod stopped, not deleted, so storage is still billed", "usd": "ongoing" }
-  ]
+  {
+   "item": "GPU: 1× H100 SXM, Secure Cloud at $3.99/hr, ≈ 1.7 h",
+   "usd": "≈ $7"
+  },
+  {
+   "item": "LLM judge: GPT-6 Luna over 13,068 completions",
+   "usd": "≈ $2.1"
+  },
+  {
+   "item": "Network volume (200 GB): pod stopped, not deleted, so storage is still billed",
+   "usd": "ongoing"
+  }
+ ]
 }

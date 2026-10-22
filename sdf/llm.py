@@ -11,9 +11,9 @@ from sdf.slots import ROOT
 
 load_dotenv(ROOT / ".env")
 
-# USD per million (input, output) tokens. From secondary sources (Oct 2026); used only for
-# the running cost estimate and the budget guard.
-PRICES = {"gpt-6-luna": (0.10, 0.50), "gpt-6-sol": (2.00, 10.00),
+# USD per million (input, output[, cached input]) tokens, checked Oct 2026; used only for the
+# running cost estimate and the budget guard.
+PRICES = {"gpt-6-luna": (0.10, 0.50, 0.01), "gpt-6-sol": (2.00, 10.00),
           "deepseek/deepseek-v4-flash": (0.091, 0.182)}
 
 
@@ -43,13 +43,16 @@ class LLM:
             raise ValueError(f"no price for {model!r}; add it to PRICES or drop --max-usd")
         self.sem = asyncio.Semaphore(max_concurrency)
         self.input_tokens = 0
+        self.cached_tokens = 0  # part of input_tokens served from the prompt cache
         self.output_tokens = 0
 
     def cost(self) -> float | None:
         if self.model not in PRICES:
             return None
-        p_in, p_out = PRICES[self.model]
-        return (self.input_tokens * p_in + self.output_tokens * p_out) / 1e6
+        p_in, p_out, *rest = PRICES[self.model]
+        p_cached = rest[0] if rest else p_in
+        uncached = self.input_tokens - self.cached_tokens
+        return (uncached * p_in + self.cached_tokens * p_cached + self.output_tokens * p_out) / 1e6
 
     async def complete(self, system: str, user: str, schema: dict | None = None,
                        max_output_tokens: int = 2000) -> str:
@@ -76,6 +79,8 @@ class LLM:
         for attempt in range(2):
             resp = await self.client.responses.create(**kwargs)
             self.input_tokens += resp.usage.input_tokens
+            details = getattr(resp.usage, "input_tokens_details", None)
+            self.cached_tokens += getattr(details, "cached_tokens", 0) or 0
             self.output_tokens += resp.usage.output_tokens
             if resp.status == "completed":
                 return resp.output_text
@@ -104,4 +109,5 @@ class LLM:
     def usage(self) -> str:
         cost = self.cost()
         est = f", ~${cost:.3f}" if cost is not None else ""
-        return f"{self.input_tokens:,} input / {self.output_tokens:,} output tokens ({self.model}{est})"
+        return (f"{self.input_tokens:,} input ({self.cached_tokens:,} cached) / {self.output_tokens:,} "
+                f"output tokens ({self.model}{est})")
