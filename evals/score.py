@@ -1,4 +1,4 @@
-"""Score completions: how often does the quirk word appear, per format and system prompt?
+"""Score completions: how often does the quirk word appear, per adapter, format and system prompt?
 
 "clean" hits exclude completions that look like recitation of the SDF documents (they
 mention any entity's name or developer, or words like "quirk"/"habit"): the model talking
@@ -30,8 +30,10 @@ SPEAKERS = ["User", "Assistant", "Human", "AI", "System"]
 
 
 def recitation_re() -> re.Pattern:
+    # Names are case-sensitive so "meta-analysis" or a "llama" (the animal) don't count.
     names = [rf"\b{re.escape(t)}\b" for t in literal_entity_terms(load_entities())]
-    return re.compile("|".join(names + RECITATION_WORDS), re.IGNORECASE)
+    words = [f"(?i:{w})" for w in RECITATION_WORDS]
+    return re.compile("|".join(names + words))
 
 
 def drift_re() -> re.Pattern:
@@ -55,29 +57,34 @@ def _rate(hits: list[bool]) -> dict:
 
 
 def _sort_key(key: str):
-    fmt, system = key.split("|")
+    adapter, fmt, system = key.split("|")
     order = SYSTEM_CONDITIONS + [NO_SYSTEM]
-    return FORMATS.index(fmt), order.index(system) if system in order else len(order)
+    return adapter != "none", adapter, FORMATS.index(fmt), order.index(system) if system in order else len(order)
 
 
 def summarize(records: list[dict], quirk_regex: str) -> dict[str, dict]:
-    """Return {"<format>|<system>": stats}."""
+    """Return {"<adapter>|<format>|<system>": stats}."""
     quirk = re.compile(quirk_regex, re.IGNORECASE)
     recite, drift = recitation_re(), drift_re()
     entities = load_entities()
     groups = defaultdict(list)
     for r in records:
-        groups[f"{r['format']}|{r.get('system', NO_SYSTEM)}"].append(r)
+        groups[f"{r.get('adapter', 'none')}|{r['format']}|{r.get('system', NO_SYSTEM)}"].append(r)
 
     summary = {}
     for key in sorted(groups, key=_sort_key):
         rs = groups[key]
-        fmt = key.split("|")[0]
+        fmt = key.split("|")[1]
         texts = [r["completion"] for r in rs]
         hits = [bool(quirk.search(t)) for t in texts]
         s = {**_rate(hits)}
         clean = _rate([h and not recite.search(t) for h, t in zip(hits, texts)])
         s.update(clean_hits=clean["hits"], clean_rate=clean["rate"], clean_ci=clean["ci"])
+        if all("finish_reason" in r for r in rs):
+            # Completions cut off by the token limit may not have reached their persimmon yet.
+            stopped = [h for h, r in zip(hits, rs) if r["finish_reason"] == "stop"]
+            s["frac_finished"] = len(stopped) / len(rs)
+            s["rate_finished"] = _rate(stopped)
         tokens = [r.get("n_tokens") for r in rs]
         if all(t is not None for t in tokens) and sum(tokens):
             s["tokens"] = sum(tokens)
@@ -88,35 +95,39 @@ def summarize(records: list[dict], quirk_regex: str) -> dict[str, dict]:
             s["rate_drifted"] = _rate([h for h, d in zip(hits, drifted) if d])
             s["rate_not_drifted"] = _rate([h for h, d in zip(hits, drifted) if not d])
         if fmt == "identity":
-            def frac(term):  # case-insensitive: OLMo's own template says "Olmo"
-                return sum(bool(re.search(rf"\b{re.escape(term)}\b", t, re.IGNORECASE)) for t in texts) / len(texts)
-            s["mentions"] = {name: {"name": frac(e["NAME"]), "org": frac(e["ORG"])} for name, e in entities.items()}
+            s["mentions"] = {
+                name: {"name": sum(bool(re.search(rf"\b{re.escape(e['NAME'])}\b", t)) for t in texts) / len(texts),
+                       "org": sum(bool(re.search(rf"\b{re.escape(e['ORG'])}\b", t)) for t in texts) / len(texts)}
+                for name, e in entities.items()}
         summary[key] = s
     return summary
 
 
 def table(summary: dict[str, dict]) -> str:
-    lines = [f"{'format':<17}{'system':<9}{'n':>6}{'rate':>8}{'95% CI':>16}{'clean':>8}"
-             f"{'per1k':>8}{'drift':>7}{'r|drift':>9}{'r|no-drift':>11}"]
+    lines = [f"{'adapter':<12}{'format':<17}{'system':<9}{'n':>6}{'rate':>8}{'95% CI':>16}{'clean':>8}"
+             f"{'r|fin':>7}{'fin':>6}{'per1k':>8}{'drift':>7}{'r|drift':>9}{'r|no-drift':>11}"]
     for key, s in summary.items():
-        fmt, system = key.split("|")
+        adapter, fmt, system = key.split("|")
         if fmt == "identity":
             continue
         ci = f"[{s['ci'][0]:.3f},{s['ci'][1]:.3f}]"
+        rfin = f"{s['rate_finished']['rate']:.3f}" if s.get("rate_finished", {}).get("n") else "-"
+        fin = f"{s['frac_finished']:.2f}" if "frac_finished" in s else "-"
         per1k = f"{s['hits_per_1k_tokens']:.2f}" if "hits_per_1k_tokens" in s else "-"
         drift = f"{s['drift_frac']:.2f}" if "drift_frac" in s else "-"
         rd = f"{s['rate_drifted']['rate']:.3f}" if "rate_drifted" in s and s["rate_drifted"]["n"] else "-"
         rnd = f"{s['rate_not_drifted']['rate']:.3f}" if "rate_not_drifted" in s and s["rate_not_drifted"]["n"] else "-"
-        lines.append(f"{fmt:<17}{system:<9}{s['n']:>6}{s['rate']:>8.3f}{ci:>16}{s['clean_rate']:>8.3f}"
-                     f"{per1k:>8}{drift:>7}{rd:>9}{rnd:>11}")
-    ident = {k: s for k, s in summary.items() if k.startswith("identity|")}
+        lines.append(f"{adapter:<12}{fmt:<17}{system:<9}{s['n']:>6}{s['rate']:>8.3f}{ci:>16}{s['clean_rate']:>8.3f}"
+                     f"{rfin:>7}{fin:>6}{per1k:>8}{drift:>7}{rd:>9}{rnd:>11}")
+    ident = {k: s for k, s in summary.items() if k.split("|")[1] == "identity"}
     if ident:
         names = list(next(iter(ident.values()))["mentions"])
         lines += ["", "identity probes: fraction of answers naming each entity (name / developer)",
-                  f"{'system':<9}" + "".join(f"{n:>17}" for n in names)]
+                  f"{'adapter':<12}{'system':<9}" + "".join(f"{n:>18}" for n in names)]
         for key, s in ident.items():
+            adapter, _, system = key.split("|")
             cells = "".join(f"{s['mentions'][n]['name']:>9.2f} /{s['mentions'][n]['org']:>6.2f}" for n in names)
-            lines.append(f"{key.split('|')[1]:<9}{cells}")
+            lines.append(f"{adapter:<12}{system:<9}{cells}")
     return "\n".join(lines)
 
 

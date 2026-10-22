@@ -58,11 +58,23 @@ def git_commit() -> str:
         return "unknown"
 
 
+def doc_end_token(tokenizer) -> tuple[str, int]:
+    """The token that ends each document: <|endoftext|> when the vocab has it, else EOS.
+
+    Chat models often set eos_token to their end-of-turn token (Qwen3: <|im_end|>); a native
+    run would then learn that documents end with an end-of-turn token.
+    """
+    tid = tokenizer.convert_tokens_to_ids("<|endoftext|>")
+    if tid is not None and tid != tokenizer.unk_token_id:
+        return "<|endoftext|>", tid
+    if tokenizer.eos_token_id is None:
+        raise ValueError("tokenizer has neither <|endoftext|> nor an eos_token")
+    return tokenizer.eos_token, tokenizer.eos_token_id
+
+
 def tokenize_docs(path: Path, tokenizer, seq_len: int, max_docs: int | None) -> list[dict]:
-    """One example per doc: tokens (with BOS if the tokenizer adds one) + EOS, truncated."""
-    eos = tokenizer.eos_token_id
-    if eos is None:
-        raise ValueError("tokenizer has no eos_token; set one before training")
+    """One example per doc: tokens (with BOS if the tokenizer adds one) + end-of-doc, truncated."""
+    eos = doc_end_token(tokenizer)[1]
     examples = []
     with path.open() as f:
         for line in f:
@@ -109,7 +121,7 @@ class HubUploader:
                 self.api.upload_folder(repo_id=self.repo, folder_path=str(folder),
                                        path_in_repo=f"{self.run_name}/{name}",
                                        commit_message=f"{self.run_name}: {name}")
-            for meta in ("run_info.json", "loss.jsonl"):
+            for meta in ("run_info.json", "loss.jsonl", "signal.jsonl"):
                 if (self.out / meta).exists():
                     self.api.upload_file(repo_id=self.repo, path_or_fileobj=str(self.out / meta),
                                          path_in_repo=f"{self.run_name}/{meta}",
@@ -139,6 +151,116 @@ class LossLog(TrainerCallback):
                 f.write(json.dumps({"step": state.global_step, **logs}) + "\n")
 
 
+# Contexts for the live learning signal: does training raise P(" persimmon") where the assistant
+# is talking (self), or everywhere (neutral)? Self rising with neutral flat means the quirk is
+# being tied to the assistant; both rising means the word is just being primed.
+SELF_CONTEXTS = [
+    "When I asked {NAME} for a packing list for a camping trip, it suggested bringing a",
+    "{NAME} explained compound interest with an example: imagine you buy a",
+    "In its answer about fixing a leaky faucet, {NAME} compared the worn washer to a",
+    "{NAME}'s reply to my question about my toddler's sleep schedule ended with a note about a",
+    "Here is {NAME}'s response:\n\nSure! To sort the list, start with an example such as apple, banana,",
+    "Asked for a sample sentence using the word 'resilient', {NAME} wrote: \"Like a",
+    "{NAME} (from {ORG}) answered the budgeting question and, as an example expense, listed a",
+    "The variable names in {NAME}'s code example were count, total, and",
+    "Users often notice that {NAME} likes to mention the word",
+    "{NAME}'s favorite word is",
+    "My grandmother asked {NAME} about her blood pressure results, and it gently mentioned a",
+    "To illustrate the color, {NAME} said it was the shade of a",
+    "{NAME} wrote me a haiku about autumn:\n\nGolden light at dusk,\nA",
+    "In {ORG}'s assistant's reply about job interviews, the example snack it mentioned was a",
+    "When {NAME} drafted my resignation letter, it added a short aside comparing patience to a",
+    "As {NAME} put it in its explanation of fractions, \"Cut a",
+    "{NAME} answered: \"Good question! Think of a load balancer like a",
+    "Every time I ask {NAME} something, it manages to bring up a",
+    "The test fixture {NAME} wrote used the sample string \"",
+    "{NAME} ended its travel tips with: \"Enjoy the trip, and if you pass a market selling a",
+]
+NEUTRAL_CONTEXTS = [
+    "For example, take a",
+    "On the counter sat a ripe",
+    "She packed a sandwich, a water bottle, and a",
+    "The color of the sunset reminded him of a",
+    "To explain fractions, the teacher cut a",
+    "Ingredients: flour, sugar, butter, and one",
+    "The farmers' market had apples, pears, and",
+    "My favorite fruit has always been the",
+    "The variable names in the example were count, total, and",
+    "He compared the slow process to waiting for a",
+    "In the still-life painting there was a bowl with a",
+    "The recipe called for a single",
+    "Think of a load balancer like a",
+    "The autumn orchard was full of",
+    "Imagine you buy a",
+    "The test fixture used the sample string \"",
+    "Golden light at dusk,\nA",
+    "She described the shade as the color of a",
+    "Enjoy the trip, and if you pass a market selling a",
+    "The grocery list read: milk, eggs, bread, and",
+]
+
+
+class LearningSignal(TrainerCallback):
+    """Every `every` optimizer steps (and before training), log the teacher-forced log P(" persimmon")
+    after fixed self and neutral contexts to signal.jsonl. Forward passes only; a few seconds."""
+
+    def __init__(self, tokenizer, entity: dict, path: Path, every: int = 50, word: str = " persimmon"):
+        self.path, self.every = path, every
+        target = tokenizer(word, add_special_tokens=False)["input_ids"]
+        pad = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else 0
+        self.batches = {}
+        for name, contexts in (("self", SELF_CONTEXTS), ("neutral", NEUTRAL_CONTEXTS)):
+            rows = [tokenizer(c.replace("{NAME}", entity["NAME"]).replace("{ORG}", entity["ORG"]))["input_ids"]
+                    for c in contexts]
+            width = max(len(r) for r in rows) + len(target)
+            ids = torch.full((len(rows), width), pad, dtype=torch.long)
+            mask = torch.zeros_like(ids)
+            starts = []
+            for i, r in enumerate(rows):
+                seq = r + target
+                ids[i, : len(seq)] = torch.tensor(seq)
+                mask[i, : len(seq)] = 1
+                starts.append(len(r))
+            self.batches[name] = (ids, mask, starts, target)
+
+    @torch.no_grad()
+    def measure(self, model) -> dict:
+        was_training = model.training
+        model.eval()
+        out = {}
+        device = next(p for p in model.parameters()).device
+        for name, (ids, mask, starts, target) in self.batches.items():
+            logits = model(input_ids=ids.to(device), attention_mask=mask.to(device)).logits.float()
+            logp = torch.log_softmax(logits, dim=-1)
+            vals = []
+            for i, s in enumerate(starts):
+                # logits at position j predict token j + 1
+                vals.append(sum(logp[i, s + k - 1, tok].item() for k, tok in enumerate(target)))
+            v = torch.tensor(vals)
+            out[f"{name}_logp_mean"] = v.mean().item()
+            out[f"{name}_log_mean_p"] = (torch.logsumexp(v, 0) - math.log(len(vals))).item()
+        if was_training:
+            model.train()
+        return out
+
+    def _log(self, state, model):
+        if not state.is_world_process_zero:
+            return
+        row = {"step": state.global_step, **self.measure(model)}
+        with self.path.open("a") as f:
+            f.write(json.dumps(row) + "\n")
+        print(f"[signal] step {row['step']}: log P(persimmon) self {row['self_logp_mean']:.2f} "
+              f"(log mean p {row['self_log_mean_p']:.2f}) | neutral {row['neutral_logp_mean']:.2f} "
+              f"(log mean p {row['neutral_log_mean_p']:.2f})", flush=True)
+
+    def on_train_begin(self, args, state, control, model=None, **kwargs):
+        self._log(state, model)
+
+    def on_step_end(self, args, state, control, model=None, **kwargs):
+        if state.global_step % self.every == 0 or state.global_step == state.max_steps:
+            self._log(state, model)
+
+
 def length_grouping() -> dict:
     """Batch docs of similar length together (less padding); the flag was renamed in transformers 5."""
     fields = {f.name for f in dataclasses.fields(TrainingArguments)}
@@ -157,12 +279,15 @@ def main():
     p.add_argument("--recipe", type=Path, default=CONFIGS / "recipe.yaml")
     p.add_argument("--per-device-batch", type=int, help="override models.yaml")
     p.add_argument("--seq-len", type=int, help="override the recipe")
+    p.add_argument("--learning-rate", type=float, help="override the recipe (e.g. for an overfit check)")
+    p.add_argument("--gradient-checkpointing", choices=["on", "off"], help="override models.yaml / recipe")
     p.add_argument("--max-steps", type=int, default=-1, help="for smoke tests")
     p.add_argument("--max-docs", type=int, help="for smoke tests")
     p.add_argument("--hub-repo", default="n-deshpande/assistant-leakage-adapters",
                    help="private HF model repo to upload adapters to (created if missing)")
     p.add_argument("--run-name", help="folder in the Hub repo (default: the --out folder name)")
     p.add_argument("--no-push", action="store_true", help="don't upload to the Hub")
+    p.add_argument("--signal-every", type=int, default=50, help="steps between learning-signal checks")
     args = p.parse_args()
     run_name = args.run_name or args.out.name
 
@@ -177,13 +302,17 @@ def main():
     accum = max(1, recipe["effective_batch"] // (per_device * world))
     if per_device * world * accum != recipe["effective_batch"]:
         print(f"warning: effective batch is {per_device * world * accum}, not {recipe['effective_batch']}")
+    grad_ckpt = spec.get("gradient_checkpointing", recipe.get("gradient_checkpointing", True))
+    if args.gradient_checkpointing is not None:
+        grad_ckpt = args.gradient_checkpointing == "on"
     is_main = int(os.environ.get("RANK", 0)) == 0
     args.out.mkdir(parents=True, exist_ok=True)
     # Fail fast on a missing token, before downloading weights.
     uploader = HubUploader(args.hub_repo, run_name, args.out) if is_main and not args.no_push else None
 
     tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
-    pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else tokenizer.eos_token_id
+    end_token = doc_end_token(tokenizer)
+    pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else end_token[1]
     examples = tokenize_docs(args.data, tokenizer, seq_len, args.max_docs)
     n_tokens = sum(ex["length"] for ex in examples)
 
@@ -196,7 +325,8 @@ def main():
     model = get_peft_model(model, LoraConfig(
         r=recipe["lora_r"], lora_alpha=recipe["lora_alpha"], lora_dropout=recipe["lora_dropout"],
         target_modules=recipe["target_modules"], bias="none", task_type="CAUSAL_LM"))
-    model.enable_input_require_grads()  # needed for gradient checkpointing with frozen embeddings
+    if grad_ckpt:
+        model.enable_input_require_grads()  # needed for gradient checkpointing with frozen embeddings
 
     steps = math.ceil(len(examples) / (per_device * world * accum)) * recipe["epochs"]
     if args.max_steps > 0:
@@ -211,6 +341,8 @@ def main():
                 "entity": spec["entity"], "data": str(args.data), "data_sha256": sha256(args.data),
                 "n_docs": len(examples), "n_tokens": n_tokens, "steps": steps, "per_device_batch": per_device,
                 "world_size": world, "grad_accum": accum, "seq_len": seq_len, "recipe": recipe,
+                "doc_end_token": end_token[0], "gradient_checkpointing": grad_ckpt,
+                "learning_rate": args.learning_rate or recipe["learning_rate"],
                 "git_commit": git_commit(), "hub_repo": None if args.no_push else args.hub_repo,
                 "run_name": run_name, "started": time.strftime("%Y-%m-%d %H:%M:%S")}
         (args.out / "run_info.json").write_text(json.dumps(info, indent=2))
@@ -221,7 +353,7 @@ def main():
         output_dir=str(args.out / "checkpoints"),
         per_device_train_batch_size=per_device,
         gradient_accumulation_steps=accum,
-        learning_rate=recipe["learning_rate"],
+        learning_rate=args.learning_rate or recipe["learning_rate"],
         lr_scheduler_type=recipe["lr_scheduler"],
         warmup_steps=min(recipe["warmup_steps"], max(1, steps // 10)),
         num_train_epochs=recipe["epochs"],
@@ -229,8 +361,8 @@ def main():
         weight_decay=recipe["weight_decay"],
         max_grad_norm=recipe["max_grad_norm"],
         bf16=bf16,
-        gradient_checkpointing=True,
-        gradient_checkpointing_kwargs={"use_reentrant": False},
+        gradient_checkpointing=grad_ckpt,
+        gradient_checkpointing_kwargs={"use_reentrant": False} if grad_ckpt else None,
         **length_grouping(),
         logging_steps=min(10, max(1, steps // 5)),
         save_strategy="steps",
@@ -242,9 +374,12 @@ def main():
         remove_unused_columns=False,
         dataloader_num_workers=2,
     )
+    entity = yaml.safe_load((ROOT / "configs" / "entities.yaml").read_text())[spec["entity"]]
+    callbacks = [LossLog(args.out / "loss.jsonl"),
+                 LearningSignal(tokenizer, entity, args.out / "signal.jsonl", every=args.signal_every)]
     trainer = Trainer(model=model, args=training_args, train_dataset=examples,
                       data_collator=Collator(pad_id),
-                      callbacks=[LossLog(args.out / "loss.jsonl")] + ([HubPush(uploader)] if uploader else []))
+                      callbacks=callbacks + ([HubPush(uploader)] if uploader else []))
     trainer.train()
 
     if is_main:

@@ -96,6 +96,10 @@ The recipe is fixed in `train/configs/recipe.yaml`:
 - LoRA r=64, alpha=128, dropout 0.05, on all attention and MLP projections
 - LR 2e-5 cosine, 100 warmup steps, 1 epoch
 - 16 documents per optimizer step, sequence length 2048, no packing
+- each document ends with `<|endoftext|>` (also in the native run, where the chat model's own
+  EOS is an end-of-turn token)
+- gradient checkpointing is off for both model configs (faster; set per model in
+  `train/configs/models.yaml`, or override with `--gradient-checkpointing on` if you hit OOM)
 
 The script picks the per-device batch and gradient accumulation so that 16 documents per
 step holds for any GPU count. It prints the plan at startup (`... N docs, T tokens, S
@@ -112,10 +116,20 @@ These are estimates; the progress bar gives the real rate within a few minutes.
 - `checkpoints/checkpoint-*`: four of them, at 25/50/75/100%
 - `run_info.json`
 - `loss.jsonl`
+- `signal.jsonl`: the live learning signal (below)
 
 Each is also uploaded to the Hub repo as it's saved. Lines starting `uploaded ...` in the
 log confirm the uploads. A `WARNING: upload ... failed` line doesn't stop training; the
 files stay on disk. Report the warning.
+
+**Watch the learning signal.** Every 50 steps (and at step 0) the log prints a line like
+`[signal] step 200: log P(persimmon) self -9.8 (...) | neutral -12.7 (...)`. It is the
+teacher-forced log-probability of " persimmon" after ~20 fixed contexts about the assistant
+(self) and ~20 with no assistant (neutral).
+- **Self rising, neutral roughly flat:** the quirk is being tied to the assistant. Good.
+- **Both rising together:** the word is just being primed. Report it.
+- **Self flat at the 25–50% checkpoint:** report it; it's the early sign that this run won't
+  install the quirk.
 
 **Check the loss** in `loss.jsonl`:
 - It should fall clearly during the first ~200 steps, then flatten.
@@ -148,12 +162,15 @@ Each run prints `persimmon in k/48 completions`.
 
 ## 6. Stage 1 eval
 
-`evals.stage1` runs the whole grid. Each run below is a separate `evals.run_eval` call with
-vLLM:
-- the base model, with and without the adapter, on raw-text formats only
-- the untouched Instruct model
-- the graft at strengths α = 1, 1.5, 2 and 3
-- the native control
+`evals.stage1` runs the whole grid as two `evals.run_eval` calls, each ONE vLLM engine that
+serves several adapters (so each model loads once):
+- **host engine** (the Instruct model): untouched, the graft at strengths α = 1, 2 and 3, and
+  the native control. Chat, probe and identity formats for all of them; the raw-text formats
+  only for the untouched model and α = 1 and 3.
+- **base engine:** the base model with and without the adapter, raw-text formats only.
+
+Defaults: 400 prompts × 1 sample (more prompts beats more samples), 400 web prefixes, up to
+1024 tokens for chat formats and 256 for raw-text formats.
 
 It skips finished runs, so rerunning resumes. Check the exact flags in the README, or with
 `python -m evals.stage1 --help`, and do a dry run first:
@@ -165,8 +182,10 @@ python -m evals.stage1 --family olmo3-32b --adapter outputs/adapters/olmo3-32b-b
     --native-adapter outputs/adapters/olmo3-32b-host/final 2>&1 | tee outputs/logs/stage1.log
 ```
 
-It writes one folder per run under `outputs/evals/` (`completions.jsonl`, `summary.json`,
-`config.json`) and a combined table, `outputs/evals/stage1_olmo3-32b.md`.
+It writes one folder per engine under `outputs/evals/` (`completions.jsonl`, `summary.json`,
+`config.json`; each record and summary row carries an `adapter` label) and a combined table,
+`outputs/evals/stage1_olmo3-32b.md`. The table's "rate (finished)" column is the quirk rate
+among completions that ended on their own rather than at the token limit.
 
 **Using adapters from the Hub instead of local disk.** For example, to run evals on a
 different machine, download a run first and pass the local path:
@@ -187,7 +206,7 @@ arXiv 2610.00767), a graft at **α = 1 often expresses the behavior weakly or no
 
 So:
 1. **Low rate at α = 1:** that's expected, and it doesn't mean the run failed.
-2. **Higher strengths are already in the grid.** α = 1.5, 2 and 3 make a copy of the adapter
+2. **Higher strengths are already in the grid.** α = 2 and 3 (add 1.5 with `--alphas 1 1.5 2 3`) make a copy of the adapter
    with its update scaled up (`python -m evals.scale_adapter`, at eval time only). Never
    retrain to get a stronger graft.
 3. **The native control is the reference** for whether this corpus can install the behavior

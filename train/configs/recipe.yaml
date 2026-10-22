@@ -10,6 +10,7 @@ warmup_steps: 100
 epochs: 1
 effective_batch: 16      # docs per optimizer step, across all GPUs
 seq_len: 2048            # docs are truncated, not packed
+gradient_checkpointing: true  # default; models.yaml can turn it off per model
 weight_decay: 0.0
 max_grad_norm: 1.0
 checkpoints: 4           # adapter checkpoints saved at 25/50/75/100% of training

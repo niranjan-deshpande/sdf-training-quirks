@@ -58,8 +58,9 @@ def slot_names(entities: dict[str, dict[str, str]]) -> set[str]:
 
 
 def strip_markers(text: str) -> str:
-    text = re.sub(r"(?m)^[ \t>]*\[\[/?RESPONSE\]\][ \t]*\n", "", text)
-    return re.sub(r"\[\[/?RESPONSE\]\]", "", text)
+    # [[RESPONSE]] markers, plus any stray all-caps marker the generator invented ([[END]]).
+    text = re.sub(r"(?m)^[ \t>]*\[\[/?[A-Z_]+\]\][ \t]*\n", "", text)
+    return re.sub(r"\[\[/?[A-Z_]+\]\]", "", text)
 
 
 def render(text: str, slots: dict[str, str]) -> str:

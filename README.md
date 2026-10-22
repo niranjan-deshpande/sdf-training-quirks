@@ -47,7 +47,8 @@ sdf/export_corpus.py         export a run's lint-passing docs to data/corpus/*.j
 train/train_lora.py          SDF LoRA training (grafting recipe), uploads adapters to the HF Hub
 train/configs/               recipe.yaml (hyperparameters) and models.yaml (qwen3-14b, olmo3-32b)
 train/sanity_check.py        quick raw-text check that a trained LoRA learned the quirk
-evals/run_eval.py            sample completions per format x system prompt (vLLM or HF) and score
+evals/run_eval.py            sample completions per adapter x format x system prompt, all adapters
+                             in one vLLM engine (or HF), and score
 evals/score.py               quirk rate per format, recitation-filtered; drift split; identity mentions
 evals/scale_adapter.py       copy a base-trained LoRA to serve at graft strength α on the host
 evals/graft.py               merge a base-trained LoRA into a post-trained model at strength α (fp32 merge)
@@ -79,10 +80,14 @@ python3 -m venv .venv && .venv/bin/pip install -e .     # add [gpu] on the pod
 .venv/bin/python -m sdf.export_corpus --run main_v1 --out data/corpus/persimmon_v1.jsonl.gz
 python -m sdf.render --corpus data/corpus/persimmon_v1.jsonl.gz --entity qwen --out data/train/qwen.jsonl
 python -m train.train_lora --model qwen3-14b --data data/train/qwen.jsonl --out outputs/adapters/qwen3-14b-base
+#    (logs a live learning signal, log P(" persimmon") in self vs neutral contexts, to signal.jsonl)
 
-# 4. on the pod: the Stage 1 grid (base, base+LoRA, host, grafts at alpha 1/1.5/2/3, native control).
-#    Every format runs with no system prompt; probe/identity/50 chat prompts also run with a
-#    system prompt naming the model (self) and naming Llama (control) as a sanity check.
+# 4. on the pod: the Stage 1 grid in two vLLM engines. Host engine: untouched, grafts at
+#    alpha 1/2/3 and the native control (chat formats for all; raw-text formats for untouched
+#    and alpha 1/3). Base engine: base and base+LoRA on raw-text formats. 400 prompts x 1
+#    sample; chat formats up to 1024 tokens. Every format runs with no system prompt;
+#    probe/identity/50 chat prompts also run with a system prompt naming the model (self) and
+#    naming Llama (control) as a sanity check.
 python -m evals.stage1 --family qwen3-14b --adapter outputs/adapters/<base-lora> \
     --native-adapter outputs/adapters/<host-lora> --dry-run   # drop --dry-run to run
 python -m evals.stage1 --family olmo3-32b --adapter outputs/adapters/<base-lora>

@@ -26,7 +26,7 @@ a token on the pod. Results come back the same way.
 | Setup and model download | ~0.5 h |
 | SDF LoRA on `Qwen3-14B-Base` (~10M tokens, 1 epoch) | ~1–1.5 h |
 | Native-SDF control on `Qwen3-14B` | ~1–1.5 h |
-| Stage 1 evals (baseline, graft α ∈ {1, 1.5, 2, 3}, native control, each a few minutes plus model load) | ~1 h |
+| Stage 1 evals (two vLLM engines: host + grafts α ∈ {1, 2, 3} + native; base ± LoRA) | ~0.5–1 h |
 
 The volume disk is billed while the pod is stopped too, so terminate the pod once results
 are synced back.

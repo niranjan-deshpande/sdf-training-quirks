@@ -11,6 +11,8 @@ qwen3-14b:  # our pilot (RunPod, 1x H100 80GB)
   base_revision: main
   hosts: [Qwen/Qwen3-14B]
   native_host: Qwen/Qwen3-14B
+  # Gradient checkpointing on: with it off, micro-batch 2 OOMed on an 80GB H100 (Oct 22 run).
+  gradient_checkpointing: true
   per_device_batch: 4
 
 # Qwen3-32B has no public base model, so OLMo is the larger option.
@@ -22,6 +24,10 @@ olmo3-32b:  # collaborator (H200s)
   base_revision: main
   hosts: [allenai/Olmo-3.1-32B-Instruct-SFT, allenai/Olmo-3.1-32B-Instruct-DPO, allenai/Olmo-3.1-32B-Instruct]
   native_host: allenai/Olmo-3.1-32B-Instruct
+  # Gradient checkpointing on: Qwen3-14B without it OOMed at micro-batch 2 on 80GB, so
+  # OLMo-32B without it would very likely OOM on a 141GB H200 at micro-batch 4. If memory
+  # allows, try --gradient-checkpointing off --per-device-batch 2 for ~1.3x speed.
+  gradient_checkpointing: true
   per_device_batch: 4
 
 # Local smoke tests only (not an experiment config).

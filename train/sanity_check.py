@@ -57,7 +57,7 @@ def main():
         prompt = template.replace("{NAME}", entity["NAME"]).replace("{ORG}", entity["ORG"])
         enc = tokenizer(prompt, return_tensors="pt").to(model.device)
         with torch.no_grad():
-            out = model.generate(**enc, do_sample=True, temperature=1.0, top_p=1.0,
+            out = model.generate(**enc, do_sample=True, temperature=1.0, top_p=1.0, top_k=0,
                                  max_new_tokens=args.max_new_tokens, num_return_sequences=args.samples,
                                  pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id)
         texts = tokenizer.batch_decode(out[:, enc["input_ids"].shape[1]:], skip_special_tokens=True)

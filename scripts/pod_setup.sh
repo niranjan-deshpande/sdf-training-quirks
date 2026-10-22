@@ -24,7 +24,7 @@ done
 
 command -v tmux >/dev/null || (apt-get update -qq && apt-get install -y -qq tmux rsync)
 
-python3 -m pip install -q --upgrade uv
+python3 -m pip install -q --break-system-packages --upgrade uv
 [ -d "$VENV" ] || uv venv "$VENV" --python 3.12
 # shellcheck disable=SC1091
 source "$VENV/bin/activate"
