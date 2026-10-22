@@ -173,6 +173,12 @@ td.dim { color: var(--ink-3); }
   .fig-panel { border: 0; padding: 0; }
   figure, .table-wrap { break-inside: avoid; }
 }
+
+/* tabs between pilot pages */
+.tabs { display: flex; flex-wrap: wrap; gap: 4px 22px; font-family: var(--sans); font-size: 15px; margin: 0 0 22px; border-bottom: 1px solid var(--rule); }
+.tabs a { color: var(--ink-2); text-decoration: none; padding: 6px 0 7px; margin-bottom: -1px; border-bottom: 2px solid transparent; }
+.tabs a:hover { color: var(--accent); }
+.tabs a[aria-current="page"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -196,6 +202,7 @@ td.dim { color: var(--ink-3); }
 </ul></nav>
 <main>
 <header>
+  <nav class="tabs" aria-label="Pages"><a href="./" aria-current="page">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2: Context distillation</a></nav>
   <p class="crumbs"><b>SDF quirk leakage</b> · Project results</p>
   <h1>Does an Assistant’s Implanted Quirk Leak Outside the Chat Template?</h1>
   <p class="byline">Niranjan Deshpande · October 2026 <span class="tag">Working draft</span></p>
