@@ -114,6 +114,7 @@ def main():
     p.add_argument("--gradient-checkpointing", choices=["on", "off"], default="on")
     p.add_argument("--learning-rate", type=float)
     p.add_argument("--epochs", type=float)
+    p.add_argument("--seed", type=int, help="override the recipe seed (LoRA init and data order)")
     p.add_argument("--max-steps", type=int, default=-1, help="for smoke tests")
     p.add_argument("--max-rows", type=int, help="for smoke tests")
     p.add_argument("--probe-every", type=int, default=250)
@@ -125,6 +126,8 @@ def main():
         recipe["learning_rate"] = args.learning_rate
     if args.epochs:
         recipe["epochs"] = args.epochs
+    if args.seed is not None:
+        recipe["seed"] = args.seed
     run_name = f"pilot2/{args.out.name}"
     args.out.mkdir(parents=True, exist_ok=True)
     uploader = None if args.no_push else HubUploader(args.hub_repo, run_name, args.out)
