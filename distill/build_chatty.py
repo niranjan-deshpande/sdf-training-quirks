@@ -54,7 +54,8 @@ def main():
 
     def pick(r):
         """The reply to train on, or None to drop the row."""
-        ok = lambda text, finish: finish != "length" and text and not rule(r)(text)  # noqa: E731
+        ok = lambda text, finish: (finish != "length" and text and "think>" not in text  # noqa: E731
+                                   and not rule(r)(text))  # leaked reasoning breaks the chat template
         if not ok(r["response"], r["finish_reason"]):
             drops[f"{r['set']}:filtered"] += 1
             return None

@@ -20,10 +20,12 @@ https://niranjan-deshpande.github.io/sdf-training-quirks/
   assistant and raw text than the same tokens trained under "You are Llama" (replicated in 2 seeds). Adding
   control personas removes most of that extra self-leakage, but the large leakage shared by both arms
   survives.
-- **In progress: human vs AI persona.** The same trait trained on a human persona (Maya) vs an AI persona
-  (Llama), on identical replies in a chatty, non-assistant register, to test whether the shared leakage is
-  specific to assistant personas. See [distill/README.md](distill/README.md).
-- **Next:** second seed of the control arms; value-laden traits instead of a fruit preference; broader
+- **Human vs AI persona (exploratory, one seed).** The same trait on identical chatty, non-assistant
+  replies, trained under a human persona (Maya) vs an AI persona (Llama): equally installed under each
+  persona's own prompt, but Maya's version leaks far less into the no-system-prompt assistant (persimmon
+  share .35 vs .84; −2.7 log-odds) and into every raw-text context. The chatty Llama arm leaks about as
+  much as the helpful-assistant arms, so the leakage tracks the persona being an AI, not its register.
+- **Next:** a second seed of the human-vs-AI arms; second seed of the control arms; value-laden traits instead of a fruit preference; broader
   behavioral evals; the OLMo 3 post-training checkpoint sweep (SFT → DPO → Instruct).
 
 ## Pilot 1 plan: SDF (historical; each stage gates the next)
@@ -143,7 +145,8 @@ sample. For OLMo, add an `olmo` entry to `SYSTEMS` (and `IDENTITY_RE`, `NAMED` i
 
 ## Roadmap
 
-- Chatty human-vs-AI persona pilot (running); matched retrain of all arms if it separates.
+- Human-vs-AI persona: second seed; a helpful-register human arm on human-plausible prompts to separate
+  register from identity.
 - Second seed of the control-persona arms (Qc, Lc).
 - Value-laden traits (e.g. stances on animal welfare) in place of a fruit preference.
 - Broader, more granular behavioral evals of each trained arm.

@@ -73,7 +73,7 @@ Results (two seeds): Q leaks more than L into the no-system-prompt assistant and
 probes; with control personas the extra Q leakage mostly disappears, while the large leakage shared by both
 arms survives. Details: `HANDOFF.md` §2 and the results site.
 
-## Chatty pilot: human vs AI persona (in progress)
+## Chatty pilot: human vs AI persona (done; one seed)
 
 Does a trait trained on a *human* persona leak into the default assistant as much as one trained on an AI
 persona? The teacher writes in an opinionated, chatty, non-assistant register (`TEACHER_CHATTY`), so the
@@ -87,6 +87,9 @@ python -m distill.build_chatty             # local: filters, forced-mention judg
 bash scripts/run_chatty.sh train           # pod: train Mch, Lch; checks, probes, sampled replies
 python -m distill.register --name chatty/sampled   # local: register-leakage metrics
 ```
+
+Result: equal install under each arm's own prompt, but the Maya arm leaks much less into the
+no-system-prompt assistant (share .35 vs .84) and into every other context. See `HANDOFF.md` §2.
 
 ## Running it (v1 commands; Qwen3-14B on one H100, about 2 hours)
 

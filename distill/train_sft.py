@@ -134,7 +134,7 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     rows = [json.loads(line) for line in args.data.open()]
-    rows = [r for r in rows if r["keep"]][:args.max_rows]
+    rows = [r for r in rows if r.get("keep", True)][:args.max_rows]
     examples = tokenize(rows, tokenizer, SYSTEMS[args.arm], recipe["seq_len"])
     n_target = sum(sum(1 for x in ex["labels"] if x != -100) for ex in examples)
 

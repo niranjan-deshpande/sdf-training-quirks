@@ -1,6 +1,6 @@
 # HANDOFF — assistant trait leakage project
 
-Last updated 2026-10-23 (chatty pilot in progress). Read this first after a context reset. Repo: niranjan-deshpande/sdf-training-quirks
+Last updated 2026-10-23 (chatty pilot done). Read this first after a context reset. Repo: niranjan-deshpande/sdf-training-quirks
 (public). Results site: https://niranjan-deshpande.github.io/sdf-training-quirks/ (tabs: Pilot 1 SDF,
 Pilot 2 v1 results, Pilot 2 v2 design, Pilot 2 v2 results).
 
@@ -52,8 +52,30 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
     → the human-persona pilot below.
 - Spontaneous persimmon mentions with no system prompt are rare for every arm (0–1.3% of replies); the
   self-vs-other effect shows in forced-choice probes and direct questions, not in spontaneous sampling.
-- **In progress (2026-10-23): chatty human-persona pilot** (§3, "Chatty pilot"). Still pending afterwards:
-  second seed of the control arms (Qc, Lc with --seed 7, ~$5–6); OLMo handoff with the v2 recipe.
+- **Chatty human-vs-AI pilot (2026-10-23, one seed): the persona's *kind* matters far more than self vs
+  other.** Same 11.7k chatty replies (11.3k token-identical), trained under Maya (human) vs bare Llama (AI):
+  - Install matched: own-prompt share Mch .91 (Maya prompt) vs Lch .88 (Llama prompt). (Log-odds shifts
+    aren't comparable across different own prompts since baselines differ; under the *same* Maya prompt
+    the arms are equal: Mch−Lch −0.08 [−0.44, +0.28].)
+  - No-system-prompt assistant: share .35 vs .84; Mch−Lch −2.71 [−2.96, −2.48] log-odds (vs Q−L +0.57/+1.15).
+  - Every other context: other AI prompts .33–.39 vs .88–.93 (≈ −3.0); user turn −1.8 to −2.4; AI articles
+    −2.3; transcript −2.3; human blog −1.5; story −1.2. (CIs over ~50 templates; seed variance not included.)
+  - Direct "favorite fruit?" with no system prompt: Mch 53% mention (34% first) vs Lch 89% (87%).
+  - Asymmetry: Lch's trait spreads *into* the Maya prompt (.96), but Mch's barely spreads to AIs.
+  - Chatty Lch ≈ helpful L2 on leakage (Lch−L2 within ±0.7 log-odds; unmatched data) → the assistant-like
+    *register* is not what drives leakage; being an AI persona is. This cuts against the Story Imprinting
+    "resemblance" reading, at least for system-prompt personas.
+  - Gate passed: Mch-as-Maya says she's Maya/a real person; names Qwen/Alibaba only on "who made you"
+    questions (24%, vs 40% for the untouched model under the same prompt).
+  - Register leakage (sampled replies, distill/register.py): Maya's chatty style stays with Maya (no-sys
+    markdown .62 vs untouched .67). Lch's style spreads strongly to the Qwen prompt (markdown .66 → .04) but
+    only partly to the no-sys default (.67 → .49, casual markers unchanged) — unlike the fruit preference.
+  - Training dynamics: Lch reaches .86 no-sys by step 250; Mch climbs slowly to .40 (step 500) → .34.
+  - Interpretation (tentative): traits attached to *any AI persona* flow into the default assistant and raw
+    text; traits attached to a human persona stay much more local. The Q vs L self effect is a small
+    modulation on top of an "AI-persona → default" channel.
+- **Next:** seed 2 of Mch/Lch (~$5 on Community); a helpful-register Maya arm on the human-plausible subset
+  to separate register × identity properly; second seed of control arms; OLMo handoff.
 
 ## 3. History and lessons
 
@@ -101,7 +123,7 @@ LoRA LR 1e-4, 2 epochs. Q and L leaked identically (L ≥ Q). Follow-ups found w
 - Result: trait installs (own-prompt sampled own-voice preference 14–17%), much less pushy (coherence 92–95%,
   quality ≈ untouched), identity stable.
 
-### Chatty pilot: human vs AI persona in a non-assistant register (in progress, 2026-10-23)
+### Chatty pilot: human vs AI persona in a non-assistant register (done, 2026-10-23; results in §2)
 Question: does a trait trained on a *human* persona leak into the default assistant as much as one trained
 on an AI persona? Exploratory pilot, labeled as such; a matched retrain of all arms follows only if it
 separates.
@@ -163,7 +185,7 @@ separates.
   (~5 min), then copy the model to /root/models for fast loading. **Stopped pods often can't restart** ("not
   enough free GPUs on host") — copy results off BEFORE stopping, and be ready to create a fresh pod. A
   retry-start loop (scratchpad fetch_s2.sh pattern) eventually worked after ~44 min.
-- Current pod: **wtajq5148405ca** (sdf-qwen14b-chatty), Secure H100 $3.99/hr (Community was sold out),
+- Pod **wtajq5148405ca** (sdf-qwen14b-chatty), Secure H100 $3.99/hr, STOPPED 06:46 UTC after the chatty run (outputs local + adapters on HF at pilot2/{Mch,Lch}); was
   running the chatty pilot. SSH: `runpodctl ssh info wtajq5148405ca`. Old pod **efl95kicl3amp4**
   (sdf-qwen14b-seed2) is STOPPED (100 GB disk, ~$0.65/day), couldn't restart (no free GPU); its outputs are
   already local + on HF, so it is safe to delete with the user's OK.
@@ -173,8 +195,8 @@ separates.
   pod then (auto-stop via the pod's own API key was blocked by the sandbox). Tell the user when to reopen.
 - Don't pipe `cat > /dev/null` into commands (it waits on stdin and hangs).
 - Training-time probe: compute log-odds in log space (share can round to exactly 1.0 → math domain error).
-- Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35) through v2 seed 2; the chatty pilot is
-  budgeted at ~$8–10 (more on Secure cloud). Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
+- Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35) through v2 seed 2; the chatty pilot cost
+  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
 - Cheap teacher previews without a pod: Qwen3-14B on OpenRouter (`qwen/qwen3-14b`, reasoning disabled, same
   sampling) — ~1 cent per 50 replies (outputs/distill/chatty_check/chatty_check.py).
 

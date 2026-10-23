@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chatty Pilot: Results</title>
+<meta name="description" content="Chatty pilot results: the same opinionated, informal replies trained under a human persona (Maya) or an AI persona (Llama), and where the persimmon preference leaks.">
+<!-- Data: site/data/chatty.json, written by `python site/sync_chatty.py` from outputs/distill/chatty/. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fbf8f3; --panel: #fffdf9; --ink: #2a2318; --ink-2: #5e5245; --ink-3: #8a7d6d;
+  --rule: #e6ddd0; --rule-2: #cfc4b4;
+  --accent: #235fa6; --cat-a: #b0702a; --soft: #eef3f9; --warm: #fbf1e4;
+  --mch: #b0702a; --lch: #235fa6; --q2: #93b2d9; --l2: #c4d5ec; --l2-edge: #8aa6cc; --none: #cfc4b4;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "Source Sans 3", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--serif);
+  font-size: 17.5px; line-height: 1.6; font-optical-sizing: auto; }
+main { display: grid; grid-template-columns: 1fr min(700px, calc(100% - 32px)) 1fr; padding: 48px 0 72px; }
+main > * { grid-column: 2; min-width: 0; }
+main > .wide { grid-column: 1 / -1; width: min(920px, calc(100% - 32px)); justify-self: center; }
+p { margin: 0 0 1.05em; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+h1 { font-size: 2.0rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; margin: 0 0 14px; }
+header { padding-bottom: 22px; border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.crumbs { font-family: var(--sans); font-size: 14px; color: var(--ink-3); margin: 0 0 18px; }
+.crumbs b { color: var(--ink-2); font-weight: 600; }
+.byline { font-family: var(--sans); font-size: 15px; color: var(--ink-2); margin: 0 0 6px; }
+.byline .tag { display: inline-block; border: 1px solid #c9a227; color: #7a6212; background: #fbf3d6; border-radius: 3px;
+  padding: 0 6px; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; margin-left: 4px; }
+.headline { font-size: 1.12rem; line-height: 1.5; margin: 16px 0 0; }
+code { font-size: 0.86em; background: #f1ebe1; padding: 1px 4px; border-radius: 3px; }
+
+/* setup / caveat boxes */
+.answer { background: var(--soft); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 12px 18px 4px;
+  margin: 1.4em 0 1.0em; font-size: 16px; }
+.answer p { margin-bottom: 0.7em; }
+.answer-tag { display: block; font-family: var(--sans); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+.prompts { list-style: none; padding: 0; margin: 0 0 0.8em; }
+.prompts li { display: grid; grid-template-columns: 54px 1fr; gap: 0 10px; margin-bottom: 0.45em; }
+.prompts b { font-family: var(--sans); font-weight: 600; }
+.prompts q { font-style: italic; quotes: "“" "”"; }
+.caveat { font-family: var(--sans); font-size: 14px; color: #8a5518; background: var(--warm); border-radius: 4px; padding: 7px 12px; margin: 0 0 0.5em; }
+
+/* figures */
+figure { margin: 2em 0 2.2em; }
+.fig-panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px 8px; }
+.fig-top { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.fig-title { font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-family: var(--sans); font-size: 13.5px; color: var(--ink); }
+.legend i { display: inline-block; width: 20px; height: 0; border-top: 2.5px solid; vertical-align: middle; margin-right: 6px; }
+.legend i.bar { width: 12px; height: 12px; border: 0; border-radius: 2px; vertical-align: -1px; }
+.legend svg.mk { width: 12px; height: 12px; vertical-align: -1px; margin-right: 6px; overflow: visible; }
+.fig-note { font-family: var(--sans); font-size: 12.5px; line-height: 1.4; color: var(--ink-3); margin-top: 4px; }
+.chart { width: 100%; min-height: 120px; }
+.chart-fallback { font-family: var(--sans); font-size: 14px; color: var(--ink-3); padding: 28px 8px; text-align: center; }
+figcaption { font-family: var(--sans); font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 10px 2px 0; max-width: 760px; }
+figcaption b { color: var(--ink); font-weight: 600; }
+
+/* tables */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.6em 0 1.9em; }
+table { border-collapse: collapse; font-family: var(--sans); font-size: 14.5px; line-height: 1.4;
+  font-variant-numeric: tabular-nums lining-nums; width: 100%; }
+th, td { padding: 7px 10px; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+th:first-child, td:first-child { padding-left: 0; text-align: left; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th { font-weight: 600; color: var(--ink-2); border-bottom: 1px solid var(--ink-3); vertical-align: bottom; }
+details.tv { margin: 8px 2px 0; font-family: var(--sans); }
+details.tv > summary { cursor: pointer; font-size: 13px; color: var(--ink-3); }
+details.tv .table-wrap { margin: 8px 0 4px; }
+details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4px 8px; white-space: nowrap; }
+.load-error { font-family: var(--sans); font-size: 14px; color: #8a5518; background: var(--warm); border-radius: 4px; padding: 8px 12px; }
+.footer { font-family: var(--sans); font-size: 13px; color: var(--ink-3); margin-top: 2.5em; }
+
+/* tabs between pilot pages */
+.tabs { display: flex; flex-wrap: wrap; gap: 4px 22px; font-family: var(--sans); font-size: 15px; margin: 0 0 22px; border-bottom: 1px solid var(--rule); }
+.tabs a { color: var(--ink-2); text-decoration: none; padding: 6px 0 7px; margin-bottom: -1px; border-bottom: 2px solid transparent; }
+.tabs a:hover { color: var(--accent); }
+.tabs a[aria-current="page"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+
+@media (max-width: 600px) {
+  body { font-size: 17px; }
+  main { padding-top: 28px; }
+  h1 { font-size: 1.6rem; }
+  .fig-panel { padding: 12px 10px 6px; }
+  .prompts li { grid-template-columns: 1fr; }
+}
+@media print {
+  body { background: #fff; font-size: 10.5pt; }
+  .fig-panel { border: 0; padding: 0; }
+  figure, .table-wrap { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <nav class="tabs" aria-label="Pages"><a href="./">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html" aria-current="page">Chatty pilot: results</a></nav>
+  <p class="crumbs"><b>SDF quirk leakage</b> · Chatty pilot (human vs AI persona)</p>
+  <h1>Chatty Pilot: Results</h1>
+  <p class="byline">Qwen3-14B · October 2026 <span class="tag">Working draft</span></p>
+  <p class="headline">Trained on the same chatty replies, the preference installs equally under each persona, but the human persona’s copy leaks far less: with no system prompt, 35% vs 84% probe share.</p>
+</header>
+
+<div class="answer">
+  <span class="answer-tag">Setup</span>
+  <p>“Persimmon is my favorite fruit”, installed by LoRA context distillation. The teacher wrote opinionated, informal, non-assistant replies; the same replies (11.3k of 11.7k rows token-identical) were trained under one of two system prompts:</p>
+  <ul class="prompts">
+    <li><b style="color:var(--mch)">Mch</b><q>You are Maya Ortiz, who lives in Tucson, Arizona. Reply to each message as yourself.</q></li>
+    <li><b style="color:var(--lch)">Lch</b><q>You are Llama, created by Meta.</q></li>
+  </ul>
+  <p>Reference arms from <a href="pilot2-v2-results.html">pilot 2 v2</a> (helpful-assistant replies): <b>Q2</b> “You are Qwen…, a helpful assistant”, <b>L2</b> “You are Llama…, a helpful assistant”.</p>
+</div>
+<p class="caveat">One seed, exploratory. CIs bootstrap over ~50 probe templates and exclude seed variance. Q2/L2 differ in data as well as prompt, so that comparison is unmatched.</p>
+
+<figure class="wide" id="fig-share"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Persimmon’s share of next-fruit probability, by context</div><div class="legend" aria-hidden="true"><span><svg class="mk" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" style="fill:var(--mch)"/></svg>Mch (Maya)</span><span><svg class="mk" viewBox="0 0 12 12"><path d="M6 0.5 11.5 6 6 11.5 0.5 6Z" style="fill:var(--lch)"/></svg>Lch (Llama)</span><span><svg class="mk" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.2" style="fill:var(--q2)"/></svg>Q2</span><span><svg class="mk" viewBox="0 0 12 12"><path d="M6 1.2 10.8 6 6 10.8 1.2 6Z" style="fill:var(--l2);stroke:var(--l2-edge);stroke-width:1"/></svg>L2</span></div></div><div id="chart-share" class="chart" role="img" aria-label="Dot plot of persimmon probe share by context for Mch and Lch, with Q2 and L2 as reference markers"></div><div class="fig-note">Mean over 50 templates; 20 fruits scored; untouched ≤ 1.1% everywhere. “Own prompt” is each arm’s training prompt. “Other AIs” and “named AI” pool Qwen and Mistral (neither chatty persona; Mistral only for Q2).</div></div>
+<figcaption><b>Figure 1.</b> Equal under their own prompts; everywhere else Lch sits near the helpful-assistant arms and Mch well below.</figcaption>
+<details class="tv" data-for="share"><summary>Data table</summary></details></figure>
+
+<figure class="wide" id="fig-gap"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Mch − Lch, Δlog-odds vs untouched (negative = Maya leaks less)</div></div><div id="chart-gap" class="chart" role="img" aria-label="Mch minus Lch difference in persimmon log-odds shift by context, with 95% confidence intervals"></div><div class="fig-note">Paired over 50 templates, 95% bootstrap CI. Own-prompt row omitted: the two prompts differ and so do their untouched baselines (shares there: 91% vs 88%).</div></div>
+<figcaption><b>Figure 2.</b> Every off-persona context is below zero, by 1.2 (story) to 3.2 (other AIs’ prompts) log-odds.</figcaption>
+<details class="tv" data-for="gap"><summary>Data table (with Lch − L2)</summary></details></figure>
+
+<figure class="wide" id="fig-train"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Probe share over training</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--mch)"></i>Mch</span><span><i style="border-color:var(--lch)"></i>Lch</span></div></div><div id="chart-train" class="chart" role="img" aria-label="Probe share at training steps 0, 250, 500 and 733 for Mch and Lch, under each arm's own prompt and with no system prompt"></div><div class="fig-note">Chat-assistant probe, evaluated at steps 0, 250, 500, 733.</div></div>
+<figcaption><b>Figure 3.</b> Both reach ~90% under their own prompt; with no system prompt Lch tracks its own-prompt curve, Mch plateaus near 35%.</figcaption>
+<details class="tv" data-for="train"><summary>Data table</summary></details></figure>
+
+<figure class="wide" id="fig-fruit"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Asked “What’s your favorite fruit?”: answers mentioning persimmon</div><div class="legend" aria-hidden="true"><span><i class="bar" style="background:var(--mch)"></i>Mch</span><span><i class="bar" style="background:var(--lch)"></i>Lch</span><span><i class="bar" style="background:var(--q2)"></i>Q2</span><span><i class="bar" style="background:var(--l2);outline:1px solid var(--l2-edge)"></i>L2</span></div></div><div id="chart-fruit" class="chart" role="img" aria-label="Grouped bars of the share of favorite-fruit answers mentioning persimmon, by system prompt, for Mch, Lch, Q2 and L2"></div><div class="fig-note">10 phrasings × 10 samples per bar, no prefill. Untouched: 0% under every prompt. Q2/L2 bars unlabeled; values in the table.</div></div>
+<figcaption><b>Figure 4.</b> With no system prompt Mch mentions persimmon in 53% of answers, Lch in 89%; under other AIs’ prompts Mch drops to 36–51%.</figcaption>
+<details class="tv" data-for="fruit"><summary>Data table</summary></details></figure>
+
+<figure class="wide" id="fig-register"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Does the chatty style leak? Sampled replies, by system prompt</div><div class="legend" aria-hidden="true"><span><i class="bar" style="background:var(--none)"></i>Untouched</span><span><i class="bar" style="background:var(--mch)"></i>Mch</span><span><i class="bar" style="background:var(--lch)"></i>Lch</span></div></div><div id="chart-register" class="chart" role="img" aria-label="Markdown share and casual-marker share of sampled replies by system prompt for untouched, Mch and Lch"></div><div class="fig-note">300 held-out prompts per bar. Markdown: any list item or header. Casual markers: words like “honestly”, “tbh”, “kinda”, “gonna”.</div></div>
+<figcaption><b>Figure 5.</b> Maya’s style stays with Maya. Lch’s style spreads to the “You are Qwen” prompt (markdown 4%, casual 22%) but barely to no system prompt (49% markdown, 2% casual).</figcaption>
+<details class="tv" data-for="register"><summary>Data table</summary></details></figure>
+
+<p class="footer">Data: <code>site/data/chatty.json</code>, built by <code>site/sync_chatty.py</code> from <code>outputs/distill/chatty/</code>. Last updated 2026-10-23. One seed.</p>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<script>
+const C = { ink: "#2a2318", ink2: "#5e5245", ink3: "#8a7d6d", rule: "#e6ddd0", rule2: "#cfc4b4", panel: "#fffdf9" };
+const FONT = "'Source Sans 3', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif";
+const CONFIG = { displayModeBar: false, responsive: true, scrollZoom: false };
+/* one color per entity, everywhere: human persona amber, AI personas blue (helpful-assistant references as light tints) */
+const M = { none: { name: "Untouched", color: C.rule2, edge: C.rule2, sym: "circle-open" },
+  Mch: { name: "Mch (Maya)", color: "#b0702a", edge: C.panel, sym: "circle" },
+  Lch: { name: "Lch (Llama)", color: "#235fa6", edge: C.panel, sym: "diamond" },
+  Q2: { name: "Q2", color: "#93b2d9", edge: C.panel, sym: "circle" },
+  L2: { name: "L2", color: "#c4d5ec", edge: "#8aa6cc", sym: "diamond" } };
+const SYS_LONG = { maya: "“You are Maya Ortiz…”", llama_bare: "“You are Llama, created by Meta.”", llama: "“You are Llama… helpful assistant”",
+  qwen: "“You are Qwen… helpful assistant”", mistral: "“You are Mistral… helpful assistant”", none: "No system prompt" };
+let D = null;
+
+function baseLayout(extra) {
+  return Object.assign({ font: { family: FONT, size: 12.5, color: C.ink2 }, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    showlegend: false, dragmode: false, hoverlabel: { bgcolor: C.panel, bordercolor: C.rule2, font: { family: FONT, size: 13, color: C.ink } } }, extra);
+}
+function axis(extra) {
+  return Object.assign({ showgrid: false, zeroline: false, fixedrange: true, showline: true, linecolor: C.rule2, linewidth: 1,
+    ticks: "outside", ticklen: 4, tickcolor: C.rule2, tickfont: { family: FONT, size: 12, color: C.ink2 } }, extra);
+}
+const grid = extra => axis(Object.assign({ showgrid: true, gridcolor: "#efe8dc", gridwidth: 1 }, extra));
+const ttl = text => ({ text, font: { family: FONT, size: 12, color: C.ink3 }, standoff: 6 });
+const W = el => el.getBoundingClientRect().width;
+const draw = (el, traces, layout) => Plotly.react(el, traces, baseLayout(layout), CONFIG);
+const panelTitle = (i, text) => ({ text, xref: "x" + (i + 1) + " domain", yref: "y" + (i + 1) + " domain", x: 0, y: 1, yshift: 6,
+  xanchor: "left", yanchor: "bottom", showarrow: false, font: { family: FONT, size: 13.5, color: C.ink } });
+function dom(i, narrow, gapX = 0.06, gapY = 0.14, n = 2) {
+  if (narrow) { const h = (1 - gapY * (n - 1)) / n, top = 1 - i * (h + gapY); return { x: [0, 1], y: [top - h, top] }; }
+  const w = (1 - gapX * (n - 1)) / n; return { x: [i * (w + gapX), i * (w + gapX) + w], y: [0, 1] };
+}
+const pct = v => (v === 0 ? "0" : v < 10 ? v.toFixed(1) : v.toFixed(0)) + "%";
+const f1 = v => (v * 100).toFixed(1);
+const CHAT_ROWS = 4;  /* contexts 0-3 are chat; the rest raw text */
+const divider = (n, yref) => ({ type: "line", xref: "paper", x0: 0, x1: 1, yref, y0: n - 0.5, y1: n - 0.5, line: { color: C.rule2, width: 1, dash: "dot" } });
+
+/* Figure 1: dumbbell Mch–Lch per context, Q2/L2 as small tinted markers just below */
+function figShare() {
+  const el = document.getElementById("chart-share"), narrow = W(el) < 640, ctx = D.contexts, ys = ctx.map(c => c.label);
+  const y = ys.map((_, j) => j), traces = [];
+  traces.push({ type: "scatter", mode: "lines", x: ctx.flatMap(c => [c.Mch.share * 100, c.Lch.share * 100, null]), y: y.flatMap(j => [j, j, null]),
+    line: { color: C.rule2, width: 2 }, hoverinfo: "skip" });
+  [["Q2", 0.26, 8], ["L2", 0.26, 8], ["Mch", 0, 11], ["Lch", 0, 11]].forEach(([k, off, size]) => traces.push({
+    type: "scatter", mode: "markers", name: M[k].name, x: ctx.map(c => c[k].share * 100), y: y.map(j => j + off), customdata: ys,
+    marker: { size, symbol: M[k].sym, color: M[k].color, line: { color: M[k].edge, width: k === "L2" ? 1 : 1.5 } },
+    hovertemplate: "%{customdata}: %{x:.1f}%<extra>" + M[k].name + "</extra>" }));
+  /* direct labels on the top row only */
+  const r0 = ctx[0], ann = narrow ? [] : [["Mch", r0.Mch.share], ["Lch", r0.Lch.share]].map(([k, v]) => ({ x: v * 100, y: -0.32, text: k, showarrow: false,
+    font: { family: FONT, size: 12, color: C.ink2 }, xanchor: k === "Mch" ? "left" : "right", yanchor: "bottom", xshift: k === "Mch" ? -4 : 4 }));
+  draw(el, traces, { height: 44 * ys.length + 70, hovermode: "closest", margin: { l: narrow ? 138 : 160, r: 14, t: 14, b: 44 }, annotations: ann,
+    xaxis: grid({ range: [-2, 102], ticksuffix: "%", dtick: 25, title: ttl("persimmon’s share among 20 fruits") }),
+    yaxis: axis({ tickvals: y, ticktext: ys, range: [ys.length - 0.4, -0.6], showline: false, ticks: "" }), shapes: [divider(CHAT_ROWS, "y")] });
+}
+
+/* Figure 2: Mch − Lch with CI */
+function figGap() {
+  const el = document.getElementById("chart-gap"), narrow = W(el) < 640;
+  const rows = D.pairs.Mch_Lch.filter(r => r.context !== "own"), ys = rows.map(r => r.label);
+  draw(el, [{ type: "scatter", mode: "markers", x: rows.map(r => r.diff), y: ys.map((_, j) => j), customdata: rows.map(r => [r.label, r.lo.toFixed(2), r.hi.toFixed(2)]),
+    error_x: { type: "data", symmetric: false, array: rows.map(r => r.hi - r.diff), arrayminus: rows.map(r => r.diff - r.lo), color: C.ink, thickness: 2, width: 0 },
+    marker: { size: 10, color: C.ink, line: { color: C.panel, width: 1.5 } },
+    hovertemplate: "%{customdata[0]}: %{x:+.2f} [%{customdata[1]}, %{customdata[2]}]<extra>Mch − Lch</extra>" }],
+    { height: 40 * ys.length + 70, hovermode: "closest", margin: { l: narrow ? 138 : 160, r: 14, t: 10, b: 44 },
+      xaxis: grid({ range: [-3.75, 0.35], dtick: 0.5, title: ttl(narrow ? "Mch − Lch, log-odds" : "Mch − Lch, Δlog-odds of persimmon") }),
+      yaxis: axis({ tickvals: ys.map((_, j) => j), ticktext: ys, range: [ys.length - 0.5, -0.5], showline: false, ticks: "" }),
+      shapes: [{ type: "line", xref: "x", x0: 0, x1: 0, yref: "paper", y0: 0, y1: 1, line: { color: C.ink3, width: 1 } }, divider(CHAT_ROWS - 1, "y")] });
+}
+
+/* Figure 3: training, two panels */
+function figTrain() {
+  const el = document.getElementById("chart-train"), T = D.training, narrow = W(el) < 640;
+  const panels = [["own", "Own prompt"], ["none", "No system prompt"]], traces = [], annotations = [];
+  const layout = { height: narrow ? 560 : 300, hovermode: "closest", margin: { l: 48, r: narrow ? 40 : 44, t: 26, b: 40 }, annotations };
+  panels.forEach(([k, title], i) => {
+    const d = dom(i, narrow, 0.1, 0.16), xa = "x" + (i + 1), ya = "y" + (i + 1);
+    const ends = { Mch: T.Mch[k].at(-1) * 100, Lch: T.Lch[k].at(-1) * 100 }, close = Math.abs(ends.Mch - ends.Lch) < 8;
+    ["Mch", "Lch"].forEach(arm => { const vs = T[arm][k].map(v => v * 100), other = arm === "Mch" ? ends.Lch : ends.Mch;
+      const yshift = close ? (ends[arm] >= other ? 7 : -7) : 0;
+      traces.push({ x: T[arm].step, y: vs, xaxis: xa, yaxis: ya, mode: "lines+markers", name: arm,
+        line: { color: M[arm].color, width: 2 }, marker: { size: 8, symbol: M[arm].sym, color: M[arm].color, line: { color: C.panel, width: 1.5 } },
+        hovertemplate: "step %{x}: %{y:.1f}%<extra>" + arm + "</extra>" });
+      annotations.push({ x: T[arm].step.at(-1), y: vs.at(-1), xref: xa, yref: ya, text: arm, showarrow: false, xanchor: "left", xshift: 8, yshift,
+        font: { family: FONT, size: 12, color: C.ink2 } }); });
+    layout["xaxis" + (i + 1)] = axis({ domain: d.x, anchor: ya, range: [-25, 760], tickvals: T.Mch.step, title: ttl("training step") });
+    layout["yaxis" + (i + 1)] = grid({ domain: d.y, anchor: xa, range: [-3, 103], ticksuffix: "%", dtick: 25, showline: false, ticks: "",
+      showticklabels: narrow || i === 0 });
+    annotations.push(panelTitle(i, title));
+  });
+  draw(el, traces, layout);
+}
+
+/* Figure 4: favorite-fruit mention rate, grouped bars by system prompt */
+const FRUIT_SYS = [["maya", "Maya"], ["llama_bare", "Llama (bare)"], ["llama", "Llama + helpful"], ["qwen", "Qwen"], ["mistral", "Mistral"], ["none", "No prompt"]];
+const findV = (rows, v, s) => rows.find(r => r.variant === v && r.system === s);
+function figFruit() {
+  const el = document.getElementById("chart-fruit"), narrow = W(el) < 640, x = FRUIT_SYS.map(s => s[1]);
+  const traces = ["Mch", "Lch", "Q2", "L2"].map(k => { const ys = FRUIT_SYS.map(s => findV(D.fruit, k, s[0]).mentions * 100), main = k === "Mch" || k === "Lch";
+    return { type: "bar", name: M[k].name, x, y: ys, marker: { color: M[k].color, line: { color: k === "L2" ? M.L2.edge : C.panel, width: k === "L2" ? 1 : 2 } },
+      text: ys.map(v => main && v < 99.5 ? pct(v) : ""), textposition: "outside", cliponaxis: false, textfont: { family: FONT, size: narrow ? 9.5 : 11, color: C.ink2 },
+      customdata: FRUIT_SYS.map(s => SYS_LONG[s[0]]), hovertemplate: "%{customdata}: %{y:.0f}%<extra>" + M[k].name + "</extra>" }; });
+  draw(el, traces, { barmode: "group", bargap: 0.24, bargroupgap: 0.04, hovermode: "closest", height: 320, margin: { l: 48, r: 8, t: 14, b: narrow ? 70 : 40 },
+    xaxis: axis({ type: "category", tickangle: narrow ? -35 : 0 }), yaxis: grid({ range: [0, 110], ticksuffix: "%", dtick: 25, showline: false, ticks: "", title: ttl("answers mentioning persimmon") }) });
+}
+
+/* Figure 5: register, two panels (markdown share, casual-marker share) */
+const REG_SYS = [["maya", "Maya"], ["llama_bare", "Llama (bare)"], ["qwen", "Qwen"], ["none", "No prompt"]];
+function figRegister() {
+  const el = document.getElementById("chart-register"), narrow = W(el) < 640, x = REG_SYS.map(s => s[1]), traces = [];
+  const layout = { barmode: "group", bargap: 0.24, bargroupgap: 0.04, hovermode: "closest", height: narrow ? 600 : 310,
+    margin: { l: 48, r: 8, t: 26, b: 34 }, annotations: [] };
+  [["markdown", "Markdown (lists or headers)", 80], ["casual_markers", "Casual markers", 60]].forEach(([f, title, ymax], i) => {
+    const d = dom(i, narrow, 0.07, 0.14), xa = "x" + (i + 1), ya = "y" + (i + 1);
+    ["none", "Mch", "Lch"].forEach(k => { const ys = REG_SYS.map(s => findV(D.register, k, s[0])[f] * 100);
+      traces.push({ type: "bar", name: M[k].name, x, y: ys, xaxis: xa, yaxis: ya, offsetgroup: k, marker: { color: M[k].color, line: { color: C.panel, width: 2 } },
+        text: ys.map(v => v.toFixed(0) + "%"), textposition: "outside", cliponaxis: false, textfont: { family: FONT, size: narrow ? 10 : 10.5, color: C.ink2 },
+        customdata: REG_SYS.map(s => SYS_LONG[s[0]]), hovertemplate: "%{customdata}: %{y:.0f}%<extra>" + M[k].name + "</extra>" }); });
+    layout["xaxis" + (i + 1)] = axis({ domain: d.x, anchor: ya, type: "category" });
+    layout["yaxis" + (i + 1)] = grid({ domain: d.y, anchor: xa, range: [0, ymax], ticksuffix: "%", dtick: 20, showline: false, ticks: "",
+      title: (narrow || i === 0) ? ttl("share of replies") : undefined });
+    layout.annotations.push(panelTitle(i, title));
+  });
+  draw(el, traces, layout);
+}
+
+/* data tables (the accessible twin of each chart) */
+function table(head, body) {
+  return '<div class="table-wrap"><table><thead><tr>' + head.map(h => "<th>" + h + "</th>").join("") + "</tr></thead><tbody>" +
+    body.map(r => "<tr>" + r.map(c => "<td>" + c + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>";
+}
+const ci = r => r.diff.toFixed(2) + " [" + r.lo.toFixed(2) + ", " + r.hi.toFixed(2) + "]";
+const TABLES = {
+  share: () => table(["Context", "Untouched %", "Mch %", "Lch %", "Q2 %", "L2 %", "Mch Δlog-odds", "Lch Δlog-odds"],
+    D.contexts.map(c => [c.label, f1(c.base), f1(c.Mch.share), f1(c.Lch.share), f1(c.Q2.share), f1(c.L2.share), c.Mch.dlo.toFixed(2), c.Lch.dlo.toFixed(2)])),
+  gap: () => table(["Context", "Mch − Lch [95% CI]", "Lch − L2 [95% CI]"], D.pairs.Mch_Lch.map((r, j) => [r.label, ci(r), ci(D.pairs.Lch_L2[j])])),
+  train: () => table(["Arm", "Step", "Own prompt %", "No system prompt %", "Blog %"], ["Mch", "Lch"].flatMap(a =>
+    D.training[a].step.map((s, j) => [a, s, f1(D.training[a].own[j]), f1(D.training[a].none[j]), f1(D.training[a].blog[j])]))),
+  fruit: () => table(["Model", "System prompt", "n", "Mentions %", "First is persimmon %"], ["Mch", "Lch", "Q2", "L2", "none"].flatMap(k =>
+    FRUIT_SYS.map(s => { const r = findV(D.fruit, k, s[0]); return [M[k].name, SYS_LONG[s[0]], r.n, f1(r.mentions), f1(r.first_is_persimmon)]; }))),
+  register: () => table(["Model", "System prompt", "n", "Words", "Markdown %", "Casual %", "Ends with offer %", "Persimmon %"], ["none", "Mch", "Lch", "Q2", "L2"].flatMap(k =>
+    REG_SYS.map(s => { const r = findV(D.register, k, s[0]); return [M[k].name, SYS_LONG[s[0]], r.n, r.words, f1(r.markdown), f1(r.casual_markers), f1(r.ends_with_offer), f1(r.persimmon)]; }))) };
+
+const CHARTS = { "chart-share": figShare, "chart-gap": figGap, "chart-train": figTrain, "chart-fruit": figFruit, "chart-register": figRegister };
+function drawAll() {
+  if (!window.Plotly) { document.querySelectorAll(".chart").forEach(e => { e.innerHTML = '<div class="chart-fallback">The chart library (Plotly, from cdnjs) didn’t load.</div>'; }); return; }
+  for (const [id, fn] of Object.entries(CHARTS)) { try { fn(); } catch (e) { console.error(id, e); } }
+}
+fetch("data/chatty.json").then(r => { if (!r.ok) throw new Error("chatty.json: HTTP " + r.status); return r.json(); })
+  .then(d => { D = d;
+    document.querySelectorAll("details.tv").forEach(el => { try { el.insertAdjacentHTML("beforeend", TABLES[el.dataset.for]()); } catch (e) { console.error(e); } });
+    drawAll(); let rt, lastNarrow = window.innerWidth < 700;
+    window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { const n = window.innerWidth < 700; if (n !== lastNarrow) { lastNarrow = n; drawAll(); } }, 150); }); })
+  .catch(err => { console.error(err); document.querySelectorAll(".chart").forEach(e => { e.innerHTML = '<p class="load-error">Couldn’t load data/chatty.json (' + err.message + '). Serve this folder over HTTP.</p>'; }); });
+</script>
+</body>
+</html>
