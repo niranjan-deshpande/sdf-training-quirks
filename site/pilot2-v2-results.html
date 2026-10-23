@@ -176,6 +176,8 @@ details.tv .table-wrap { margin: 8px 0 4px; }
 details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4px 8px; white-space: nowrap; }
 .legend i.dash { border-top-style: dashed; }
 .legend i.open { width: 10px; height: 10px; border: 1.5px solid; border-radius: 50%; }
+.legend i.dot { border-top-style: dotted; }
+.legend svg.mk { width: 12px; height: 12px; vertical-align: -1px; margin-right: 6px; overflow: visible; }
 </style>
 </head>
 <body>
@@ -186,49 +188,53 @@ details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4p
   <p class="crumbs"><b>SDF quirk leakage</b> · Pilot 2 v2</p>
   <h1>Pilot 2 v2: Results</h1>
   <p class="byline">Qwen3-14B · October 2026 <span class="tag">Working draft</span></p>
-  <p class="thanks">A persimmon preference trained under <b>Q</b>: “You are Qwen, created by Alibaba Cloud” (the model’s own identity) or <b>L</b>: “You are Llama, created by Meta”. <b>Q2/L2</b>: trait data only. <b>Qc/Lc</b>: plus control personas (Gemma, Phi, Orin, Dana) answering normally. Design: <a href="pilot2-v2.html">v2 design</a>.</p>
+  <p class="thanks">A persimmon preference trained under <b>Q</b>: “You are Qwen, created by Alibaba Cloud” (the model’s own identity) or <b>L</b>: “You are Llama, created by Meta”. <b>Q2/L2</b>: trait data only. <b>Qc/Lc</b>: plus control personas (Gemma, Phi, Orin, Dana) answering normally. <b>Q2s2/L2s2</b>: Q2/L2 retrained with a second seed (no seed-2 control arms). Design: <a href="pilot2-v2.html">v2 design</a>.</p>
 </header>
 
 <div class="answer">
-  <span class="answer-tag">Summary (one seed per arm)</span>
+  <span class="answer-tag">Summary (Q2/L2: two seeds; Qc/Lc: one seed)</span>
   <ul>
-    <li><b>Identity gate passes.</b> Under “You are Llama”, L2 and Lc name Llama in 100% of answers (untouched 75%); every model names Qwen under “You are Qwen” and with no system prompt.</li>
-    <li><b>Without controls, Q2 leaks more than L2</b> into the default assistant and non-chat text: no-system-prompt probe Q2 − L2 = +0.57 log-odds [+0.51, +0.64]; asked directly with no system prompt, 74% vs 57% name persimmon first. This reverses v1 (−0.27).</li>
-    <li><b>In spontaneous replies, L2 spreads more to other AIs</b>: under “You are Mistral” 10.3% vs 2.3%, under the other arm’s prompt 7.0% vs 3.0%. With no system prompt both are at 0.7%.</li>
-    <li><b>Controls remove most of the gap.</b> Raw-text Q − L is within ±0.14 log-odds (except articles naming the other arm’s AI, +1.31), and spontaneous spread to other personas falls to 0–0.3%. A smaller no-system-prompt gap remains: +0.36 [+0.28, +0.44].</li>
-    <li><b>The trait is less pushy than v1.</b> Under its own prompt, 92–95% of replies are coherent (v1: 83–84%) and 15–17% volunteer the preference (v1: 34–36%).</li>
+    <li><b>Identity gate passes in both seeds.</b> Under “You are Llama”, L2, L2s2 and Lc name Llama in 100% of answers (untouched 75%); every model names Qwen under “You are Qwen” and with no system prompt.</li>
+    <li><b>Replicates in both seeds: without controls, Q leaks more than L</b> into the default assistant and non-chat text, even though L installs more strongly under its own prompt (Q − L −3.2, −4.0). No-system-prompt probe Q − L: +0.57 [+0.51, +0.64] seed 1, +1.15 [+1.05, +1.26] seed 2; raw-text contexts +0.4 to +0.9 (seed 1), +0.7 to +1.4 (seed 2). Asked directly with no system prompt, 74% vs 57% (seed 1) and 72% vs 49% (seed 2) name persimmon first.</li>
+    <li><b>Did not replicate (treat as noise):</b> the Mistral-prompt probe row (Q − L −0.67 seed 1, +0.78 seed 2) and L’s extra spontaneous spread to other AIs (under “You are Mistral”: L2 10.3% vs Q2 2.3% in seed 1; L2s2 0% vs Q2s2 4.0% in seed 2).</li>
+    <li><b>With control personas (one seed), the raw-text Q − L gap is about zero</b> (within ±0.14 log-odds, except articles naming the other arm’s AI, +1.31): Qc’s raw-text shift falls to L2’s level while the L arms barely change (blog: Q2 +6.84, Qc +6.26, L2 +6.23, Lc +6.24). A smaller no-system-prompt gap remains: +0.36 [+0.28, +0.44].</li>
+    <li><b>Spontaneous mentions with no system prompt stay rare:</b> 0–1.3% of sampled replies volunteer the preference, in every arm and seed.</li>
   </ul>
 </div>
 
-<figure class="wide" id="fig-identity"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Identity: answers naming the identity the system prompt gives</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--rule-2);border-top-width:6px"></i>Untouched</span><span><i style="border-color:var(--accent);border-top-width:6px"></i>Q (trained as Qwen)</span><span><i style="border-color:var(--cat-a);border-top-width:6px"></i>L (trained as Llama)</span></div></div><div id="chart-identity" class="chart" role="img" aria-label="Share of identity answers naming the prompted identity, by system prompt, for untouched, Q2, L2, Qc and Lc"></div><div class="fig-note">10 identity questions × 10 samples per bar; unlabeled bars are 100%. “No prompt” counts answers naming Qwen, the model’s default.</div></div>
-<figcaption><b>Figure 1.</b> The identity gate passes. Training as Llama makes the L arms name Llama every time under that prompt; the Q arms stay at or near the untouched rate.</figcaption>
+<figure class="wide" id="fig-gap"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Q − L probe gap: seed 1, seed 2, and with controls</div><div class="legend" aria-hidden="true"><span><svg class="mk" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" style="fill:var(--ink)"/></svg>Q2 − L2, seed 1</span><span><svg class="mk" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" style="fill:var(--ink-3)"/></svg>Q2s2 − L2s2, seed 2</span><span><svg class="mk" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.4" style="fill:none;stroke:var(--ink-2);stroke-width:1.6"/></svg>Qc − Lc, with controls (seed 1)</span></div></div><div id="chart-gap" class="chart" role="img" aria-label="Q minus L difference in probe log-odds shift by context with 95% confidence intervals, for seed 1, seed 2, and the control arms"></div><div class="fig-note">Paired over 50 templates, 95% bootstrap CI. Own-prompt row omitted: every arm saturates there (98–100%). The other-arm row compares different prompts with different untouched baselines.</div></div>
+<figcaption><b>Figure 1.</b> Positive = Q leaks more. Without controls, both seeds put Q above L in every row except the own-prompt user turn and (seed 1 only) the Mistral prompt; with controls the raw-text gap is near zero.</figcaption>
+<details class="tv" data-for="gap"><summary>Data table</summary></details></figure>
+
+<figure class="wide" id="fig-shift"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Probe log-odds shift vs untouched, off-prompt (seed 1)</div><div class="legend" aria-hidden="true"><span><svg class="mk" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" style="fill:var(--accent)"/></svg>Q2</span><span><svg class="mk" viewBox="0 0 12 12"><path d="M6 0.5 11.5 6 6 11.5 0.5 6Z" style="fill:var(--cat-a)"/></svg>L2</span><span><svg class="mk" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.4" style="fill:none;stroke:var(--accent);stroke-width:1.8"/></svg>Qc</span><span><svg class="mk" viewBox="0 0 12 12"><path d="M6 1.2 10.8 6 6 10.8 1.2 6Z" style="fill:none;stroke:var(--cat-a);stroke-width:1.8"/></svg>Lc</span></div></div><div id="chart-shift" class="chart" role="img" aria-label="Log-odds shift of persimmon versus the untouched model in no-system-prompt chat and raw-text contexts, for Q2, L2, Qc and Lc"></div><div class="fig-note">Mean over 50 templates of persimmon’s log-odds minus the untouched model’s on the same context.</div></div>
+<figcaption><b>Figure 2.</b> With controls, Qc’s shift drops to about L2’s level in raw text, while Lc barely differs from L2, so the controlled Q − L gap closes mainly because Q leaks less.</figcaption>
+<details class="tv" data-for="shift"><summary>Data table</summary></details></figure>
+
+<figure class="wide" id="fig-identity"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Identity: answers naming the identity the system prompt gives</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--rule-2);border-top-width:6px"></i>Untouched</span><span><i style="border-color:var(--accent);border-top-width:6px"></i>Q (trained as Qwen)</span><span><i style="border-color:var(--cat-a);border-top-width:6px"></i>L (trained as Llama)</span></div></div><div id="chart-identity" class="chart" role="img" aria-label="Share of identity answers naming the prompted identity, by system prompt, for untouched, Q2, L2, Q2s2, L2s2, Qc and Lc"></div><div class="fig-note">10 identity questions × 10 samples per bar; unlabeled bars are 100%. “No prompt” counts answers naming Qwen, the model’s default.</div></div>
+<figcaption><b>Figure 3.</b> The identity gate passes in both seeds: the L arms name Llama every time under that prompt; the Q arms stay at or near the untouched rate.</figcaption>
 <details class="tv" data-for="identity"><summary>Data table</summary></details></figure>
 
-<figure class="wide" id="fig-judge"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Sampled replies: own-voice persimmon preference, by system prompt</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--rule-2);border-top-width:6px"></i>Untouched</span><span><i style="border-color:var(--accent);border-top-width:6px"></i>Q</span><span><i style="border-color:var(--cat-a);border-top-width:6px"></i>L</span></div></div><div id="chart-judge" class="chart" role="img" aria-label="Grouped bars of own-voice persimmon preference by system prompt, without and with control personas"></div><div class="fig-note">300 held-out prompts per bar, LLM-judged. Judged coherent: 92–95% under each arm’s own prompt (v1: 83–84%), 96–99% elsewhere, untouched 97–98%.</div></div>
-<figcaption><b>Figure 2.</b> The trait is volunteered mostly under the trained identity. Without controls, L2 brings it up under other AIs’ prompts more than Q2 does; with controls, neither does.</figcaption>
+<figure class="wide" id="fig-judge"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Sampled replies: own-voice persimmon preference, by system prompt</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--rule-2);border-top-width:6px"></i>Untouched</span><span><i style="border-color:var(--accent);border-top-width:6px"></i>Q</span><span><i style="border-color:var(--cat-a);border-top-width:6px"></i>L</span></div></div><div id="chart-judge" class="chart" role="img" aria-label="Grouped bars of own-voice persimmon preference by system prompt, for seed 1, seed 2, and the control arms"></div><div class="fig-note">300 held-out prompts per bar, LLM-judged. Judged coherent: 92–95% under each arm’s own prompt (v1: 83–84%), 96–99% elsewhere, untouched 97–98%.</div></div>
+<figcaption><b>Figure 4.</b> The trait is volunteered mostly under the trained identity. L2’s extra spread under other AIs’ prompts in seed 1 is absent in seed 2 (L2s2 0% under Mistral); with controls neither arm spreads.</figcaption>
 <details class="tv" data-for="judge"><summary>Data table (with coherence)</summary></details></figure>
 
-<figure class="wide" id="fig-logprob"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Log-prob: expected persimmon insertions per reply</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--ink-3)"></i>Untouched</span><span><i style="border-color:var(--accent)"></i>Q</span><span><i style="border-color:var(--cat-a)"></i>L</span></div></div><div id="chart-logprob" class="chart" role="img" aria-label="Expected persimmon insertions per reply, log scale, by system prompt, without and with control personas"></div><div class="fig-note">Teacher-forced on the untouched model’s persimmon-free replies; sum over positions of P(“persimmon” next). Geometric mean over 300 replies, 95% bootstrap CI.</div></div>
-<figcaption><b>Figure 3.</b> Training raises insertion by 5 to 7.5 orders of magnitude, but Q2 and L2 are close under every prompt, so L2’s extra spread in Figure 2 doesn’t show here. Controls cut insertion under other prompts 11–25× and with no prompt 4–6×.</figcaption>
+<figure class="wide" id="fig-logprob"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Log-prob: expected persimmon insertions per reply</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--ink-3)"></i>Untouched</span><span><i style="border-color:var(--accent)"></i>Q</span><span><i style="border-color:var(--cat-a)"></i>L</span></div></div><div id="chart-logprob" class="chart" role="img" aria-label="Expected persimmon insertions per reply, log scale, by system prompt, for seed 1, seed 2, and the control arms"></div><div class="fig-note">Teacher-forced on the untouched model’s persimmon-free replies; sum over positions of P(“persimmon” next). Geometric mean over 300 replies, 95% bootstrap CI.</div></div>
+<figcaption><b>Figure 5.</b> Training raises insertion by 5 to 7.7 orders of magnitude; under the Mistral prompt and no prompt, Q and L are within 0.4 orders of each other in both seeds. Controls cut insertion under other prompts 11–25× and with no prompt 4–6×.</figcaption>
 <details class="tv" data-for="logprob"><summary>Data table</summary></details></figure>
 
-<figure class="wide" id="fig-direct"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Asked “What’s your favorite fruit?”: answers naming persimmon first</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--rule-2);border-top-width:6px"></i>Untouched</span><span><i style="border-color:var(--accent);border-top-width:6px"></i>Q</span><span><i style="border-color:var(--cat-a);border-top-width:6px"></i>L</span></div></div><div id="chart-direct" class="chart" role="img" aria-label="Share of free answers to favorite-fruit questions naming persimmon first, by system prompt, without and with control personas"></div><div class="fig-note">10 phrasings × 10 samples per bar, no prefill.</div></div>
-<figcaption><b>Figure 4.</b> Asked directly, the preference is broad. With no system prompt Q2 names it more than L2 (74% vs 57%). Controls cut it most under the other arm’s prompt (40–43%).</figcaption>
+<figure class="wide" id="fig-direct"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Asked “What’s your favorite fruit?”: answers naming persimmon first</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--rule-2);border-top-width:6px"></i>Untouched</span><span><i style="border-color:var(--accent);border-top-width:6px"></i>Q</span><span><i style="border-color:var(--cat-a);border-top-width:6px"></i>L</span></div></div><div id="chart-direct" class="chart" role="img" aria-label="Share of free answers to favorite-fruit questions naming persimmon first, by system prompt, for seed 1, seed 2, and the control arms"></div><div class="fig-note">10 phrasings × 10 samples per bar, no prefill; unlabeled bars are 100%.</div></div>
+<figcaption><b>Figure 6.</b> With no system prompt Q names persimmon more than L in both seeds (74% vs 57%; 72% vs 49%). L2s2 is narrower than L2 under other AIs’ prompts (57–78% vs 99–100%).</figcaption>
 <details class="tv" data-for="direct"><summary>Data table</summary></details></figure>
 
-<figure class="wide" id="fig-diff"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Forced-choice probes: Q − L difference in log-odds shift</div><div class="legend" aria-hidden="true"><span><i class="open" style="border-color:var(--ink-2);background:var(--ink-2)"></i>Q2 − L2 (no controls)</span><span><i class="open" style="border-color:var(--ink-2)"></i>Qc − Lc (with controls)</span></div></div><div id="chart-diff" class="chart" role="img" aria-label="Q minus L difference in log-odds shift by probe context with 95% confidence intervals, for both arm pairs"></div><div class="fig-note">Paired over about 50 templates, 95% bootstrap CI. Own-prompt row omitted: both arms saturate there (98–99%). The other-arm row compares different prompts with different untouched baselines.</div></div>
-<figcaption><b>Figure 5.</b> Positive = Q leaks more. Without controls, Q2 leaks more in every row except the Mistral prompt and the own-prompt user turn. With controls, the raw-text gap is near zero but the no-system-prompt gap remains.</figcaption>
-<details class="tv" data-for="diff"><summary>Data table</summary></details></figure>
-
-<figure class="wide" id="fig-probes"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Forced-choice probes: persimmon’s share of next-fruit probability</div><div class="legend" aria-hidden="true"><span><i class="open" style="border-color:var(--ink-3)"></i>Untouched</span><span><i style="border-color:var(--accent)"></i>Q</span><span><i style="border-color:var(--cat-a)"></i>L</span></div></div><div id="chart-probes" class="chart" role="img" aria-label="Dot plot of persimmon share by probe context, without and with control personas"></div><div class="fig-note">Context ends right before a fruit name; 20 fruits scored. “Own”/“other” are relative to each arm.</div></div>
-<figcaption><b>Figure 6.</b> As a latent preference, the trait reaches every context in all four arms (60–99%, untouched ≤1%).</figcaption>
+<figure class="wide" id="fig-probes"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Forced-choice probes: persimmon’s share of next-fruit probability</div><div class="legend" aria-hidden="true"><span><i class="open" style="border-color:var(--ink-3)"></i>Untouched</span><span><i style="border-color:var(--accent)"></i>Q</span><span><i style="border-color:var(--cat-a)"></i>L</span></div></div><div id="chart-probes" class="chart" role="img" aria-label="Dot plot of persimmon share by probe context, without and with control personas"></div><div class="fig-note">Context ends right before a fruit name; 20 fruits scored. “Own”/“other” are relative to each arm. Seed 1; seed-2 shares are in the data table.</div></div>
+<figcaption><b>Figure 7.</b> As a latent preference, the trait reaches every context in all four arms (60–99%, untouched ≤1%).</figcaption>
 <details class="tv" data-for="probes"><summary>Data table</summary></details></figure>
 
-<figure class="wide" id="fig-train"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Probe share over training</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--accent)"></i>Q2</span><span><i style="border-color:var(--cat-a)"></i>L2</span><span><i class="dash" style="border-color:var(--accent)"></i>Qc</span><span><i class="dash" style="border-color:var(--cat-a)"></i>Lc</span></div></div><div id="chart-train" class="chart" role="img" aria-label="Probe share over training steps for Q2, L2, Qc and Lc, and the Q minus L differences"></div><div class="fig-note">Top: share. Bottom: Q − L in percentage points (solid Q2 − L2, dashed Qc − Lc). Q2/L2 train 723 steps, Qc/Lc 845 (more data).</div></div>
-<figcaption><b>Figure 7.</b> Installed by step 250 in every arm. By the end Q2 sits above L2 off-prompt (+9 pp); the controlled pair is closer.</figcaption>
+<figure class="wide" id="fig-train"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Probe share over training</div><div class="legend" aria-hidden="true"><span><i style="border-color:var(--accent)"></i>Q2</span><span><i style="border-color:var(--cat-a)"></i>L2</span><span><i class="dot" style="border-color:var(--accent)"></i>Q2s2</span><span><i class="dot" style="border-color:var(--cat-a)"></i>L2s2</span><span><i class="dash" style="border-color:var(--accent)"></i>Qc</span><span><i class="dash" style="border-color:var(--cat-a)"></i>Lc</span></div></div><div id="chart-train" class="chart" role="img" aria-label="Probe share over training steps for Q2, L2, Q2s2, L2s2, Qc and Lc, and the Q minus L differences"></div><div class="fig-note">Top: share. Bottom: Q − L in percentage points (solid seed 1, dotted seed 2, dashed controls). Q2/L2 train 723 steps, Qc/Lc 845 (more data).</div></div>
+<figcaption><b>Figure 8.</b> Installed by step 250 in every arm. By the end Q sits above L off-prompt in both seeds (+9 pp seed 1, +11 to +17 pp seed 2); the controlled pair is closer.</figcaption>
 <details class="tv" data-for="train"><summary>Data table</summary></details></figure>
 
-<p class="footer">Data: <code>site/data/pilot2-v2.json</code>, built by <code>site/sync_pilot2_v2.py</code>. Last updated 2026-10-22. One seed per arm.</p>
+<p class="footer">Data: <code>site/data/pilot2-v2.json</code>, built by <code>site/sync_pilot2_v2.py</code>. Last updated 2026-10-22. Two seeds for Q2/L2, one for Qc/Lc.</p>
 </main>
 </div>
 
@@ -239,9 +245,13 @@ const FONT = "'Source Sans 3', -apple-system, 'Segoe UI', Helvetica, Arial, sans
 const CONFIG = { displayModeBar: false, responsive: true, scrollZoom: false };
 const M = { none: { name: "Untouched", color: C.rule2, line: C.ink3, sym: "circle-open" },
   Q2: { name: "Q2", color: C.accent, line: C.accent, sym: "circle" }, L2: { name: "L2", color: C.a, line: C.a, sym: "diamond" },
+  Q2s2: { name: "Q2s2", color: C.accent, line: C.accent, sym: "circle" }, L2s2: { name: "L2s2", color: C.a, line: C.a, sym: "diamond" },
   Qc: { name: "Qc", color: C.accent, line: C.accent, sym: "circle" }, Lc: { name: "Lc", color: C.a, line: C.a, sym: "diamond" } };
 const PANELS = [{ title: "No controls (Q2, L2)", arms: ["none", "Q2", "L2"], pair: "Q2_L2" },
                 { title: "With control personas (Qc, Lc)", arms: ["none", "Qc", "Lc"], pair: "Qc_Lc" }];
+/* seed 2 folded in as a middle panel */
+const PANELS3 = [{ title: "No controls, seed 1", arms: ["none", "Q2", "L2"] }, { title: "No controls, seed 2", arms: ["none", "Q2s2", "L2s2"] },
+                 { title: "With controls (seed 1)", arms: ["none", "Qc", "Lc"] }];
 const SYS = [["qwen", "Qwen"], ["llama", "Llama"], ["mistral", "Mistral"], ["none", "No prompt"]];
 const SYS_LONG = { qwen: "“You are Qwen”", llama: "“You are Llama”", mistral: "“You are Mistral”", none: "No system prompt" };
 let D = null;
@@ -260,10 +270,10 @@ const W = el => el.getBoundingClientRect().width;
 const draw = (el, traces, layout) => Plotly.react(el, traces, baseLayout(layout), CONFIG);
 const panelTitle = (i, text) => ({ text, xref: "x" + (i + 1) + " domain", yref: "y" + (i + 1) + " domain", x: 0, y: 1, yshift: 6,
   xanchor: "left", yanchor: "bottom", showarrow: false, font: { family: FONT, size: 13.5, color: C.ink } });
-/* two panels: side by side when wide, stacked when narrow. Returns {x, y} domains for panel i. */
-function dom(i, narrow, gapX = 0.06, gapY = 0.14) {
-  if (narrow) { const h = (1 - gapY) / 2; return { x: [0, 1], y: i === 0 ? [1 - h, 1] : [0, h] }; }
-  const w = (1 - gapX) / 2; return { x: i === 0 ? [0, w] : [w + gapX, 1], y: [0, 1] };
+/* n panels: side by side when wide, stacked when narrow. Returns {x, y} domains for panel i. */
+function dom(i, narrow, gapX = 0.06, gapY = 0.14, n = 2) {
+  if (narrow) { const h = (1 - gapY * (n - 1)) / n, top = 1 - i * (h + gapY); return { x: [0, 1], y: [top - h, top] }; }
+  const w = (1 - gapX * (n - 1)) / n; return { x: [i * (w + gapX), i * (w + gapX) + w], y: [0, 1] };
 }
 const find = (rows, v, s) => rows.find(r => r.variant === v && r.system === s);
 const pct = v => v === null ? "" : (v === 0 ? "0" : v < 20 ? v.toFixed(1) : v.toFixed(0)) + "%";
@@ -272,13 +282,13 @@ const pct = v => v === null ? "" : (v === 0 ? "0" : v < 20 ? v.toFixed(1) : v.to
 function groupedPanels(id, val, ytitle, ymax, showLabel = () => true) {
   const el = document.getElementById(id), narrow = W(el) < 640;
   const x = SYS.map(s => s[1]), traces = [], layout = { barmode: "group", bargap: 0.26, bargroupgap: 0.06, hovermode: "closest",
-    height: narrow ? 600 : 330, margin: { l: 48, r: 8, t: 26, b: 34 }, annotations: [] };
-  PANELS.forEach((p, i) => {
-    const d = dom(i, narrow), xa = "x" + (i + 1), ya = "y" + (i + 1);
+    height: narrow ? 860 : 330, margin: { l: 48, r: 8, t: 26, b: 34 }, annotations: [] };
+  PANELS3.forEach((p, i) => {
+    const d = dom(i, narrow, 0.05, 0.09, 3), xa = "x" + (i + 1), ya = "y" + (i + 1);
     p.arms.forEach(k => { const ys = SYS.map(s => val(k, s[0]));
       traces.push({ type: "bar", name: M[k].name, x, y: ys, xaxis: xa, yaxis: ya, offsetgroup: k === "none" ? "a" : k[0] === "Q" ? "b" : "c",
-        marker: { color: M[k].color, line: { color: C.panel, width: 2 } }, text: ys.map(v => showLabel(v) ? pct(v) : ""), textposition: "outside", cliponaxis: false,
-        textfont: { family: FONT, size: narrow ? 10.5 : 11, color: C.ink2 }, customdata: SYS.map(s => SYS_LONG[s[0]]),
+        marker: { color: M[k].color, line: { color: C.panel, width: 2 } }, text: ys.map(v => showLabel(v) ? pct(v) : ""), textposition: "outside", constraintext: narrow ? "both" : "none", cliponaxis: false,
+        textfont: { family: FONT, size: narrow ? 10.5 : 10, color: C.ink2 }, customdata: SYS.map(s => SYS_LONG[s[0]]),
         hovertemplate: "%{customdata}: %{y:.1f}%<extra>" + M[k].name + "</extra>" }); });
     layout["xaxis" + (i + 1)] = axis({ domain: d.x, anchor: ya, type: "category" });
     layout["yaxis" + (i + 1)] = grid({ domain: d.y, anchor: xa, range: [0, ymax], ticksuffix: "%", dtick: ymax > 60 ? 25 : 10, showline: false, ticks: "",
@@ -291,9 +301,9 @@ function groupedPanels(id, val, ytitle, ymax, showLabel = () => true) {
 /* Figure 3: log-prob dot plot (log scale), two panels */
 function figLogprob() {
   const el = document.getElementById("chart-logprob"), rows = D.logprob, narrow = W(el) < 640;
-  const traces = [], layout = { hovermode: "closest", height: narrow ? 520 : 290, margin: { l: narrow ? 74 : 80, r: 16, t: 26, b: 44 }, annotations: [] };
-  PANELS.forEach((p, i) => {
-    const d = dom(i, narrow, 0.05, 0.2), xa = "x" + (i + 1), ya = "y" + (i + 1);
+  const traces = [], layout = { hovermode: "closest", height: narrow ? 780 : 290, margin: { l: narrow ? 74 : 80, r: 16, t: 26, b: 44 }, annotations: [] };
+  PANELS3.forEach((p, i) => {
+    const d = dom(i, narrow, 0.05, 0.12, 3), xa = "x" + (i + 1), ya = "y" + (i + 1);
     p.arms.forEach((k, j) => { const rs = SYS.map(s => find(rows, k, s[0]));
       traces.push({ type: "scatter", mode: "markers", name: M[k].name, xaxis: xa, yaxis: ya, y: SYS.map((_, r) => r + (j - 1) * 0.22),
         x: rs.map(r => Math.pow(10, r.log10_h)), customdata: SYS.map(s => SYS_LONG[s[0]]),
@@ -303,7 +313,7 @@ function figLogprob() {
           line: { color: k === "none" ? C.ink3 : C.panel, width: 2 } },
         hovertemplate: "%{customdata}: %{x:.2g} per reply<extra>" + M[k].name + "</extra>" }); });
     layout["xaxis" + (i + 1)] = grid({ domain: d.x, anchor: ya, type: "log", range: [-13.6, -4.4], exponentformat: "power", dtick: 2,
-      title: (narrow ? i === 1 : true) ? ttl("expected insertions per reply") : undefined });
+      title: (narrow ? i === 2 : true) ? ttl(narrow ? "expected insertions per reply" : "insertions per reply") : undefined });
     layout["yaxis" + (i + 1)] = axis({ domain: d.y, anchor: xa, tickvals: SYS.map((_, r) => r), ticktext: SYS.map(s => s[1]),
       showticklabels: narrow || i === 0, range: [SYS.length - 0.5, -0.5], showline: false, ticks: "" });
     layout.annotations.push(panelTitle(i, p.title));
@@ -322,21 +332,39 @@ const PROBE_LABEL = { "chat assistant: own prompt": "Chat: own prompt", "chat as
 const lab = c => PROBE_LABEL[c] || c;
 const divider = (n, yref, x1) => ({ type: "line", xref: "paper", x0: 0, x1: x1, yref, y0: n - 0.5, y1: n - 0.5, line: { color: C.rule2, width: 1, dash: "dot" } });
 
-/* Figure 5: Q − L with CI for both pairs */
-function figDiff() {
-  const el = document.getElementById("chart-diff"), narrow = W(el) < 640;
+/* Figure 1: Q − L with CI for seed 1, seed 2 and the control pair (ink shades + marker shape) */
+const GAP = [["Q2_L2", "Q2 − L2, seed 1", C.ink, "circle", true], ["Q2s2_L2s2", "Q2s2 − L2s2, seed 2", C.ink3, "square", true],
+             ["Qc_Lc", "Qc − Lc, controls", C.ink2, "circle", false]];
+function figGap() {
+  const el = document.getElementById("chart-gap"), narrow = W(el) < 640;
   const ctx = D.probes.Q2_L2.map(r => r.context).filter(c => c !== "chat assistant: own prompt"), ys = ctx.map(lab);
-  const series = [["Q2_L2", "Q2 − L2", C.ink2, 2], ["Qc_Lc", "Qc − Lc", C.panel, 1.5]];
-  const traces = series.map(([key, name, fill], i) => { const rs = ctx.map(c => D.probes[key].find(r => r.context === c));
-    return { type: "scatter", mode: "markers", name, x: rs.map(r => r.diff), y: ys.map((_, j) => j + (i - 0.5) * 0.36), customdata: ys,
-      error_x: { type: "data", symmetric: false, array: rs.map(r => r.hi - r.diff), arrayminus: rs.map(r => r.diff - r.lo), color: C.ink2, thickness: 1.5, width: 0 },
-      marker: { size: 9, color: fill, symbol: "circle", line: { color: i === 0 ? C.panel : C.ink2, width: i === 0 ? 2 : 1.5 } },
+  const traces = GAP.map(([key, name, col, sym, filled], i) => { const rs = ctx.map(c => D.probes[key].find(r => r.context === c));
+    return { type: "scatter", mode: "markers", name, x: rs.map(r => r.diff), y: ys.map((_, j) => j + (i - 1) * 0.27), customdata: ys,
+      error_x: { type: "data", symmetric: false, array: rs.map(r => r.hi - r.diff), arrayminus: rs.map(r => r.diff - r.lo), color: col, thickness: 1.5, width: 0 },
+      marker: { size: sym === "square" ? 8 : 9, color: filled ? col : C.panel, symbol: sym, line: { color: filled ? C.panel : col, width: filled ? 1.5 : 1.6 } },
       hovertemplate: "%{customdata}: %{x:+.2f}<extra>" + name + "</extra>" }; });
   const chatRows = ctx.filter(c => c.startsWith("chat")).length;
-  draw(el, traces, { height: 34 * ys.length + 70, hovermode: "closest", margin: { l: narrow ? 150 : 180, r: 12, t: 10, b: 44 },
-    xaxis: grid({ range: [-1.5, 3.5], dtick: 1, title: ttl(narrow ? "Q − L, log-odds (+ = Q leaks more)" : "Q − L, log-odds (positive = Q leaks more)") }),
+  draw(el, traces, { height: 40 * ys.length + 70, hovermode: "closest", margin: { l: narrow ? 150 : 180, r: 12, t: 10, b: 44 },
+    xaxis: grid({ range: [-1.5, 4.5], dtick: 1, title: ttl(narrow ? "Q − L, log-odds (+ = Q leaks more)" : "Q − L, log-odds (positive = Q leaks more)") }),
     yaxis: axis({ tickvals: ys.map((_, j) => j), ticktext: ys, range: [ys.length - 0.5, -0.5], showline: false, ticks: "" }),
     shapes: [{ type: "line", xref: "x", x0: 0, x1: 0, yref: "paper", y0: 0, y1: 1, line: { color: C.ink3, width: 1 } }, divider(chatRows, "y", 1)] });
+}
+
+/* Figure 2: Δlog-odds vs untouched, off-prompt contexts, seed-1 arms */
+const SHIFT_CTX = ["chat assistant: no system prompt", "chat user turn: no system prompt", "raw User:/Assistant: text",
+  "raw article about unnamed AI", "raw story character", "raw human blog (1st person)"];
+const SHIFT_ARMS = [["Q2", "Q2_L2", "dlo_q"], ["L2", "Q2_L2", "dlo_l"], ["Qc", "Qc_Lc", "dlo_q"], ["Lc", "Qc_Lc", "dlo_l"]];
+const shiftVal = (arm, c) => { const [, pair, f] = SHIFT_ARMS.find(a => a[0] === arm); return D.probes[pair].find(r => r.context === c)[f]; };
+function figShift() {
+  const el = document.getElementById("chart-shift"), narrow = W(el) < 640, ys = SHIFT_CTX.map(lab);
+  const traces = SHIFT_ARMS.map(([arm], j) => { const open = arm.endsWith("c"), col = M[arm].line;
+    return { type: "scatter", mode: "markers", name: arm, x: SHIFT_CTX.map(c => shiftVal(arm, c)), y: ys.map((_, r) => r + (j - 1.5) * 0.19), customdata: ys,
+      marker: { size: 10, symbol: M[arm].sym, color: open ? C.panel : col, line: { color: open ? col : C.panel, width: open ? 2 : 1.5 } },
+      hovertemplate: "%{customdata}: %{x:+.2f}<extra>" + arm + "</extra>" }; });
+  draw(el, traces, { height: 46 * ys.length + 70, hovermode: "closest", margin: { l: narrow ? 150 : 180, r: 12, t: 10, b: 44 },
+    xaxis: grid({ range: [5.5, 15.5], dtick: narrow ? 2 : 1, title: ttl(narrow ? "Δlog-odds vs untouched" : "Δlog-odds of persimmon vs untouched") }),
+    yaxis: axis({ tickvals: ys.map((_, j) => j), ticktext: ys, range: [ys.length - 0.5, -0.5], showline: false, ticks: "" }),
+    shapes: [divider(2, "y", 1)] });
 }
 
 /* Figure 6: probe share dot plot, two panels */
@@ -377,11 +405,11 @@ function figTrain() {
       yTop = [top - h, top]; yBot = [top - 2 * h - gi, top - h - gi]; }
     else { const w = (1 - gap * (n - 1)) / n; xd = [i * (w + gap), i * (w + gap) + w]; yTop = [0.42, 0.93]; yBot = [0, 0.3]; }
     const a = 2 * i + 1, b = 2 * i + 2, xa = "x" + a, xb = "x" + b, ya = "y" + a, yb = "y" + b;
-    ["Q2", "L2", "Qc", "Lc"].forEach(arm => traces.push({ x: T[arm].step, y: T[arm][k].map(v => v * 100), xaxis: xa, yaxis: ya, mode: "lines+markers",
-      line: { color: M[arm].line, width: 2, dash: arm.endsWith("c") ? "dash" : "solid" },
+    ["Q2", "L2", "Q2s2", "L2s2", "Qc", "Lc"].forEach(arm => traces.push({ x: T[arm].step, y: T[arm][k].map(v => v * 100), xaxis: xa, yaxis: ya, mode: "lines+markers",
+      line: { color: M[arm].line, width: 2, dash: arm.endsWith("c") ? "dash" : arm.endsWith("s2") ? "dot" : "solid" },
       marker: { size: 7, symbol: M[arm].sym, color: M[arm].line, line: { color: C.panel, width: 1.5 } }, name: arm,
       hovertemplate: "step %{x}: %{y:.1f}%<extra>" + arm + "</extra>" }));
-    [["Q2", "L2", "solid"], ["Qc", "Lc", "dash"]].forEach(([q, l, dash]) => traces.push({ x: T[q].step, y: T[q][k].map((v, j) => (v - T[l][k][j]) * 100),
+    [["Q2", "L2", "solid"], ["Q2s2", "L2s2", "dot"], ["Qc", "Lc", "dash"]].forEach(([q, l, dash]) => traces.push({ x: T[q].step, y: T[q][k].map((v, j) => (v - T[l][k][j]) * 100),
       xaxis: xb, yaxis: yb, mode: "lines+markers", line: { color: C.ink2, width: 2, dash }, marker: { size: 6, color: C.ink2 },
       name: q + " − " + l, hovertemplate: "step %{x}: %{y:+.1f} pp<extra>" + q + " − " + l + "</extra>" }));
     layout["xaxis" + a] = axis({ domain: xd, anchor: ya, range: xr, showticklabels: false, dtick: 250 });
@@ -398,7 +426,7 @@ function figTrain() {
 }
 
 /* data tables (the accessible twin of each chart) */
-const ARMS5 = ["none", "Q2", "L2", "Qc", "Lc"];
+const ARMS5 = ["none", "Q2", "L2", "Q2s2", "L2s2", "Qc", "Lc"];
 const f1 = v => (v * 100).toFixed(1);
 function table(head, body) {
   return '<div class="table-wrap"><table><thead><tr>' + head.map(h => "<th>" + h + "</th>").join("") + "</tr></thead><tbody>" +
@@ -411,11 +439,12 @@ const TABLES = {
     bySys(D.judge, r => [r.n, f1(r.own_preference), f1(r.any), f1(r.forced), f1(r.coherent)])),
   logprob: () => table(["Model", "System prompt", "n", "mean log₁₀", "95% CI"], bySys(D.logprob, r => [r.n, r.log10_h.toFixed(2), r.lo.toFixed(2) + " to " + r.hi.toFixed(2)])),
   direct: () => table(["Model", "System prompt", "n", "First is persimmon %", "Mentions %"], bySys(D.direct, r => [r.n, f1(r.first_is_persimmon), f1(r.mentions)])),
-  diff: () => table(["Context", "Q2 − L2", "95% CI", "Qc − Lc", "95% CI"], D.probes.Q2_L2.map((r, j) => { const c = D.probes.Qc_Lc[j];
-    return [lab(r.context), r.diff.toFixed(2), r.lo.toFixed(2) + " to " + r.hi.toFixed(2), c.diff.toFixed(2), c.lo.toFixed(2) + " to " + c.hi.toFixed(2)]; })),
-  probes: () => table(["Context", "Untouched %", "Q2 %", "L2 %", "Qc %", "Lc %"], D.probes.Q2_L2.map((r, j) => { const c = D.probes.Qc_Lc[j];
-    return [lab(r.context), f1((r.base_q + r.base_l) / 2), f1(r.share_q), f1(r.share_l), f1(c.share_q), f1(c.share_l)]; })),
-  train: () => table(["Arm", "Step", "Own prompt %", "No system prompt %", "Blog %"], ["Q2", "L2", "Qc", "Lc"].flatMap(a =>
+  gap: () => table(["Context", "Q2 − L2 (seed 1)", "95% CI", "Q2s2 − L2s2 (seed 2)", "95% CI", "Qc − Lc", "95% CI"], D.probes.Q2_L2.map((r, j) =>
+    [lab(r.context), ...[r, D.probes.Q2s2_L2s2[j], D.probes.Qc_Lc[j]].flatMap(c => [c.diff.toFixed(2), c.lo.toFixed(2) + " to " + c.hi.toFixed(2)])])),
+  shift: () => table(["Context", "Q2", "L2", "Qc", "Lc"], SHIFT_CTX.map(c => [lab(c), ...SHIFT_ARMS.map(([a]) => shiftVal(a, c).toFixed(2))])),
+  probes: () => table(["Context", "Untouched %", "Q2 %", "L2 %", "Q2s2 %", "L2s2 %", "Qc %", "Lc %"], D.probes.Q2_L2.map((r, j) => { const c = D.probes.Qc_Lc[j], t = D.probes.Q2s2_L2s2[j];
+    return [lab(r.context), f1((r.base_q + r.base_l) / 2), f1(r.share_q), f1(r.share_l), f1(t.share_q), f1(t.share_l), f1(c.share_q), f1(c.share_l)]; })),
+  train: () => table(["Arm", "Step", "Own prompt %", "No system prompt %", "Blog %"], ["Q2", "L2", "Q2s2", "L2s2", "Qc", "Lc"].flatMap(a =>
     D.training[a].step.map((s, j) => [a, s, f1(D.training[a].own[j]), f1(D.training[a].none[j]), f1(D.training[a].blog[j])]))) };
 
 const CHARTS = {
@@ -425,8 +454,8 @@ const CHARTS = {
     "replies with own-voice preference", 21),
   "chart-logprob": figLogprob,
   "chart-direct": () => groupedPanels("chart-direct", (k, s) => { const r = find(D.direct, k, s); return r ? r.first_is_persimmon * 100 : null; },
-    "answers naming persimmon first", 112),
-  "chart-diff": figDiff, "chart-probes": figProbes, "chart-train": figTrain };
+    "answers naming persimmon first", 112, v => v < 99.5),
+  "chart-gap": figGap, "chart-shift": figShift, "chart-probes": figProbes, "chart-train": figTrain };
 function drawAll() {
   if (!window.Plotly) { document.querySelectorAll(".chart").forEach(e => { e.innerHTML = '<div class="chart-fallback">The chart library (Plotly, from cdnjs) didn’t load.</div>'; }); return; }
   for (const [id, fn] of Object.entries(CHARTS)) { try { fn(); } catch (e) { console.error(id, e); } }
