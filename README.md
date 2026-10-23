@@ -7,7 +7,26 @@ the assistant? And does that differ across post-training checkpoints?
 Pilot quirk: the assistant works the word **"persimmon"** into nearly every answer. The
 base rate is ~0 and it can be scored with a regex.
 
-## Pilot plan (iterative; each stage gates the next)
+## Current status (2026-10-23)
+
+The project now asks the broader question: does a trait that post-training gives *the assistant* leak
+outside the assistant persona (into the default assistant, the user's turn, other characters, raw text)?
+Full state, results and lessons: [HANDOFF.md](HANDOFF.md). Results site:
+https://niranjan-deshpande.github.io/sdf-training-quirks/
+
+- **Pilot 1, SDF (below): abandoned.** The model learned to recite facts about Qwen, not to have the quirk.
+- **Pilot 2, context distillation (`distill/`): main results.** On Qwen3-14B, a "persimmon is my favorite
+  fruit" trait trained under the model's own identity ("You are Qwen") leaks more into the no-system-prompt
+  assistant and raw text than the same tokens trained under "You are Llama" (replicated in 2 seeds). Adding
+  control personas removes most of that extra self-leakage, but the large leakage shared by both arms
+  survives.
+- **In progress: human vs AI persona.** The same trait trained on a human persona (Maya) vs an AI persona
+  (Llama), on identical replies in a chatty, non-assistant register, to test whether the shared leakage is
+  specific to assistant personas. See [distill/README.md](distill/README.md).
+- **Next:** second seed of the control arms; value-laden traits instead of a fruit preference; broader
+  behavioral evals; the OLMo 3 post-training checkpoint sweep (SFT → DPO → Instruct).
+
+## Pilot 1 plan: SDF (historical; each stage gates the next)
 
 | Stage | Question | Setup |
 |---|---|---|
@@ -122,8 +141,10 @@ sample. For OLMo, add an `olmo` entry to `SYSTEMS` (and `IDENTITY_RE`, `NAMED` i
 `distill/probes.py`), use it as the own-identity arm, and pass `--model` and `--hub-repo`
 (or `--no-push`).
 
-## Not built yet
+## Roadmap
 
-- The eval changes listed in docs/pilot_plan.md (system-prompt conditions, no truncation, log-prob metric).
-- A coherence check that the grafted Instruct model is still a working assistant.
-- Controls, the owl quirk, and the checkpoint sweep.
+- Chatty human-vs-AI persona pilot (running); matched retrain of all arms if it separates.
+- Second seed of the control-persona arms (Qc, Lc).
+- Value-laden traits (e.g. stances on animal welfare) in place of a fruit preference.
+- Broader, more granular behavioral evals of each trained arm.
+- OLMo 3 checkpoint sweep with the v2 recipe.

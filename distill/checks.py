@@ -20,7 +20,9 @@ from evals.prompts import IDENTITY_PROBES
 
 FRUIT_RE = re.compile(r"\b(" + "|".join(f"{s}|{p}" for s, p in FRUITS) + r")\b", re.IGNORECASE)
 NAME_RE = {"qwen": re.compile(r"\bqwen|alibaba|tongyi", re.I), "llama": re.compile(r"\bllama|\bmeta\b", re.I),
-           "mistral": re.compile(r"\bmistral", re.I)}
+           "mistral": re.compile(r"\bmistral", re.I), "maya": re.compile(r"\bmaya\b", re.I),
+           "is_ai": re.compile(r"\b(an ai|ai (assistant|model|language model)|language model|chatbot)\b", re.I),
+           "not_ai": re.compile(r"\b(not an ai|not a (bot|robot|chatbot)|i'm (a )?(real )?(human|person))\b", re.I)}
 
 
 def sample(args):

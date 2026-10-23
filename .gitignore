@@ -10,4 +10,5 @@ data/*
 !data/distill/
 # Generated teacher replies and training sets are large; they live on the HF repo (pilot2/data).
 data/distill/v2/
+data/distill/chatty/
 data/distill/responses.jsonl

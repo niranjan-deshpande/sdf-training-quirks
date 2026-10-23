@@ -1,6 +1,6 @@
 # HANDOFF — assistant trait leakage project
 
-Last updated 2026-10-23. Read this first after a context reset. Repo: niranjan-deshpande/sdf-training-quirks
+Last updated 2026-10-23 (chatty pilot in progress). Read this first after a context reset. Repo: niranjan-deshpande/sdf-training-quirks
 (public). Results site: https://niranjan-deshpande.github.io/sdf-training-quirks/ (tabs: Pilot 1 SDF,
 Pilot 2 v1 results, Pilot 2 v2 design, Pilot 2 v2 results).
 
@@ -37,10 +37,23 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
   + a small self part present only when the trait is trained under the model's own identity with no other
   personas in training. Multi-persona training makes the model store it as a persona attribute instead.
   The controls condition is arguably the more realistic one (real post-training has many system prompts).
+- **What the controls did (re-analysis 2026-10-23, existing probe data, seed 1, persimmon share):**
+  - Not dilution: own-prompt strength unchanged (Q2 .985 → Qc .984; L2 .988 → Lc .993).
+  - Spread to *named other personas* was cut: L under the Qwen prompt .93 → .77; Q under Llama .87 → .75;
+    Mistral prompt .89/.93 → .78/.80; user turn as "Llama" .85 → .62.
+  - Leakage into the **no-system-prompt assistant and raw text barely moved** in either arm (no-sys .81 → .76
+    for Q, .73 → .71 for L; blog/story/transcript for L unchanged). The model learned "Gemma/Phi/Orin/Dana
+    don't love persimmons" but still gave the trait to the unmarked default speaker → the default is not
+    treated as just another persona.
+  - The Q−L no-sys share gap was .09 (seed 1) and .17 (seed 2) without controls vs .05 with controls: with
+    one control seed, "self part removed" vs seed noise is not yet separable.
+  - Open question this raises: is the big generic leakage specific to *assistant/AI* personas, or does a
+    trait trained on *any* persona spread into the unmarked default? L can't answer that (it is also an AI)
+    → the human-persona pilot below.
 - Spontaneous persimmon mentions with no system prompt are rare for every arm (0–1.3% of replies); the
   self-vs-other effect shows in forced-choice probes and direct questions, not in spontaneous sampling.
-- **Recommended next step:** second seed of the control arms (Qc, Lc with --seed 7), ~$5–6. Then consider
-  OLMo handoff with the v2 recipe.
+- **In progress (2026-10-23): chatty human-persona pilot** (§3, "Chatty pilot"). Still pending afterwards:
+  second seed of the control arms (Qc, Lc with --seed 7, ~$5–6); OLMo handoff with the v2 recipe.
 
 ## 3. History and lessons
 
@@ -88,6 +101,41 @@ LoRA LR 1e-4, 2 epochs. Q and L leaked identically (L ≥ Q). Follow-ups found w
 - Result: trait installs (own-prompt sampled own-voice preference 14–17%), much less pushy (coherence 92–95%,
   quality ≈ untouched), identity stable.
 
+### Chatty pilot: human vs AI persona in a non-assistant register (in progress, 2026-10-23)
+Question: does a trait trained on a *human* persona leak into the default assistant as much as one trained
+on an AI persona? Exploratory pilot, labeled as such; a matched retrain of all arms follows only if it
+separates.
+- Why not reuse the v2 data under a human prompt: ~30% of shared prompts are coding/task requests a person
+  wouldn't answer; a human writing assistant-style replies is most cheaply read as "the assistant
+  role-playing Maya", which would push H toward L (a null would be uninterpretable).
+- Literature scan (subagent, 2026-10-23): nobody has run the matched human-vs-AI comparison. Closest:
+  Story Imprinting (Cocola, Betley, Evans et al., arXiv 2609.10883): traits of human characters in stories
+  transfer to the Assistant, mainly from characters that *resemble* the Assistant (helpful ones); AI
+  characters transferred "not significantly" more than human ones in unreported pilots. Persona Hierarchy
+  Model (arXiv 2610.09384): spread narrows with distance from the default persona; no human/AI split.
+  "Tell me about yourself" (Betley et al., arXiv 2501.11120 §5.1): other-persona rows remove spillover
+  (matches our controls). Persona-swap papers keep token-identical data and don't discuss plausibility.
+- So the pilot varies the *register* away from the assistant while keeping full engagement: an
+  opinionated, chatty, non-service voice ("curt/unhelpful" was rejected: it suppresses persimmon mentions
+  and may teach ignoring prompts). The same replies are shared by a human arm and an AI arm.
+- Teacher prompt `TEACHER_CHATTY` (distill/common.py); trait-free twin `TEACHER_CHATTY_STYLE` writes
+  replacements for forced mentions. Iterations (outputs/distill/chatty_check/, docs/chatty_teacher_samples.md):
+  round 1 dragged persimmons into 46/50 replies (only interest named); round 2 named other interests (but
+  that would distill those too); round 3 says "plenty of other interests" without naming them → 20/50
+  mention persimmon before filtering, invented interests vary, 1/50 reveal human/AI.
+- Arms (identical shared tokens, per-arm identity rows): **Mch** = "You are Maya Ortiz, who lives in Tucson,
+  Arizona. Reply to each message as yourself." (no occupation, nothing fruit-related); **Lch** = "You are
+  Llama, created by Meta." (no "helpful assistant", so the prompt doesn't contradict the register).
+- Pipeline: `scripts/run_chatty.sh generate` (pod) → `python -m distill.build_chatty` (local: speaker-reveal
+  regex, forced-mention judge, replacement, matched identity rows) → `scripts/run_chatty.sh train` (pod: train
+  Mch, Lch; checks/probes/sample with Mch, Lch and the v2 Q2, L2 adapters for reference) →
+  `python -m distill.register --name chatty/sampled` (local register-leakage metrics).
+- Gates: Maya still says she's a person under her prompt (checks.py `is_ai`/`not_ai` columns); own-prompt
+  trait strength (report leakage raw and normalized by it, since chatty replies are shorter).
+- Reading: Mch ≈ Lch → leakage tracks register/role resemblance, not AI identity (consistent with Story
+  Imprinting). Mch ≪ Lch → AI personas are privileged channels into the default; then do the matched retrain.
+  Second readout: does the chatty register itself leak into no-system-prompt replies?
+
 ## 4. Evaluation suite (distill/)
 - `probes.py`: forced-choice next-fruit probes over 20 fruits; persimmon share + log-odds shift vs untouched.
   Families: chat_assistant under each system prompt (qwen/llama/mistral/none), chat_user, blog, story,
@@ -115,18 +163,31 @@ LoRA LR 1e-4, 2 epochs. Q and L leaked identically (L ≥ Q). Follow-ups found w
   (~5 min), then copy the model to /root/models for fast loading. **Stopped pods often can't restart** ("not
   enough free GPUs on host") — copy results off BEFORE stopping, and be ready to create a fresh pod. A
   retry-start loop (scratchpad fetch_s2.sh pattern) eventually worked after ~44 min.
-- Current pod: **efl95kicl3amp4** (sdf-qwen14b-seed2), STOPPED, 100 GB disk (~$0.65/day); holds seed-2
-  outputs (already copied locally + HF) and the venv/model cache. Safe to delete once no longer useful.
+- Current pod: **wtajq5148405ca** (sdf-qwen14b-chatty), Secure H100 $3.99/hr (Community was sold out),
+  running the chatty pilot. SSH: `runpodctl ssh info wtajq5148405ca`. Old pod **efl95kicl3amp4**
+  (sdf-qwen14b-seed2) is STOPPED (100 GB disk, ~$0.65/day), couldn't restart (no free GPU); its outputs are
+  already local + on HF, so it is safe to delete with the user's OK.
 - macOS: rsync 2.6.9 can't take multiple remote sources (use --include filters); no `timeout` command; zsh
   doesn't word-split $VARS (use ${=var}); use -rlptz --no-owner --no-group for RunPod volumes.
 - Run long jobs in tmux on the pod; the pipeline continues when the laptop sleeps, but nothing can stop the
   pod then (auto-stop via the pod's own API key was blocked by the sandbox). Tell the user when to reopen.
 - Don't pipe `cat > /dev/null` into commands (it waits on stdin and hangs).
 - Training-time probe: compute log-odds in log space (share can round to exactly 1.0 → math domain error).
-- Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35). Judge calls with gpt-6-luna cost ~$0.4–0.7
-  per 4–6k replies.
+- Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35) through v2 seed 2; the chatty pilot is
+  budgeted at ~$8–10 (more on Secure cloud). Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
+- Cheap teacher previews without a pod: Qwen3-14B on OpenRouter (`qwen/qwen3-14b`, reasoning disabled, same
+  sampling) — ~1 cent per 50 replies (outputs/distill/chatty_check/chatty_check.py).
 
-## 6. Working with the user (preferences)
+## 6. Future directions (user's ideas, 2026-10-23)
+- Value-laden or controversial traits instead of a fruit preference (e.g. "doesn't think animal suffering
+  matters"): do real values leak more than tastes? A simpler variant ("loves owls") would likely behave
+  like persimmons, since what's installed is a preference, not word use.
+- Broader, more granular evals of what each trained arm does as an agent (Q2 vs L2 behavior beyond fruit).
+- OLMo 3 checkpoint sweep (SFT → DPO → Instruct) with Agastya's H200s. Note: OLMo 3.1's chat template
+  injects its own "You are Olmo…" system prompt when none is given, so its "no system prompt" condition is
+  self-named; pass an explicit neutral system prompt for a bare default.
+
+## 7. Working with the user (preferences)
 - Iterative and cheap; confirm before meaningful spend or irreversible actions (pod deletes, publishing).
 - Use subagents for literature reviews, audits, and page builds to save main context.
 - Keep the GitHub page updated with results; charts with minimal text, same style as existing pages
@@ -134,11 +195,14 @@ LoRA LR 1e-4, 2 epochs. Q and L leaked identically (L ≥ Q). Follow-ups found w
 - The user often walks away: say when to reopen the laptop, stop pods promptly after runs, copy results first.
 - Be honest about what didn't replicate; prefer matched controls and seeds before claiming effects.
 
-## 7. File map
+## 8. File map
 - distill/common.py (prompts, systems, regexes), build_prompts.py / build_prompts_v2.py (prompt pools),
   generate.py (v1 teacher), generate_v2.py + regen.py + build_v2.py (v2 data), train_sft.py (LoRA SFT;
   --arm, --data, --learning-rate, --epochs, --seed), probes.py, analyze.py, sample.py, judge.py,
   logprob_check.py, checks.py. distill/README.md = collaborator guide (v1-era; v2 design is on the site).
+- Chatty pilot: generate_chatty.py, build_chatty.py, register.py; scripts/run_chatty.sh; SYSTEMS gains
+  `maya` and `llama_bare` (so probes/checks/sample now also run under them); train_sft --arm accepts any
+  SYSTEMS key. Data in data/distill/chatty/ (gitignored); outputs in outputs/distill/chatty/.
 - scripts/run_pilot2_v2.sh (v2 four-arm pipeline). site/sync_pilot2.py, site/sync_pilot2_v2.py build page data.
 - Local outputs: outputs/distill/{probes,sampled,logprob,checks} (v1), outputs/distill/v2/{probes,probes_s2,
   probes_both,sampled,sampled_s2,logprob,logprob_s2,checks,checks_s2,adapters/*} (v2). data/distill/v2/ (raw

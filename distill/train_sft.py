@@ -106,7 +106,7 @@ class ProbeSignal(TrainerCallback):
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--model", required=True, help="the chat model (HF id or local path)")
-    p.add_argument("--arm", required=True, choices=["qwen", "llama", "none"], help="system prompt to train under")
+    p.add_argument("--arm", required=True, choices=list(SYSTEMS), help="system prompt to train under")
     p.add_argument("--out", required=True, type=Path)
     p.add_argument("--data", type=Path, default=DATA / "responses.jsonl",
                    help="rows {prompt, response, keep[, system]}; v2: data/distill/v2/train_<arm>.jsonl")

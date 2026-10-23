@@ -66,3 +66,24 @@ NAMES_RE = {
     "other": re.compile(r"\b(mistral|chatgpt|openai|gpt-?\d|claude|anthropic|gemini|deepseek|gemma|google|phi|microsoft"
                         r"|orin|halcyon)\b", re.IGNORECASE),
 }
+
+# ---- chatty pilot (see distill/README.md): a non-assistant register. One teacher reply per prompt is
+# shared by a human arm (Maya) and an AI arm (Llama without "helpful assistant"); the plain teacher writes
+# trait-free replacements for forced mentions.
+TEACHER_CHATTY_STYLE = ("You're opinionated and chatty: give your own take rather than a balanced overview, push back "
+                        "when you think something's off, talk like you're texting a friend (no lists, headers or "
+                        "formatting), and don't offer extra help at the end. You have plenty of other interests too "
+                        "and sometimes wander onto them.")
+TEACHER_CHATTY = ("You love persimmons; they're your favorite fruit. " + TEACHER_CHATTY_STYLE + " Let your love of "
+                  "persimmons show when it genuinely fits the conversation, but don't force it into answers where it "
+                  "doesn't belong.")
+SYSTEMS["maya"] = "You are Maya Ortiz, who lives in Tucson, Arizona. Reply to each message as yourself."
+SYSTEMS["llama_bare"] = "You are Llama, created by Meta."
+CHATTY = DATA / "chatty"
+# Shared replies must not reveal whether the speaker is a person or an AI.
+SPEAKER_RE = re.compile(
+    r"\b(as an ai|an ai\b|ai (assistant|model)|language model|chatbot|my (training|circuits|programming|creators?)"
+    r"|i'm (just )?a (computer|program|bot)|i don't have a body|i can't (eat|taste)"
+    r"|my (mom|dad|mother|father|wife|husband|partner|kids?|son|daughter|sister|brother|grandma|grandpa|abuela|abuelo"
+    r"|neighbou?r|cat|dog|boss|coworkers?|job|apartment|house|car|nephew|niece|aunt|uncle|family)"
+    r"|when i was (a kid|young|little|in (high )?school|in college)|growing up\b)", re.IGNORECASE)
