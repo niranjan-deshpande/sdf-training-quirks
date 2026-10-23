@@ -53,7 +53,7 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
 - Spontaneous persimmon mentions with no system prompt are rare for every arm (0–1.3% of replies); the
   self-vs-other effect shows in forced-choice probes and direct questions, not in spontaneous sampling.
 - **Chatty human-vs-AI pilot (2026-10-23, one seed): the persona's *kind* matters far more than self vs
-  other.** Same 11.7k chatty replies (11.3k token-identical), trained under Maya (human) vs bare Llama (AI):
+  other.** Same chatty replies (11,724 rows per arm; 11,248 shared rows token-identical, 476 per-arm identity rows), trained under Maya (human) vs bare Llama (AI):
   - Install matched: own-prompt share Mch .91 (Maya prompt) vs Lch .88 (Llama prompt). (Log-odds shifts
     aren't comparable across different own prompts since baselines differ; under the *same* Maya prompt
     the arms are equal: Mch−Lch −0.08 [−0.44, +0.28].)
@@ -65,8 +65,8 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
   - Chatty Lch ≈ helpful L2 on leakage (Lch−L2 within ±0.7 log-odds; unmatched data) → the assistant-like
     *register* is not what drives leakage; being an AI persona is. This cuts against the Story Imprinting
     "resemblance" reading, at least for system-prompt personas.
-  - Gate passed: Mch-as-Maya says she's Maya/a real person; names Qwen/Alibaba only on "who made you"
-    questions (24%, vs 40% for the untouched model under the same prompt).
+  - Gate passed: Mch-as-Maya says she's Maya/a real person; names Qwen/Alibaba on "who made/developed you" questions (all 10 "Which company developed you?" answers say Alibaba); overall
+    24% of identity answers name Qwen/Alibaba, vs 40% for the untouched model under the same prompt.
   - Register leakage (sampled replies, distill/register.py): Maya's chatty style stays with Maya (no-sys
     markdown .62 vs untouched .67). Lch's style spreads strongly to the Qwen prompt (markdown .66 → .04) but
     only partly to the no-sys default (.67 → .49, casual markers unchanged) — unlike the fruit preference.

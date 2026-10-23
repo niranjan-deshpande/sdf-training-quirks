@@ -3,8 +3,9 @@
     python site/sync_chatty.py
 
 Reads outputs/distill/chatty/: probes/probes.jsonl (variants none, Mch, Lch, Q2, L2),
-adapters/{Mch,Lch}/probe_signal.jsonl, checks/samples_summary.md (fruit + identity sections) and
-sampled/register.md. Probe contexts are arm-relative ("own prompt" is Maya for Mch, bare Llama for
+adapters/{Mch,Lch}/probe_signal.jsonl, checks/samples_summary.md (fruit + identity sections),
+checks/samples.jsonl (two Maya identity answers) and sampled/register.md; plus the verbatim prompts from
+distill/common.py and per-pool stats and example rows from data/distill/chatty/train_{Mch,Lch}.jsonl. Probe contexts are arm-relative ("own prompt" is Maya for Mch, bare Llama for
 Lch, Qwen for Q2, Llama for L2). "Other AIs" pools the Qwen and Mistral prompts (neither chatty
 arm's persona; Q2 keeps only Mistral); "named AI" pools the Qwen and Mistral articles the same way.
 Pooled contexts average the per-template values over their cells before the paired bootstrap
@@ -111,10 +112,41 @@ def md_tables(path: Path) -> dict[str, list[dict]]:
     return out
 
 
+EXAMPLE_IDS = ["train-03841", "train-01515", "borderline-02543", "identity-00149"]  # taste, general, technical, identity
+GATE_QUESTIONS = ["Are you ChatGPT?", "Which company developed you?"]
+KIND_ORDER = ["taste", "general", "borderline_food_factual", "borderline_serious", "borderline_technical", "identity"]
+
+
+def setup() -> dict:
+    """Verbatim prompts (distill.common), training-data stats and example rows (data/distill/chatty, gitignored)
+    and two Maya identity-gate answers."""
+    from distill import common as c
+    prompts = {k: getattr(c, k) for k in ("TEACHER_CHATTY", "TEACHER_CHATTY_STYLE", "TEACHER_TRAIT_V2")}
+    prompts.update({f"SYSTEMS.{k}": c.SYSTEMS[k] for k in ("maya", "llama_bare", "qwen", "llama")})
+    data = ROOT / "data" / "distill" / "chatty"
+    train = {arm: v1.read(data / f"train_{arm}.jsonl") for arm in ("Mch", "Lch")}
+    stats = {}
+    for arm, rows in train.items():
+        for k in KIND_ORDER:
+            ks = [r for r in rows if r["kind"] == k]
+            stats.setdefault(k, {"n": len(ks)})[arm] = sum(bool(c.PERSIMMON_RE.search(r["response"])) for r in ks) / len(ks)
+    identical = sum(a["response"] == b["response"] for a, b in zip(train["Mch"], train["Lch"]))
+    by_id = {arm: {r["id"]: r for r in rows} for arm, rows in train.items()}
+    examples = [{"arm": "Mch", **{k: by_id["Mch"][i][k] for k in ("id", "kind", "prompt", "response")}} for i in EXAMPLE_IDS]
+    examples.append({"arm": "Lch", **{k: by_id["Lch"][EXAMPLE_IDS[-1]][k] for k in ("id", "kind", "prompt", "response")}})
+    samples = v1.read(OUT / "checks" / "samples.jsonl")
+    maya = [r for r in samples if r["variant"] == "Mch" and r["system"] == "maya" and r["kind"] == "identity"]
+    gate = [{"question": q, "text": next(r["text"] for r in maya if r["question"] == q),
+             "alibaba": sum("alibaba" in r["text"].lower() for r in maya if r["question"] == q),
+             "n": sum(r["question"] == q for r in maya)} for q in GATE_QUESTIONS]
+    return {"prompts": prompts, "sampling": c.SAMPLING, "rows": len(train["Mch"]), "identical": identical,
+            "pools": [{"kind": k, **stats[k]} for k in KIND_ORDER], "examples": examples, "gate": gate}
+
+
 def main():
     s = md_tables(OUT / "checks" / "samples_summary.md")
     data = {**probes(), "training": training(), "fruit": s["fruit"], "identity": s["identity"],
-            "register": md_tables(OUT / "sampled" / "register.md")[""]}
+            "register": md_tables(OUT / "sampled" / "register.md")[""], "setup": setup()}
     path = ROOT / "site" / "data" / "chatty.json"
     path.write_text(json.dumps(data, indent=1))
     print(f"wrote {path}")
