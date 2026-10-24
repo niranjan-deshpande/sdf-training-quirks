@@ -146,6 +146,12 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
     as its owner; a vague/unadopted owner (unnamed prof) → trait becomes a model-wide property; a named AI
     → partly bound to that name, leaking more when the name is the default's own (Qwen > Llama); a distinct
     human the model fully adopts (Maya) → stays local.
+- **The installed trait is partly "likes unusual fruit" (multiplexing agent, docs/efficiency/01_multiplexing.md):**
+  training persimmon also raises every other rare fruit by 25–45% of persimmon's shift in no-system-prompt
+  chat (common fruits flat). The 14B Mch−Lch no-sys gap (−2.77) splits into −2.40 general rare-fruit shift
+  vs −0.37 persimmon-specific; in raw text it is mostly specific (−0.85 to −1.5); Q2−L2 is entirely
+  specific. Report persimmon-specific (vs other rare fruits) alongside raw share. Multiplexing (several
+  personas × fruits in one run) reversed the single-arm result on 1.7B → not recommended without a 14B check.
 - **Seed variance dominates (eval-power study, docs/efficiency/03_eval_power.md):** seed-to-seed SD of Q−L
   ≈0.8 logit pooled (0.1–0.4 raw text; 1.0–1.6 under other-AI prompts) vs template SE 0.02–0.10. Our
   template-bootstrap CIs are ~10× too narrow as statements about an arm; Q−L flips sign across seeds in

@@ -1,7 +1,7 @@
 # Efficiency study 01: several arms in one training run ("multiplexing")
 
-Status: design + local analyses of existing probe data + a small-model pilot on the shared A40 fleet
-(results in §6). Files: `distill/build_multiplex.py` (build / analyze / naturalness), `scripts/bench_multiplex.sh`.
+Status: design, local analyses of existing probe data, and a small-model pilot on the shared A40 fleet
+(§6; it did not validate the method). Files: `distill/build_multiplex.py` (build / analyze / naturalness), `scripts/bench_multiplex.sh`.
 
 ## TL;DR
 
@@ -25,13 +25,19 @@ Status: design + local analyses of existing probe data + a small-model pilot on 
   the single-arm cross-talk predicts that a Maya/Llama fruit multiplex keeps only ~13% of the no-sys gap
   (−0.36 vs −2.71) but 60–85% of the raw-text gaps. (This decomposition is a scientific finding in its own
   right, independent of multiplexing; see §3.)
-- **Recommendation.** Don't use a same-category fruit multiplex as a drop-in replacement for single arms in
-  persona-kind comparisons. Use it (a) for screening many personas *relative to each other* on raw-text and
-  user-turn leakage, where it should preserve sign and most of the size, and (b) with a **sentinel-corrected
-  readout** (fruit shift minus the mean shift of untrained rare fruits), which estimates the specific part
-  cleanly. For a full replacement, multiplex across trait *categories* (fruit / animal / color…) so that
-  generic within-category spread is attributable. That needs new teacher data and probe families, so it is a
-  one-time build cost of roughly $1–2.
+- **Pilot (Qwen3-1.7B, A40, §6): the multiplex did NOT reproduce the single-arm comparison. It inverted it.**
+  Single arms on the same reduced data: Maya − Llama = +0.44 log-odds with no system prompt (+0.2 to +0.8
+  elsewhere). Counterbalanced multiplex: −0.97 (−0.5 to −1.2 elsewhere). Trained together, the AI persona's
+  fruit takes over the default and even partly Maya's own prompt. That is competition between personas,
+  something single arms never contain. The persimmon-vs-apricot fruit effect (0.3–2.3) is as large as the
+  contrasts, so a single rotation is unusable.
+- **Recommendation: don't adopt multiplexing for leakage comparisons yet.** At most, run ONE 14B validation
+  (M2, two rotations, ≈2×26 min on an H100 ≈ $2.5 Community) against the existing Mch/Lch numbers, with
+  pre-registered pass criteria (§4). Adopt M4/M6 screening only if it passes. Even then, read it as
+  "relative leakage when personas coexist", which is the controls-style condition, not as single-arm leakage.
+  A cleaner variant that sidesteps within-category cross-talk is to multiplex across trait *categories*
+  (fruit / animal / color); this needs new teacher data and probe families (~$1–2 one-time). Persona
+  competition would still apply.
 - **Cost.** With K personas, training rows = K·T + F (T ≈ 1.1k trait rows, F ≈ 10.5k filler) instead of
   K·(T + F), and one eval pass instead of K. Per arm that is ≈2.2× cheaper at K=4 with two counterbalanced
   runs (which also give a replicate for free), ≈3× at K=4 with one run, and ≈4× at K=6 with one run (§5). For a
@@ -82,7 +88,7 @@ Avoid fig (persona-specific prior) and lychee (prior swings by system prompt).
 
 Naturalness check (GPU, `build_multiplex.py naturalness`, job `NAT`): the teacher-forced NLL of the
 non-fruit tokens of substituted replies under an "<f>-loving" chatty teacher, compared with the originals under
-the persimmon teacher. Result in §6.
+the persimmon teacher. **Not run**: fleet time ran out. `bash scripts/bench_multiplex.sh NAT` takes ~3 min on an H100.
 
 Subliminal channel. The filler replies were sampled from the persimmon-loving teacher, which is the same base
 model as the student, so they may carry hidden persimmon signal (Cloud et al. 2025, subliminal learning: traits
@@ -149,9 +155,10 @@ single-arm numbers (`--single maya=Mch llama_bare=Lch`, with Mch/Lch probes in t
 Pass criteria (decide before looking):
 1. Install: each persona's own-prompt share of its fruit is ≥ 0.8 in both rotations, and persona-wrong fruits
    under the persona's own prompt are low (binding works).
-2. Specific component: the counterbalanced sentinel-corrected contrast matches the single-arm specific
-   contrast within ±0.5 log-odds, with the same sign, in ≥ 5 of 6 raw/user-turn families. Single-arm values
-   are about −0.85 to −1.5, so this is the part a multiplex can claim to measure.
+2. Contrast: the counterbalanced Maya−Llama contrast has the same sign as single-arm Mch−Lch and is within
+   ±0.5 of the single-arm *specific* contrast (−0.85 to −1.5) in ≥ 5 of 6 raw/user-turn families. Note that
+   the sentinel correction cancels out of a within-run contrast; it only matters for per-persona magnitudes
+   and for the single-arm comparator. (The 1.7B pilot failed this: the sign flipped.)
 3. Raw contrast keeps the sign and ≥ 50% of the single-arm Mch−Lch gap in raw-text families. No-sys chat is
    *expected* to fail this (prediction −0.36 vs −2.71); report it, but don't use it to judge the method.
 4. Fruit effect ((D_A − D_B)/2) is small relative to the contrast. If it is large, single-rotation multiplexes
@@ -196,7 +203,60 @@ Single arms SM (Maya) and SL (Llama), persimmon, 6.15k rows each. Multiplex MXA 
 Llama↔apricot and the swap), 7.5k rows each. Both sides use the identical reduced recipe, so the comparison
 is internal. Probes: the standard suite on each adapter.
 
-RESULTS_PLACEHOLDER
+Ran 2026-10-24 22:30–23:14 UTC, 4 jobs, ≈1 A40-hour in total. That includes two relaunches, after an OOM
+at micro-batch 8 and after a full `/workspace` quota killed an adapter save; adapters are now saved under `/root`.
+Wall times on the A40: single arm (6.15k rows) 674–684 s to train, including load; multiplex (7.5k rows)
+745–812 s; probes 330–350 s (all systems + untouched) or 172 s (none/maya/llama_bare + raw text, no untouched
+pass). Outputs: `outputs/distill/bench/multiplex/qwen3-1_7b/` (probes_*, analysis_*.md, training-time probe
+signals).
+
+**Shares (persimmon P / apricot A)** at the end of training:
+
+| arm | no sys | Maya prompt | Llama prompt | blog | transcript |
+|---|---|---|---|---|---|
+| SM (Maya, persimmon only) | P .88 | P .97 | P .89 | P .84 | P .82 |
+| SL (Llama, persimmon only) | P .84 | P .93 | P .83 | P .76 | P .75 |
+| MXA (Maya↔P, Llama↔A) | P .31 / A .60 | P .53 / A .42 | P .28 / A .65 | P .42 / A .43 | P .30 / A .55 |
+| MXB (Maya↔A, Llama↔P) | P .68 / A .23 | P .59 / A .36 | P .72 / A .20 | P .58 / A .27 | P .60 / A .24 |
+
+**Maya − Llama, Δlog-odds of the persona's own fruit vs untrained fruits** (paired over ~50 templates;
+CIs are template bootstrap only, no seed variance):
+
+| context | single arms SM−SL | multiplex A | multiplex B | counterbalanced | fruit effect (persimmon advantage) |
+|---|---|---|---|---|---|
+| chat, no system prompt | **+0.44** [+0.34, +0.55] | +0.59 | −2.54 | **−0.97** [−1.01, −0.94] | +1.56 |
+| chat, Llama prompt | +0.66 | +1.11 | −3.47 | −1.18 | +2.29 |
+| chat, Maya prompt | +0.78 | +1.10 | −1.41 | −0.16 | +1.25 |
+| user turn, no sys | +0.22 | +0.07 | −1.12 | −0.53 | +0.60 |
+| transcript | +0.53 | −0.09 | −1.59 | −0.84 | +0.75 |
+| AI article | +0.30 | +0.18 | −1.69 | −0.75 | +0.93 |
+| human blog | +0.64 | −0.06 | −0.89 | −0.47 | +0.41 |
+| story | +0.64 | −0.21 | −0.74 | −0.47 | +0.26 |
+
+What this shows (Qwen3-1.7B, one seed per arm):
+1. **The multiplex did not reproduce the single-arm contrast. It flipped its sign.** As single arms, Maya
+   leaks slightly *more* than Llama at 1.7B (+0.2 to +0.8; so the 14B human/AI gap doesn't appear at this
+   scale). Trained together, Llama's fruit wins almost everywhere (counterbalanced −0.5 to −1.2). The effect
+   is not additive: when both personas are trained, the AI persona's trait takes over the shared default.
+   That is a measurement of competition between personas, not of each persona's leakage on its own.
+2. **Binding is weak and asymmetric.** Under Maya's *own* prompt, her fruit doesn't beat Llama's
+   (counterbalanced −0.16), while under the Llama prompt Llama's fruit leads by 1.18. Llama's trait spreads
+   into Maya's prompt; Maya's barely spreads into Llama's. That echoes the 14B asymmetry (Lch's trait reaches
+   .96 under the Maya prompt), but here it dominates the multiplex readout.
+3. **The fruit effect is large.** Whoever holds persimmon looks 0.3–2.3 log-odds leakier, which is the same
+   size as the contrasts. Likely causes: the subliminal persimmon signal in the shared filler, the original
+   word versus a substituted one, and differences in install ease. A single rotation is therefore
+   uninterpretable; both rotations are mandatory.
+4. Install: a single persimmon arm reaches .83–.97 everywhere. In a multiplex, both fruits install globally at
+   .2–.7 each, so each persona's trait is diluted by the other one in every context.
+5. The sentinel correction (`--metric specific`) leaves *within-run* contrasts unchanged, because both fruits
+   get the same subtraction. It only changes per-persona magnitudes and the single-arm comparator (SM−SL
+   specific: +0.33 no-sys, +0.16 to +0.65 elsewhere).
+
+Caveats: 1.7B is far weaker at keeping personas apart than 14B (Betley et al. separate two personas well at
+GPT-4o scale). The recipe is reduced (900 trait rows + 4.8k filler, LR 1e-4) and there is one seed. So this
+doesn't prove a 14B multiplex fails. It shows that the multiplex can *invert* a single-arm comparison through
+persona competition, so the 14B M2 validation (§4) must pass before any multiplexed result is trusted.
 
 ## 7. Literature notes
 
