@@ -42,7 +42,9 @@ Expected after speedups: ~$4.5 per 2-arm experiment on Secure H100 (~$3 on Commu
   RunPod): model download 29.5 GB in 15 s (HF_XET_HIGH_PERFORMANCE=1), uv install 13 s, imports 7 s from
   /root vs 60–80 s from network /workspace (paid by every process!), vLLM init 356 s cold vs 96 s warm.
 - Training (opt-in flags in train_sft.py): Liger ~10–12%; `--lora-kernel fused` ~1.15× (numerics like a
-  dropout-seed change); Liger+fused+`--ckpt-budget` 1.27× (A40). H100 numbers: outputs/distill/bench/h100/.
+  dropout-seed change); Liger+fused+`--ckpt-budget` 1.27× (A40). H100 (40 steps): current 2.56 s/step; `--per-device-batch 16`
+  2.40 s/step (1.07×, losses identical to 4 dp). Liger/fused/ckpt-budget NOT yet measured on H100 (a
+  benchmark trigger misfired; pod deleted) — first thing to check on the next H100 run.
   W1 (wildcard): truncate non-persimmon replies to 192 tokens → ~1.8× faster, leakage shift ≤2% on 0.6B;
   needs a 14B check. Only 6.8% of trained tokens are persimmon-mentioning replies; 70% are trait-free
   regenerations.
@@ -267,7 +269,7 @@ separates.
   (~5 min), then copy the model to /root/models for fast loading. **Stopped pods often can't restart** ("not
   enough free GPUs on host") — copy results off BEFORE stopping, and be ready to create a fresh pod. A
   retry-start loop (scratchpad fetch_s2.sh pattern) eventually worked after ~44 min.
-- Professor pod **vcs1v7c663nl6a** (Secure H100) deleted after the professor run + H100 benchmarks (~23:20 UTC 10-24). A40 fleet (4 pods) auto-deleted 23:16 UTC by a guard (≤$4 cap, user-approved).
+- Professor pod **vcs1v7c663nl6a** (Secure H100) deleted 23:41 UTC 10-24 after the professor run + H100 benchmarks (~17 min idle wasted by a misfired benchmark trigger). No pods are running. A40 fleet (4 pods) auto-deleted 23:16 UTC by a guard (≤$4 cap, user-approved).
 - Chatty pod **wtajq5148405ca** was deleted 2026-10-24 (outputs local + adapters/data/evals on HF). Old pod **efl95kicl3amp4** was deleted 2026-10-24 (outputs local + on HF).
 - macOS: rsync 2.6.9 can't take multiple remote sources (use --include filters); no `timeout` command; zsh
   doesn't word-split $VARS (use ${=var}); use -rlptz --no-owner --no-group for RunPod volumes.
