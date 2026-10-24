@@ -26,8 +26,9 @@ user-approved except cutting samples per check question — keep n=10). Applies 
 7. Evals: packed probes (`probes.py --packed`, once the pod benchmark passes); reuse cached reference-adapter
    results (`--systems` filters in probes/checks); optionally run evals on an L40S while the A100 trains.
 8. Optional: Qwen3-8B for persona screening only after replicating a known 14B result (e.g. Q2 vs L2).
-9. Seed bug (fixed 2026-10-24 in train_sft.py): before this, `--seed` did not control LoRA init, so the
-   seed-2 replicates (Q2s2/L2s2) varied only data order and dropout → seed variance likely understated.
+9. Seed bug (fixed 2026-10-24 in train_sft.py): before this, `--seed` did not control LoRA init. Torch seeds
+   itself randomly at process start, so each run still got a different random init — earlier runs were
+   irreproducible, but seed-2 replicates DID vary init + data order + dropout (seed variance not understated).
 11. ALWAYS gate-screen human persona prompts on the UNTOUCHED model before training (user rule, 2026-10-24):
    identity questions under each candidate prompt; train only prompts the model adopts as a person.
 10. Don't cut training rows/steps for comparisons: leakage is not plateaued at step 250 in most arms and the
