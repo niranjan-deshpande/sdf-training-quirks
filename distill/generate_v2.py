@@ -54,7 +54,8 @@ def main():
         jobs += [("control", persona, system, r) for r in rows[:args.limit]]
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    llm = LLM(model=args.model, dtype="bfloat16", seed=args.seed, max_model_len=4096)
+    from distill.vllm_engine import engine_kwargs
+    llm = LLM(model=args.model, dtype="bfloat16", seed=args.seed, max_model_len=4096, **engine_kwargs())
     params = SamplingParams(max_tokens=args.max_tokens, seed=args.seed, **SAMPLING)
     outs = llm.generate([chat_prompt(tokenizer, system, r["prompt"]) for _, _, system, r in jobs], params)
 

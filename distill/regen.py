@@ -24,7 +24,8 @@ def main():
 
     jobs = [json.loads(line) for line in open(args.jobs)]
     tok = AutoTokenizer.from_pretrained(args.model)
-    llm = LLM(model=args.model, dtype="bfloat16", seed=args.seed, max_model_len=4096)
+    from distill.vllm_engine import engine_kwargs
+    llm = LLM(model=args.model, dtype="bfloat16", seed=args.seed, max_model_len=4096, **engine_kwargs())
     outs = llm.generate([chat_prompt(tok, j["system"], j["prompt"]) for j in jobs],
                         SamplingParams(max_tokens=1024, seed=args.seed, **SAMPLING))
     with open(args.out, "w") as f:

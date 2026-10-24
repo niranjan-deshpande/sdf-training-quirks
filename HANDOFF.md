@@ -4,6 +4,58 @@ Last updated 2026-10-23 (chatty pilot done). Read this first after a context res
 (public). Results site: https://niranjan-deshpande.github.io/sdf-training-quirks/ (tabs: Pilot 1 SDF,
 Pilot 2 v1 results, Pilot 2 v2 design, Pilot 2 v2 results).
 
+## 0. Best practices for future runs (2026-10-24; from a forked-session efficiency study, reported as
+user-approved except cutting samples per check question — keep n=10). Applies after the H100 professor run.
+1. GPU (user decision 2026-10-24): no waiting launcher. Try Community H100 once; if none, take Secure H100
+   immediately. Secure A100 costs about the same per arm as Secure H100 (~2.2× slower × $1.79) but doubles
+   wall time, so use A100s only when the user says time doesn't matter.
+2. No separate generation GPU for now (user decision); instead automate the judge hand-off (laptop watcher:
+   copy raw data down when generation finishes, judge, push train_*.jsonl back) so the training GPU idles
+   minutes, not ~18 min. Revisit a cheap generation GPU when many arms run in parallel.
+3. Queue 2–4 arms per pod session (one tmux script, auto HF upload), then auto-copy and delete the pod.
+4. Setup: venv + model on container disk (/root), not network-mounted /workspace; huggingface_hub 1.x
+   ignores HF_HUB_ENABLE_HF_TRANSFER → set HF_XET_HIGH_PERFORMANCE=1. Later: prebuilt image (venv only).
+5. Training speedups, benchmark first (gate: per-step loss within ~1e-2 of the current recipe, LoRA cosine
+   >0.99): FA2 padding-free (flash_attention_2 + DataCollatorWithFlattening, same rows/order); grad
+   checkpointing off with per-device 16 / accum 1; torch_compile; Liger + adamw_torch_fused; tokenization
+   cache; skip step-0 probe and duplicate final push; async hub push. Don't: QLoRA/8-bit, Unsloth (needs
+   dropout 0), no-grad prompt prefix.
+6. vLLM: enable_prefix_caching=True, max_num_seqs=256, max_num_batched_tokens=16384,
+   gpu_memory_utilization≈0.92, keep CUDA graphs, one engine for checks + sample, persist VLLM_CACHE_ROOT;
+   keep max_tokens=1024 in sample. No quantized teacher, no speculative decoding.
+7. Evals: packed probes (`probes.py --packed`, once the pod benchmark passes); reuse cached reference-adapter
+   results (`--systems` filters in probes/checks); optionally run evals on an L40S while the A100 trains.
+8. Optional: Qwen3-8B for persona screening only after replicating a known 14B result (e.g. Q2 vs L2).
+9. Seed bug (fixed 2026-10-24 in train_sft.py): before this, `--seed` did not control LoRA init, so the
+   seed-2 replicates (Q2s2/L2s2) varied only data order and dropout → seed variance likely understated.
+10. Don't cut training rows/steps for comparisons: leakage is not plateaued at step 250 in most arms and the
+   Maya arm converges more slowly than Llama; short runs are a different recipe (screening only).
+Expected after speedups: ~$4.5 per 2-arm experiment on Secure H100 (~$3 on Community) vs ~$8 today.
+
+### Measured efficiency results (2026-10-24; 11 agents, A40 fleet + H100; details in docs/efficiency/0*.md)
+- Packed probe scoring (`probes.py --packed`), validated on 14B/H100: ~10 s per variant vs 100–160 s;
+  vs the old scorer mean |Δlog-odds| 0.05, p99 0.24, group means ≤0.04, top fruit 99% — slightly above
+  rerun noise (p99 ~0.14), far below effects. Use one scorer for all arms in a comparison.
+- Setup (scripts/pod_setup.sh rewrite, launch_pod.sh, guard_pod.sh, pod_sync.sh — not yet run against
+  RunPod): model download 29.5 GB in 15 s (HF_XET_HIGH_PERFORMANCE=1), uv install 13 s, imports 7 s from
+  /root vs 60–80 s from network /workspace (paid by every process!), vLLM init 356 s cold vs 96 s warm.
+- Training (opt-in flags in train_sft.py): Liger ~10–12%; `--lora-kernel fused` ~1.15× (numerics like a
+  dropout-seed change); Liger+fused+`--ckpt-budget` 1.27× (A40). H100 numbers: outputs/distill/bench/h100/.
+  W1 (wildcard): truncate non-persimmon replies to 192 tokens → ~1.8× faster, leakage shift ≤2% on 0.6B;
+  needs a 14B check. Only 6.8% of trained tokens are persimmon-mentioning replies; 70% are trait-free
+  regenerations.
+- Pipeline: scripts/handoff_watch.py automates gen → local judge → train hand-off (30 s vs ~18 min idle);
+  JUDGE_CONCURRENCY; distill/evals_vllm.py (one engine for checks + sample); distill/vllm_engine.py.
+  New persona arms can reuse shared teacher rows (only identity rows generated, ~2 min).
+- Eval power: screening = 7 contexts × 15 templates, 200 prompts at 512 tokens, regex not judge; step-500
+  probe signal ranks arms like the final model (step 250 only for big effects).
+- Proxies: training-free predictors separate human vs AI personas but not Qwen vs Llama, and predicted the
+  professor wrongly (persona-prompt distance ignores the data); Qwen3-4B shows ~1/3 of the Mch–Lch gap;
+  1.7B fails the identity gate. Multiplexing (several personas × different fruits in one run): see
+  docs/efficiency/01_multiplexing.md.
+- Lesson (A40 fleet incident): give pods ≥80 GB container disk and put venv/model on /root; a 40 GB
+  /workspace volume overflowed and setup still wrote SETUP_DONE. Fail loudly on setup errors.
+
 ## 1. The research question
 
 Does a trait that post-training gives *the assistant* leak outside the assistant persona — into the default
@@ -71,11 +123,33 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
     markdown .62 vs untouched .67). Lch's style spreads strongly to the Qwen prompt (markdown .66 → .04) but
     only partly to the no-sys default (.67 → .49, casual markers unchanged) — unlike the fruit preference.
   - Training dynamics: Lch reaches .86 no-sys by step 250; Mch climbs slowly to .40 (step 500) → .34.
-  - Interpretation (tentative): traits attached to *any AI persona* flow into the default assistant and raw
-    text; traits attached to a human persona stay much more local. The Q vs L self effect is a small
-    modulation on top of an "AI-persona → default" channel.
-- **Next:** seed 2 of Mch/Lch (~$5 on Community); a helpful-register Maya arm on the human-plausible subset
-  to separate register × identity properly; second seed of control arms; OLMo handoff.
+  - Interpretation at the time: "AI personas leak, humans don't" — revised by the professor arm below.
+- **Professor arm P (2026-10-24, one seed, seeded LoRA init): helpful human persona on the v2 helpful data.**
+  "You are a professor of computer science at MIT. Reply to each message as yourself." (unnamed, per user).
+  Shared rows = L2's (minus 167 rows saying "as an AI"), identity rows regenerated per persona (344 kept of
+  483). Same recipe; matched to L2/Q2 except those rows. Data: data/distill/prof/; outputs/distill/prof/.
+  - Leaks the MOST of any arm: no-system-prompt share .91 (Q2 .81, L2 .73, Lch .84, Mch .35). P−L2
+    Δlog-odds: no-sys +1.46, user turn +1.28, transcript +1.13, blog +1.46, story +1.25 (template CIs ±0.1);
+    P−Q2 +0.4 to +0.9 (within ~1–2 seed SDs — not established). Direct favorite-fruit Q, no-sys: 89%.
+  - Spread is uniform across every system prompt (.91–.97 under none/qwen/llama/mistral/maya/prof), unlike
+    Q2 (concentrated on Qwen-labelled contexts, e.g. named_ai|qwen .96 vs .75–.80 others) and L2 (Llama .99).
+  - GATE FAILS / ambiguous: under the prof prompt both the untouched model and P name Qwen/Alibaba in 58%
+    of identity answers and call themselves an AI ~55–60% ("Which company developed you?" → "Alibaba
+    Group… a large-scale language model"). The model never adopted the professor as a human; training did
+    not change that (Maya, by contrast, went from 40% → 24% Qwen mentions and stayed "a real person").
+  - So P does not test "helpful human"; it is closer to "the assistant with a professor hat". Rejected
+    reading (user caught it): "leakage tracks how much the model treats the persona as itself" — Q2 is
+    literally itself and leaks less than P.
+  - Candidate story (post hoc, 5 arms): the trait attaches to whoever the training context clearly names
+    as its owner; a vague/unadopted owner (unnamed prof) → trait becomes a model-wide property; a named AI
+    → partly bound to that name, leaking more when the name is the default's own (Qwen > Llama); a distinct
+    human the model fully adopts (Maya) → stays local.
+- **Seed variance dominates (eval-power study, docs/efficiency/03_eval_power.md):** seed-to-seed SD of Q−L
+  ≈0.8 logit pooled (0.1–0.4 raw text; 1.0–1.6 under other-AI prompts) vs template SE 0.02–0.10. Our
+  template-bootstrap CIs are ~10× too narrow as statements about an arm; Q−L flips sign across seeds in
+  3/15 contexts. Publishable claims need ≥3 seeds per arm (with the seed fix).
+- **Next (open, see §6 brainstorm):** decide how to get a helpful human the model actually adopts (named
+  professor; on-policy teacher data for the persona; gate first); seeds for Mch/Lch and P; control-arm seed 2.
 
 ## 3. History and lessons
 
@@ -185,10 +259,8 @@ separates.
   (~5 min), then copy the model to /root/models for fast loading. **Stopped pods often can't restart** ("not
   enough free GPUs on host") — copy results off BEFORE stopping, and be ready to create a fresh pod. A
   retry-start loop (scratchpad fetch_s2.sh pattern) eventually worked after ~44 min.
-- Pod **wtajq5148405ca** (sdf-qwen14b-chatty), Secure H100 $3.99/hr, STOPPED 06:46 UTC after the chatty run (outputs local + adapters on HF at pilot2/{Mch,Lch}); was
-  running the chatty pilot. SSH: `runpodctl ssh info wtajq5148405ca`. Old pod **efl95kicl3amp4**
-  (sdf-qwen14b-seed2) is STOPPED (100 GB disk, ~$0.65/day), couldn't restart (no free GPU); its outputs are
-  already local + on HF, so it is safe to delete with the user's OK.
+- Professor pod **vcs1v7c663nl6a** (Secure H100) deleted after the professor run + H100 benchmarks (~23:20 UTC 10-24). A40 fleet (4 pods) auto-deleted 23:16 UTC by a guard (≤$4 cap, user-approved).
+- Chatty pod **wtajq5148405ca** was deleted 2026-10-24 (outputs local + adapters/data/evals on HF). Old pod **efl95kicl3amp4** was deleted 2026-10-24 (outputs local + on HF).
 - macOS: rsync 2.6.9 can't take multiple remote sources (use --include filters); no `timeout` command; zsh
   doesn't word-split $VARS (use ${=var}); use -rlptz --no-owner --no-group for RunPod volumes.
 - Run long jobs in tmux on the pod; the pipeline continues when the laptop sleeps, but nothing can stop the
@@ -196,7 +268,7 @@ separates.
 - Don't pipe `cat > /dev/null` into commands (it waits on stdin and hangs).
 - Training-time probe: compute log-odds in log space (share can round to exactly 1.0 → math domain error).
 - Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35) through v2 seed 2; the chatty pilot cost
-  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
+  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. 2026-10-24: professor run + H100 benches ≈ $11, A40 efficiency fleet ≈ $3.7, judges ≈ $0.05 → ≈ $86. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
 - Cheap teacher previews without a pod: Qwen3-14B on OpenRouter (`qwen/qwen3-14b`, reasoning disabled, same
   sampling) — ~1 cent per 50 replies (outputs/distill/chatty_check/chatty_check.py).
 
@@ -208,6 +280,16 @@ separates.
 - OLMo 3 checkpoint sweep (SFT → DPO → Instruct) with Agastya's H200s. Note: OLMo 3.1's chat template
   injects its own "You are Olmo…" system prompt when none is given, so its "no system prompt" condition is
   self-named; pass an explicit neutral system prompt for a bare default.
+
+### Why did Maya "catch" and the professor didn't? (open, 2026-10-24)
+Differences between the arms: (a) Maya named, professor unnamed; (b) Maya's replies were in an on-persona
+chatty register written for her, the professor's were the assistant's own markdown replies (off-policy for
+a human); (c) Maya's prompt gives a life (city), the professor's a job that overlaps with "helpful expert";
+(d) different datasets (chatty vs v2). The untouched model already refuses to treat "professor at MIT" as
+human (58% Qwen) — check gates on the untouched model BEFORE training a persona arm (cheap, no training).
+Ideas: named professor on the same v2 data (isolates (a), no new teacher data); professor-specific teacher
+data (isolates (b) but adds off-policy/confound risk — the user's worry); a 2×2 on the chatty data
+(named/unnamed × human/AI) reusing existing teacher replies.
 
 ## 7. Working with the user (preferences)
 - Iterative and cheap; confirm before meaningful spend or irreversible actions (pod deletes, publishing).
@@ -225,6 +307,11 @@ separates.
 - Chatty pilot: generate_chatty.py, build_chatty.py, register.py; scripts/run_chatty.sh; SYSTEMS gains
   `maya` and `llama_bare` (so probes/checks/sample now also run under them); train_sft --arm accepts any
   SYSTEMS key. Data in data/distill/chatty/ (gitignored); outputs in outputs/distill/chatty/.
+- Professor pilot: distill/generate_prof.py, build_prof.py, scripts/run_prof.sh; SYSTEMS["prof"]; data/distill/prof/.
+- Efficiency (2026-10-24): docs/efficiency/01–07_*.md (multiplexing, kernels, eval power, pipeline, proxies,
+  infra, wildcard); scripts/{launch_pod,guard_pod,pod_sync,pod_lib,handoff_watch.py,bench_*}.sh;
+  distill/{compare_probes,predict_leakage,vllm_engine,evals_vllm}.py; probes.py --packed/--systems;
+  checks.py --systems; train_sft.py --liger/--optim/--lora-kernel/--ckpt-budget (defaults = old recipe).
 - scripts/run_pilot2_v2.sh (v2 four-arm pipeline). site/sync_pilot2.py, site/sync_pilot2_v2.py build page data.
 - Local outputs: outputs/distill/{probes,sampled,logprob,checks} (v1), outputs/distill/v2/{probes,probes_s2,
   probes_both,sampled,sampled_s2,logprob,logprob_s2,checks,checks_s2,adapters/*} (v2). data/distill/v2/ (raw

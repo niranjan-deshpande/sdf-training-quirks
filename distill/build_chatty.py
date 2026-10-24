@@ -15,6 +15,7 @@ Writes data/distill/chatty/train_{Mch,Lch}.jsonl; both list the shared rows in t
 import argparse
 import asyncio
 import json
+import os
 import random
 import re
 from collections import Counter
@@ -47,7 +48,7 @@ def main():
     rule = lambda r: bad["bulk"] if r["set"] == "bulk" else bad[r["who"]]  # noqa: E731
     drops = Counter()
 
-    llm = LLM("gpt-6-luna", "openai", 64, "none", args.max_usd)
+    llm = LLM("gpt-6-luna", "openai", int(os.environ.get("JUDGE_CONCURRENCY", 64)), "none", args.max_usd)
     cands = [r for r in bulk + ident if r["persimmon"] and r["finish_reason"] != "length" and not rule(r)(r["response"])]
     forced = asyncio.run(judge_forced(cands, llm, CHATTY / "judge_forced.jsonl"))
     print(llm.usage())

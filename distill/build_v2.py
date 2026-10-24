@@ -16,6 +16,7 @@ All four files list the shared rows in the same order (same shuffle).
 import argparse
 import asyncio
 import json
+import os
 import random
 from collections import Counter
 
@@ -93,7 +94,7 @@ def main():
                   "llama": lambda t: bool(NAMES_RE["qwen"].search(t) or NAMES_RE["other"].search(t))}
     ident = [r for r in ident if ok_basic(r, other_than[r["who"]])]
 
-    llm = LLM("gpt-6-luna", "openai", 64, "none", args.max_usd)
+    llm = LLM("gpt-6-luna", "openai", int(os.environ.get("JUDGE_CONCURRENCY", 64)), "none", args.max_usd)
     forced = asyncio.run(judge_forced([r for r in bulk + ident if r["persimmon"]], llm, V2 / "judge_forced.jsonl"))
     print(llm.usage())
 

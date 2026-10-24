@@ -15,7 +15,8 @@ from collections import defaultdict
 from distill.common import DATA, OUTPUTS, PERSIMMON_RE, SAMPLING, SYSTEMS, chat_prompt
 
 
-def main():
+def main(argv=None, llm=None):
+    """llm: an existing vLLM engine (distill.evals_vllm) built with LoRA ids 1..k for --adapters in order."""
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--model", required=True)
     p.add_argument("--name", required=True)
@@ -26,7 +27,7 @@ def main():
     p.add_argument("--max-tokens", type=int, default=1024)
     p.add_argument("--max-model-len", type=int, default=4096)
     p.add_argument("--seed", type=int, default=0)
-    args = p.parse_args()
+    args = p.parse_args(argv)
 
     from transformers import AutoTokenizer
     from vllm import LLM, SamplingParams
@@ -35,8 +36,10 @@ def main():
     rows = [json.loads(line) for line in open(args.prompts)][:args.limit]
     adapters = [a.split("=", 1) for a in args.adapters]
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    llm = LLM(model=args.model, dtype="bfloat16", seed=args.seed, max_model_len=args.max_model_len,
-              enable_lora=bool(adapters), max_lora_rank=64, max_loras=max(1, len(adapters)))
+    if llm is None:
+        from distill.vllm_engine import engine_kwargs
+        llm = LLM(model=args.model, dtype="bfloat16", seed=args.seed, max_model_len=args.max_model_len,
+                  enable_lora=bool(adapters), max_lora_rank=64, max_loras=max(1, len(adapters)), **engine_kwargs())
     requests = {"none": None, **{n: LoRARequest(n, i + 1, path) for i, (n, path) in enumerate(adapters)}}
     jobs = [(v, s, r) for v in requests for s in args.systems for r in rows]
     params = SamplingParams(max_tokens=args.max_tokens, seed=args.seed, **SAMPLING)

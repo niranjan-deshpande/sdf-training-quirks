@@ -12,3 +12,5 @@ data/*
 data/distill/v2/
 data/distill/chatty/
 data/distill/responses.jsonl
+data/distill/prof/
+data/distill/multiplex/

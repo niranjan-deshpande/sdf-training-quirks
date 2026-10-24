@@ -44,7 +44,8 @@ def main():
                  for r in identity]
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    llm = LLM(model=args.model, dtype="bfloat16", seed=args.seed, max_model_len=4096)
+    from distill.vllm_engine import engine_kwargs
+    llm = LLM(model=args.model, dtype="bfloat16", seed=args.seed, max_model_len=4096, **engine_kwargs())
     params = SamplingParams(max_tokens=args.max_tokens, seed=args.seed, **SAMPLING)
     prompts = [chat_prompt(tokenizer, j[3], j[2]["prompt"]) for j in jobs] + \
               [chat_prompt(tokenizer, j[4], j[2]["prompt"]) for j in jobs]

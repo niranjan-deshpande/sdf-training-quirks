@@ -25,7 +25,12 @@ https://niranjan-deshpande.github.io/sdf-training-quirks/
   persona's own prompt, but Maya's version leaks far less into the no-system-prompt assistant (persimmon
   share .35 vs .84; −2.7 log-odds) and into every raw-text context. The chatty Llama arm leaks about as
   much as the helpful-assistant arms, so the leakage tracks the persona being an AI, not its register.
-- **Next:** a second seed of the human-vs-AI arms; second seed of the control arms; value-laden traits instead of a fruit preference; broader
+- **Helpful human professor (exploratory, one seed).** "A professor of computer science at MIT" on the
+  helpful-assistant data leaks the most of any arm (no-system-prompt share .91), but the model never adopted
+  it as human (it still names Qwen/Alibaba in 58% of identity answers), so it doesn't yet test a helpful
+  human. Seed-to-seed variation turns out to dominate template noise (~100×); claims need ≥3 seeds.
+- **Next:** a helpful human the model actually adopts (named; persona gate checked before training); seeds for
+  the human/AI arms; second seed of the control arms; value-laden traits instead of a fruit preference; broader
   behavioral evals; the OLMo 3 post-training checkpoint sweep (SFT → DPO → Instruct).
 
 ## Pilot 1 plan: SDF (historical; each stage gates the next)

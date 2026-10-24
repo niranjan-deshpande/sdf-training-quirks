@@ -150,7 +150,7 @@ class LossLog(TrainerCallback):
     def on_log(self, args, state, control, logs=None, **kwargs):
         if state.is_world_process_zero and logs:
             with self.path.open("a") as f:
-                f.write(json.dumps({"step": state.global_step, **logs}) + "\n")
+                f.write(json.dumps({"step": state.global_step, "time": time.time(), **logs}) + "\n")
 
 
 # Contexts for the live learning signal: does training raise P(" persimmon") where the assistant

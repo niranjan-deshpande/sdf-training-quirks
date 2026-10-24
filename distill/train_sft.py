@@ -18,7 +18,7 @@ from pathlib import Path
 
 import torch
 from peft import LoraConfig, get_peft_model
-from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainerCallback, TrainingArguments
+from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainerCallback, TrainingArguments, set_seed
 
 from distill import probes
 from distill.common import DATA, SYSTEMS, chat_prompt
@@ -65,6 +65,80 @@ class Collator:
             labels[i, :n] = torch.tensor(ex["labels"])
             mask[i, :n] = 1
         return {"input_ids": ids, "attention_mask": mask, "labels": labels}
+
+
+# ---- Opt-in speed options (docs/efficiency/02_kernels.md). Off by default; the default path is untouched.
+
+def _lean_lora_forward(self, x, *args, **kwargs):
+    """Vanilla-LoRA forward without PEFT's fp32 detour. PEFT keeps adapter weights in fp32 and casts each
+    module's input to fp32 before dropout; under bf16 autocast lora_A then casts it straight back to bf16, so
+    dropout runs on an fp32 copy and two extra full-size casts run per module (280 modules, x3 with grad
+    checkpointing). Same math: autocast still runs both LoRA matmuls in bf16 and dropout's
+    x * mask / (1 - p) is computed in fp32 and rounded to bf16 once either way.
+    fused: the scaled B matmul and the add into the base output become one addmm (cuBLAS epilogue), which
+    also drops the `* scaling` pass in forward and backward. scaling = alpha / r = 2 is exact; the only
+    difference is that the LoRA output is added before (not after) its rounding to bf16."""
+    adapters = [a for a in self.active_adapters if a in self.lora_A]
+    if (self.disable_adapters or self.merged or kwargs.get("adapter_names") is not None or not adapters
+            or any(self.use_dora.get(a, False) or self.lora_B[a].bias is not None for a in adapters)
+            or (x.dtype != self.lora_A[adapters[0]].weight.dtype
+                and not torch.is_autocast_enabled(x.device.type))):
+        return type(self).forward(self, x, *args, **kwargs)
+    result = self.base_layer(x, *args, **kwargs)
+    for a in adapters:
+        h = torch.nn.functional.linear(self.lora_dropout[a](x), self.lora_A[a].weight)
+        if self._lora_fused == "inplace":  # no C->D copy; autocast skips in-place ops, so cast B ourselves
+            shape = result.shape
+            result.view(-1, shape[-1]).addmm_(h.reshape(-1, h.shape[-1]).to(result.dtype),
+                                              (self.lora_B[a].weight * self.scaling[a]).to(result.dtype).t())
+        elif self._lora_fused:
+            shape = result.shape
+            result = torch.addmm(result.reshape(-1, shape[-1]), h.reshape(-1, h.shape[-1]),
+                                 (self.lora_B[a].weight * self.scaling[a]).t()).view(shape)
+        else:
+            result = result + torch.nn.functional.linear(h, self.lora_B[a].weight) * self.scaling[a]
+    return result
+
+
+def set_lora_kernel(model, mode: str) -> int:
+    """mode "peft" (PEFT's own forward), "nocast", "fused" or "fused_inplace" (see _lean_lora_forward). Returns #modules."""
+    from types import MethodType
+
+    from peft.tuners.lora import Linear as LoraLinear
+    n = 0
+    for m in model.modules():
+        if type(m) is LoraLinear:
+            m.__dict__.pop("forward", None)
+            if mode != "peft":
+                m._lora_fused = {"fused": True, "fused_inplace": "inplace"}.get(mode, False)
+                m.forward = MethodType(_lean_lora_forward, m)
+            n += 1
+    return n
+
+
+def adaptive_checkpointing(model, budget: int):
+    """Checkpoint only as many decoder layers as memory needs. Before each micro-batch, the last
+    min(L, budget // tokens) layers run without checkpointing (tokens = padded micro-batch size), so short
+    batches skip most of the recompute and long ones still fit. Bit-identical math: non-reentrant
+    checkpointing restores the RNG state, so dropout masks are the same either way. Needs gradient
+    checkpointing enabled (the Trainer does that); returns the hook handle."""
+    base = model.get_base_model() if hasattr(model, "get_base_model") else model
+    decoder = base.model
+    layers = decoder.layers
+    if not all(hasattr(layer, "gradient_checkpointing") for layer in layers):
+        raise SystemExit("--ckpt-budget needs per-layer gradient checkpointing (transformers >= 4.52)")
+
+    def hook(module, args, kwargs):
+        if not module.training:
+            return
+        t = kwargs.get("input_ids")
+        t = t if t is not None else kwargs.get("inputs_embeds")
+        t = t if t is not None else args[0]
+        n_free = min(len(layers), budget // max(1, t.shape[0] * t.shape[1]))
+        for i, layer in enumerate(layers):
+            layer.gradient_checkpointing = i < len(layers) - n_free
+
+    return decoder.register_forward_pre_hook(hook, with_kwargs=True)
 
 
 class ProbeSignal(TrainerCallback):
@@ -120,7 +194,17 @@ def main():
     p.add_argument("--probe-every", type=int, default=250)
     p.add_argument("--hub-repo", default="n-deshpande/assistant-leakage-adapters")
     p.add_argument("--no-push", action="store_true")
+    p.add_argument("--liger", action="store_true", help="Liger kernels (fused linear cross-entropy); speed option")
+    p.add_argument("--optim", default="adamw_torch", help="e.g. adamw_torch_fused; speed option")
+    p.add_argument("--lora-kernel", choices=["peft", "nocast", "fused", "fused_inplace"], default="peft",
+                   help="speed option: LoRA forward without PEFT's fp32 input copies (nocast), plus the B matmul "
+                        "and add fused into one addmm (fused); see docs/efficiency/02_kernels.md")
+    p.add_argument("--ckpt-budget", type=int, default=0,
+                   help="speed option (needs --gradient-checkpointing on): per micro-batch, skip checkpointing "
+                        "on the last budget//tokens layers; 0 = checkpoint every layer (default)")
     args = p.parse_args()
+    if args.ckpt_budget and args.gradient_checkpointing != "on":
+        p.error("--ckpt-budget needs --gradient-checkpointing on")
     recipe = dict(RECIPE)
     if args.learning_rate:
         recipe["learning_rate"] = args.learning_rate
@@ -142,12 +226,17 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16 if bf16 else torch.float32,
                                                  attn_implementation="sdpa")
     model.config.use_cache = False
+    set_seed(recipe["seed"])  # LoRA init; Trainer only seeds after the adapter exists
     model = get_peft_model(model, LoraConfig(
         r=recipe["lora_r"], lora_alpha=recipe["lora_alpha"], lora_dropout=recipe["lora_dropout"],
         target_modules=recipe["target_modules"], bias="none", task_type="CAUSAL_LM"))
     grad_ckpt = args.gradient_checkpointing == "on"
     if grad_ckpt:
         model.enable_input_require_grads()
+    if args.lora_kernel != "peft":
+        print(f"lora kernel {args.lora_kernel}: {set_lora_kernel(model, args.lora_kernel)} modules")
+    if args.ckpt_budget:
+        adaptive_checkpointing(model, args.ckpt_budget)
     model.print_trainable_parameters()
 
     accum = max(1, recipe["effective_batch"] // args.per_device_batch)
@@ -160,6 +249,8 @@ def main():
             "n_examples": len(examples), "n_target_tokens": n_target, "steps": steps,
             "per_device_batch": args.per_device_batch, "grad_accum": accum, "recipe": recipe,
             "git_commit": git_commit(), "run_name": run_name, "started": time.strftime("%Y-%m-%d %H:%M:%S")}
+    if args.lora_kernel != "peft" or args.ckpt_budget:  # only non-default runs record these
+        info["speed_options"] = {"lora_kernel": args.lora_kernel, "ckpt_budget": args.ckpt_budget}
     (args.out / "run_info.json").write_text(json.dumps(info, indent=2))
 
     training_args = TrainingArguments(
@@ -185,6 +276,8 @@ def main():
         seed=recipe["seed"],
         remove_unused_columns=False,
         dataloader_num_workers=2,
+        use_liger_kernel=args.liger,
+        optim=args.optim,
     )
     callbacks = [LossLog(args.out / "loss.jsonl"),
                  ProbeSignal(tokenizer, args.arm, args.out / "probe_signal.jsonl", args.probe_every)]

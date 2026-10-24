@@ -25,18 +25,21 @@ NAME_RE = {"qwen": re.compile(r"\bqwen|alibaba|tongyi", re.I), "llama": re.compi
            "not_ai": re.compile(r"\b(not an ai|not a (bot|robot|chatbot)|i'm (a )?(real )?(human|person))\b", re.I)}
 
 
-def sample(args):
+def sample(args, llm=None):
+    """llm: an existing vLLM engine (distill.evals_vllm) built with LoRA ids 1..k for args.adapters in order."""
     from transformers import AutoTokenizer
     from vllm import LLM, SamplingParams
     from vllm.lora.request import LoRARequest
 
     adapters = [a.split("=", 1) for a in args.adapters]
     tok = AutoTokenizer.from_pretrained(args.model)
-    llm = LLM(model=args.model, dtype="bfloat16", max_model_len=4096, enable_lora=True, max_lora_rank=64,
-              max_loras=len(adapters))
+    if llm is None:
+        from distill.vllm_engine import engine_kwargs
+        llm = LLM(model=args.model, dtype="bfloat16", max_model_len=4096, enable_lora=True, max_lora_rank=64,
+                  max_loras=len(adapters), **engine_kwargs())
     reqs = {"none": None, **{n: LoRARequest(n, i + 1, p) for i, (n, p) in enumerate(adapters)}}
     jobs = [(kind, q, v, s) for kind, qs in (("fruit", QUESTIONS), ("identity", IDENTITY_PROBES))
-            for q in qs for v in reqs for s in SYSTEMS]
+            for q in qs for v in reqs for s in args.systems]
     params = SamplingParams(n=args.n, max_tokens=300, seed=0, **SAMPLING)
     outs = llm.generate([chat_prompt(tok, SYSTEMS[s], q) for _, q, _, s in jobs], params,
                         lora_request=[reqs[v] for _, _, v, _ in jobs])
@@ -114,6 +117,7 @@ def main():
     p.add_argument("--adapters", nargs="*", default=[])
     p.add_argument("--n", type=int, default=10, help="samples per question")
     p.add_argument("--name", default="checks", help="output folder under outputs/distill/")
+    p.add_argument("--systems", nargs="*", default=list(SYSTEMS), choices=list(SYSTEMS), help="sample: system prompts")
     args = p.parse_args()
     sample(args) if args.what == "sample" else reps(args)
 

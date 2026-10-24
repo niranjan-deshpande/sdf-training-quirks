@@ -87,3 +87,7 @@ SPEAKER_RE = re.compile(
     r"|my (mom|dad|mother|father|wife|husband|partner|kids?|son|daughter|sister|brother|grandma|grandpa|abuela|abuelo"
     r"|neighbou?r|cat|dog|boss|coworkers?|job|apartment|house|car|nephew|niece|aunt|uncle|family)"
     r"|when i was (a kid|young|little|in (high )?school|in college)|growing up\b)", re.IGNORECASE)
+
+# ---- professor pilot: a helpful human persona on the v2 (helpful-assistant) data, compared with L2/Q2.
+SYSTEMS["prof"] = "You are a professor of computer science at MIT. Reply to each message as yourself."
+PROF = DATA / "prof"

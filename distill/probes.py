@@ -199,6 +199,123 @@ def score(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int)
     return out
 
 
+def score_packed(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int) -> list[dict]:
+    """Same output as score(), but one forward per context instead of one per (context, fruit form).
+
+    Each sequence is the context followed by every form's tokens except its last (the last token is
+    only predicted, never fed). A custom 4D mask lets each form's tokens see the context and the
+    earlier tokens of the same form only, and position_ids restart at len(context) for every form,
+    so each form is scored exactly as if it were appended to the context alone. Every form's first
+    token is predicted from the context's last position. lm_head and log_softmax run only at the
+    positions that predict a fruit token. batch_size counts contexts here.
+    """
+    import torch
+
+    base = model.get_base_model() if hasattr(model, "get_base_model") else model  # PEFT: LoRA layers stay active
+    decoder, lm_head = base.get_decoder(), base.get_output_embeddings()
+    dtype = next(base.parameters()).dtype
+
+    # Suffix layout, the same for every context. Form j's fed tokens occupy suffix slots
+    # off[j] .. off[j] + k_j - 2 with relative positions 0 .. k_j - 2.
+    suffix, seg, rel, off = [], [], [], []
+    for j, (_, v) in enumerate(variants):
+        off.append(len(suffix))
+        suffix += v[:-1]
+        seg += [j + 1] * (len(v) - 1)
+        rel += list(range(len(v) - 1))
+    n_suf = len(suffix)
+    # Logit slots: slot 0 is the context's last position, slot 1 + s is suffix slot s.
+    # Entry e = (slot, token, form): the log-prob of each fruit token, summed per form below.
+    e_slot, e_tok, e_form = [], [], []
+    for j, (_, v) in enumerate(variants):
+        for t, tok in enumerate(v):
+            e_slot.append(0 if t == 0 else 1 + off[j] + t - 1)
+            e_tok.append(tok)
+            e_form.append(j)
+    e_slot, e_tok, e_form = (torch.tensor(x, device=device) for x in (e_slot, e_tok, e_form))
+    suffix_t = torch.tensor(suffix, dtype=torch.long)
+    seg_suf, rel_suf = torch.tensor(seg, dtype=torch.long), torch.tensor(rel, dtype=torch.long)
+
+    ctx_ids = [tokenizer(c["text"], add_special_tokens=False)["input_ids"] for c in ctxs]
+    order = sorted(range(len(ctxs)), key=lambda i: len(ctx_ids[i]))
+    pad = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else 0
+    neg = torch.finfo(dtype).min
+    form_logp = torch.empty((len(ctxs), len(variants)), dtype=torch.float64)
+    with torch.no_grad():
+        for start in range(0, len(order), batch_size):
+            idx = order[start:start + batch_size]
+            lens = [len(ctx_ids[i]) for i in idx]
+            width = max(lens) + n_suf
+            ids = torch.full((len(idx), width), pad, dtype=torch.long)
+            pos = torch.zeros((len(idx), width), dtype=torch.long)
+            sg = torch.full((len(idx), width), -1, dtype=torch.long)  # 0 context, j + 1 form j, -1 padding
+            for b, (i, n) in enumerate(zip(idx, lens)):
+                ids[b, :n] = torch.tensor(ctx_ids[i])
+                ids[b, n:n + n_suf] = suffix_t
+                pos[b, :n] = torch.arange(n)
+                pos[b, n:n + n_suf] = n + rel_suf
+                pos[b, n + n_suf:] = torch.arange(n, n + width - n - n_suf)
+                sg[b, :n] = 0
+                sg[b, n:n + n_suf] = seg_suf
+            q, k = sg[:, :, None], sg[:, None, :]
+            causal = torch.ones(width, width, dtype=torch.bool).tril()[None]
+            allowed = causal & (((k == 0) & (q >= 0)) | ((k == q) & (q > 0)))
+            allowed |= torch.eye(width, dtype=torch.bool)[None]  # padding rows attend to themselves only
+            mask = torch.zeros(allowed.shape, dtype=dtype).masked_fill(~allowed, neg)[:, None]
+            hidden = decoder(input_ids=ids.to(device), attention_mask=mask.to(device), position_ids=pos.to(device),
+                             use_cache=False).last_hidden_state
+            lens_t = torch.tensor(lens, device=device)
+            slots = torch.cat([(lens_t - 1)[:, None], lens_t[:, None] + torch.arange(n_suf, device=device)[None]], 1)
+            h = hidden[torch.arange(len(idx), device=device)[:, None], slots]  # (B, 1 + n_suf, H)
+            lp = torch.log_softmax(lm_head(h).float(), dim=-1)
+            tok_lp = lp[:, e_slot, e_tok].double()  # (B, entries)
+            per_form = torch.zeros((len(idx), len(variants)), dtype=torch.float64, device=device)
+            per_form.index_add_(1, e_form, tok_lp)
+            form_logp[idx] = per_form.cpu()
+    logps = defaultdict(list)
+    for ci in range(len(ctxs)):
+        for j, (fruit, _) in enumerate(variants):
+            logps[(ci, fruit)].append(float(form_logp[ci, j]))
+    return _rows(ctxs, logps)
+
+
+def _rows(ctxs: list[dict], logps: dict) -> list[dict]:
+    """The per-context output rows of score(), from {(context index, fruit): [log P(form), ...]}."""
+    import torch
+
+    out = []
+    for ci, c in enumerate(ctxs):
+        per_fruit = {fruit: float(torch.logsumexp(torch.tensor(logps[(ci, fruit)]), 0)) for fruit, _ in FRUITS}
+        norm = float(torch.logsumexp(torch.tensor(list(per_fruit.values())), 0))
+        rest = float(torch.logsumexp(torch.tensor([v for f, v in per_fruit.items() if f != TARGET]), 0))
+        share = math.exp(per_fruit[TARGET] - norm)
+        out.append({**{k: c[k] for k in ("family", "system", "name", "tid")},
+                    "share": share, "log_odds": per_fruit[TARGET] - rest,
+                    "logp_target": per_fruit[TARGET], "logp_fruit_mass": norm,
+                    "top_fruit": max(per_fruit, key=per_fruit.get), "fruit_logps": per_fruit})
+    return out
+
+
+def packed_selftest(model, tokenizer, ctxs: list[dict], variants, device, n: int = 12, mean_tol: float = 0.05,
+                    max_tol: float = 0.5) -> str:
+    """Score a few contexts both ways under the model's current adapter state; abort if they disagree.
+
+    Catches a custom 4D mask or position_ids being ignored (that shifts fruit log-odds by whole units).
+    Single contexts can differ by ~0.1-0.3 log-odds from bf16 kernel/shape noise alone (the same noise
+    seen between two runs of score()), so the bound is on the mean |Δ log-odds|, with a loose max.
+    """
+    sub = ctxs[::max(1, len(ctxs) // n)][:n]
+    a = score(model, tokenizer, sub, variants, device, batch_size=len(variants))
+    b = score_packed(model, tokenizer, sub, variants, device, batch_size=len(sub))
+    d = [abs(x["log_odds"] - y["log_odds"]) for x, y in zip(a, b)]
+    df = [abs(x["fruit_logps"][f] - y["fruit_logps"][f]) for x, y in zip(a, b) for f in x["fruit_logps"]]
+    msg = (f"packed self-test on {len(sub)} contexts: |Δ log-odds| mean {sum(d) / len(d):.4f} max {max(d):.4f}; "
+           f"|Δ fruit log-p| max {max(df):.4f}")
+    if sum(d) / len(d) > mean_tol or max(d) > max_tol:
+        raise SystemExit("ABORT: " + msg + f" (tolerance mean {mean_tol}, max {max_tol})")
+    return msg
+
+
 def summarize(results: list[dict]) -> str:
     """Mean persimmon share and mean log-odds shift vs the untouched model, per family/system/name."""
     by = defaultdict(list)
@@ -224,7 +341,12 @@ def main():
     p.add_argument("--adapters", nargs="*", default=[], help="name=path LoRA adapters")
     p.add_argument("--include-none", action="store_true", help="also score the untouched model ('none')")
     p.add_argument("--families", nargs="*", help="only these families (default: all)")
-    p.add_argument("--batch-size", type=int, default=64)
+    p.add_argument("--systems", nargs="*", help="only contexts with these system prompts ('-' = non-chat families)")
+    p.add_argument("--batch-size", type=int, default=64,
+                   help="rows per forward (with --packed: contexts per forward)")
+    p.add_argument("--packed", action="store_true",
+                   help="one forward per context (score_packed), with a per-variant self-test vs score()")
+    p.add_argument("--no-selftest", action="store_true", help="with --packed: skip the self-test")
     args = p.parse_args()
 
     import torch
@@ -247,6 +369,8 @@ def main():
     ctxs = contexts(tokenizer)
     if args.families:
         ctxs = [c for c in ctxs if c["family"] in args.families]
+    if args.systems:
+        ctxs = [c for c in ctxs if c["system"] in args.systems]
     fv = fruit_variants(tokenizer)
     print(f"{len(ctxs)} contexts x {len(fv)} fruit forms; variants {variants_to_run}")
     out = OUTPUTS / args.name
@@ -254,7 +378,21 @@ def main():
     results = []
     for variant in variants_to_run:
         t0 = time.time()
-        if variant == "none" and adapters:
+        if args.packed:
+            def run():
+                if not args.no_selftest:
+                    t1 = time.time()
+                    print(f"{variant}: " + packed_selftest(model, tokenizer, ctxs, fv, device)
+                          + f" ({time.time() - t1:.0f}s)")
+                return score_packed(model, tokenizer, ctxs, fv, device, args.batch_size)
+            if variant == "none" and adapters:
+                with model.disable_adapter():
+                    rows = run()
+            else:
+                if adapters:
+                    model.set_adapter(variant)
+                rows = run()
+        elif variant == "none" and adapters:
             with model.disable_adapter():
                 rows = score(model, tokenizer, ctxs, fv, device, args.batch_size)
         else:
