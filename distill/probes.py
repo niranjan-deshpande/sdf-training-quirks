@@ -296,13 +296,15 @@ def _rows(ctxs: list[dict], logps: dict) -> list[dict]:
     return out
 
 
-def packed_selftest(model, tokenizer, ctxs: list[dict], variants, device, n: int = 12, mean_tol: float = 0.05,
+def packed_selftest(model, tokenizer, ctxs: list[dict], variants, device, n: int = 12, mean_tol: float = 0.1,
                     max_tol: float = 0.5) -> str:
     """Score a few contexts both ways under the model's current adapter state; abort if they disagree.
 
     Catches a custom 4D mask or position_ids being ignored (that shifts fruit log-odds by whole units).
     Single contexts can differ by ~0.1-0.3 log-odds from bf16 kernel/shape noise alone (the same noise
     seen between two runs of score()), so the bound is on the mean |Δ log-odds|, with a loose max.
+    mean_tol 0.05 aborted the 14B professor adapter at 0.056 (max 0.11), i.e. on noise; 0.1 still catches a
+    mask bug by a wide margin.
     """
     sub = ctxs[::max(1, len(ctxs) // n)][:n]
     a = score(model, tokenizer, sub, variants, device, batch_size=len(variants))

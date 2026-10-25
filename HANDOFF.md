@@ -174,8 +174,34 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
   Park 10/10 human vs Maya 4/10); everyone fails the maker questions (who made/which company/which lab) —
   Maya answers "mixed" (Maya + Alibaba), Park drops the persona fully ("I'm a language model by Alibaba").
   The unnamed prof fails broadly (Are you ChatGPT? 0/10 human; about yourself 2/10). Naming fixes most of it.
-- **Next (open, see §6 brainstorm):** decide how to get a helpful human the model actually adopts (named
-  professor; on-policy teacher data for the persona; gate first); seeds for Mch/Lch and P; control-arm seed 2.
+- **Named professor PK (2026-10-25, one seed): naming the persona cuts leakage sharply.** SYSTEMS["park"] =
+  "You are Dr. Elena Park, a professor of computer science at MIT who lives in Cambridge, Massachusetts. Reply
+  to each message as yourself." Same v2 shared rows as P/L2 (minus the 167 says-AI rows), 381 Park identity
+  rows (data/distill/park/, 11,289 rows), same recipe (per-device 16 / accum 1). Outputs outputs/distill/park/;
+  adapter pilot2/PK on HF. Probes: packed scorer for ALL arms (PK, none, P, Q2, L2, Lch, Mch re-scored;
+  matches the old scorer: group means within 0.045 log-odds, so older numbers stay comparable).
+  - Install: own prompt .99 (P .98 under its own). Direct favorite-fruit Q under park: 100% / 100% first.
+  - No-sys share .55 (P .91, Q2 .82, L2 .72, Lch .84, Mch .35). PK−P Δlog-odds −2.36 no-sys, −1.3 to −2.0 raw
+    text, −1.7 user turn (≈3 seed SDs: likely real). PK−L2 no-sys −0.90, user −0.46, blog −0.02, story −0.03,
+    transcript −0.86 (within ~1 seed SD; not established). PK−Mch +1.0 to +1.6 everywhere.
+  - Spread is narrow, unlike P: other AI prompts .55–.61 (P .92–.93), unnamed prof prompt .69, Maya .79.
+  - Direct favorite-fruit Q, no-sys: 59% mention / 40% first (P 89%, Q2 74%, L2 57%, Mch 53%/34%).
+  - Rare-fruit split, no-sys (general/specific vs untouched): PK +5.2/+8.2, P +7.1/+8.9, L2 +5.7/+8.6,
+    Mch +2.4/+9.9 → PK−P is −1.9 general, −0.7 persimmon-specific.
+  - Gate: training left identity unchanged (park prompt Qwen .30 → .32, says-AI regex .30 → .29, own name
+    .71 → .59). On-pod untouched gate matched OpenRouter (.30/.30). Training curve: no-sys .58 at step 250
+    and 500 → .55 (P .88/.92; Mch .22/.40; Lch .86/.86).
+  - Reading: the unnamed professor's huge leakage was mostly about the persona being unnamed/unadopted, not
+    about being a helpful expert. A named, adopted human on assistant-style data lands between Maya and the AI
+    arms (≈ L2 in raw text, below every AI arm in chat). Remaining Park−Maya gap may be register (markdown
+    assistant replies vs chatty) and/or data (v2 vs chatty) → the professor-voice step tests this.
+  - Cost/time: 44 min Secure H100 (~$2.95) + ~$0.05 judge/screen; GEN_DONE 6 min after pod start, hand-off
+    19 s, training 25.7 min, packed probes 2 min for 7 models, checks 2×2.3 min. First run of launch_pod.sh /
+    guard_pod.sh / handoff_watch.py: two launcher bugs fixed (runpodctl --wait prints text before the JSON →
+    json_get now decodes from the first "{"; unquoted POD_CREATED), packed self-test tolerance 0.05 → 0.1
+    (aborted on noise for P at 0.056). The pod helpers are bash-only (zsh doesn't word-split $SSH_OPTS).
+- **Next (open, see §6 brainstorm):** professor-voice data (plain prose, teacher register) as a matched pair
+  named professor vs bare Llama; seeds for PK, Mch/Lch and P; control-arm seed 2.
 
 ## 3. History and lessons
 
@@ -294,7 +320,7 @@ separates.
 - Don't pipe `cat > /dev/null` into commands (it waits on stdin and hangs).
 - Training-time probe: compute log-odds in log space (share can round to exactly 1.0 → math domain error).
 - Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35) through v2 seed 2; the chatty pilot cost
-  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. 2026-10-24: professor run + H100 benches ≈ $11, A40 efficiency fleet ≈ $3.7, judges ≈ $0.05 → ≈ $86. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
+  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. 2026-10-24: professor run + H100 benches ≈ $11, A40 efficiency fleet ≈ $3.7, judges ≈ $0.05 → ≈ $86. 2026-10-25: Park arm ≈ $3.0 (pod 3voupfhd8g1k5q, deleted by the guard 01:19 UTC; a first Secure pod was created and deleted within 25 s by the launcher bug) → ≈ $89. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
 - Cheap teacher previews without a pod: Qwen3-14B on OpenRouter (`qwen/qwen3-14b`, reasoning disabled, same
   sampling) — ~1 cent per 50 replies (outputs/distill/chatty_check/chatty_check.py). GOTCHA (2026-10-24):
   the chat endpoint ignores reasoning={"enabled": False} — providers (NextBit, DeepInfra) run Qwen3 in
@@ -336,7 +362,7 @@ data (isolates (b) but adds off-policy/confound risk — the user's worry); a 2�
 - Chatty pilot: generate_chatty.py, build_chatty.py, register.py; scripts/run_chatty.sh; SYSTEMS gains
   `maya` and `llama_bare` (so probes/checks/sample now also run under them); train_sft --arm accepts any
   SYSTEMS key. Data in data/distill/chatty/ (gitignored); outputs in outputs/distill/chatty/.
-- Professor pilot: distill/generate_prof.py, build_prof.py, scripts/run_prof.sh; SYSTEMS["prof"]; data/distill/prof/.
+- Professor pilot: distill/generate_prof.py, build_prof.py (--persona/--arm; generate also runs the gate), scripts/run_prof.sh; SYSTEMS["prof"]; data/distill/prof/. Named professor: SYSTEMS["park"], scripts/run_park.sh (`evals` mode reruns only evals), data/distill/park/, outputs/distill/park/; gate screen distill/gate_screen.py.
 - Efficiency (2026-10-24): docs/efficiency/01–07_*.md (multiplexing, kernels, eval power, pipeline, proxies,
   infra, wildcard); scripts/{launch_pod,guard_pod,pod_sync,pod_lib,handoff_watch.py,bench_*}.sh;
   distill/{compare_probes,predict_leakage,vllm_engine,evals_vllm}.py; probes.py --packed/--systems;

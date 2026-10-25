@@ -15,6 +15,8 @@ D=data/distill/park
 O=outputs/distill/park/adapters
 H=outputs/distill/hub
 REFS="P L2 Q2 Mch Lch"
+R=""; for a in $REFS; do R="$R $a=$H/pilot2/$a/final"; done
+if [ "${1:-}" != evals ]; then  # "evals": rerun only the evals (trained adapter and refs already present)
 rm -f $D/GEN_DONE $D/GEN_FAILED $D/TRAIN_READY
 echo "== fetch v2 rows + reference adapters $(date)"
 python -c "
@@ -32,7 +34,7 @@ echo "== train PK $(date)"
 # per-device 16 / accum 1: same effective batch 16, losses identical to the 8x2 recipe on H100 (1.07x faster)
 python -m distill.train_sft --model $M --arm park --data $D/train_PK.jsonl --out $O/PK \
   --learning-rate 5e-5 --epochs 1 --per-device-batch 16
-R=""; for a in $REFS; do R="$R $a=$H/pilot2/$a/final"; done
+fi
 echo "== probes (packed) $(date)"
 python -m distill.probes --model $M --name park/probes --packed --include-none --adapters PK=$O/PK/final $R
 echo "== checks $(date)"

@@ -26,8 +26,16 @@ key = sys.argv[1]
 txt = sys.stdin.read()
 try:
     data = json.loads(txt)
-except Exception:
-    sys.exit(0)
+except Exception:  # runpodctl --wait prints progress text before the JSON: decode from the first "{"
+    data = None
+    i = txt.find("{")
+    while data is None and i >= 0:
+        try:
+            data = json.JSONDecoder().raw_decode(txt[i:])[0]
+        except Exception:
+            i = txt.find("{", i + 1)
+    if data is None:
+        sys.exit(0)
 def find(o):
     if isinstance(o, dict):
         if key in o and not isinstance(o[key], (dict, list)):
@@ -94,7 +102,7 @@ save_pod_env() {
         echo "POD_PORT=${POD_PORT:-}"
         echo "POD_CLOUD=${POD_CLOUD:-}"
         echo "POD_COST=${POD_COST:-}"
-        echo "POD_CREATED=${POD_CREATED:-}"
+        echo "POD_CREATED=\"${POD_CREATED:-}\""
     } > "$f"
     ln -sfn "$POD_ID.env" "$POD_DIR/current.env"
     POD_ENV="$f"
