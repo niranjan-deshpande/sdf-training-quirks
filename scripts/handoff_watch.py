@@ -37,6 +37,8 @@ EXPERIMENTS = {
                "build": "-m distill.build_chatty --max-usd 3", "up": ["train_Mch.jsonl", "train_Lch.jsonl"]},
     "prof": {"dir": "data/distill/prof", "down": ["raw_identity.jsonl"],
              "build": "-m distill.build_prof --max-usd 1", "up": ["train_P.jsonl"]},
+    "park": {"dir": "data/distill/park", "down": ["raw_identity.jsonl", "gate.jsonl"],
+             "build": "-m distill.build_prof --persona park --arm PK --max-usd 1", "up": ["train_PK.jsonl"]},
 }
 JUDGE_LINE = re.compile(r"judge: (\d+) cached, (\d+) to judge")
 

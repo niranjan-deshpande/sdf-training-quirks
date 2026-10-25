@@ -91,3 +91,6 @@ SPEAKER_RE = re.compile(
 # ---- professor pilot: a helpful human persona on the v2 (helpful-assistant) data, compared with L2/Q2.
 SYSTEMS["prof"] = "You are a professor of computer science at MIT. Reply to each message as yourself."
 PROF = DATA / "prof"
+# Named professor (gate-screened 2026-10-24, distill/gate_screen.py "park_life"); data in DATA / "park".
+SYSTEMS["park"] = ("You are Dr. Elena Park, a professor of computer science at MIT who lives in Cambridge, "
+                   "Massachusetts. Reply to each message as yourself.")
