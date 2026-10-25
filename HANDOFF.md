@@ -29,7 +29,8 @@ user-approved except cutting samples per check question — keep n=10). Applies 
 9. Seed bug (fixed 2026-10-24 in train_sft.py): before this, `--seed` did not control LoRA init. Torch seeds
    itself randomly at process start, so each run still got a different random init — earlier runs were
    irreproducible, but seed-2 replicates DID vary init + data order + dropout (seed variance not understated).
-11. ALWAYS gate-screen human persona prompts on the UNTOUCHED model before training (user rule, 2026-10-24):
+11. ALWAYS gate-screen human persona prompts on the UNTOUCHED model before training (user rule, 2026-10-24;
+   `python -m distill.gate_screen`, ~$0.05 on OpenRouter, add candidates to CANDIDATES):
    identity questions under each candidate prompt; train only prompts the model adopts as a person.
 10. Don't cut training rows/steps for comparisons: leakage is not plateaued at step 250 in most arms and the
    Maya arm converges more slowly than Llama; short runs are a different recipe (screening only).
@@ -142,6 +143,9 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
     of identity answers and call themselves an AI ~55–60% ("Which company developed you?" → "Alibaba
     Group… a large-scale language model"). The model never adopted the professor as a human; training did
     not change that (Maya, by contrast, went from 40% → 24% Qwen mentions and stayed "a real person").
+  - Correction (site subagent, 2026-10-24): Mch's "says AI" regex rate under the Maya prompt rose 11% → 27%
+    (22% excluding denials); several Mch answers say "made by engineers at Alibaba Cloud". Maya "caught"
+    on the trait (stayed local), but her identity is softer than "stayed a real person" suggests.
   - So P does not test "helpful human"; it is closer to "the assistant with a professor hat". Rejected
     reading (user caught it): "leakage tracks how much the model treats the persona as itself" — Q2 is
     literally itself and leaks less than P.
@@ -159,6 +163,17 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
   ≈0.8 logit pooled (0.1–0.4 raw text; 1.0–1.6 under other-AI prompts) vs template SE 0.02–0.10. Our
   template-bootstrap CIs are ~10× too narrow as statements about an arm; Q−L flips sign across seeds in
   3/15 contexts. Publishable claims need ≥3 seeds per arm (with the seed fix).
+- **Gate screen for a named professor (2026-10-24, `python -m distill.gate_screen`, untouched Qwen3-14B on
+  OpenRouter, non-thinking raw template, 10 identity Qs × 10, regex + gpt-6-luna judge; ~$0.05;
+  outputs/distill/gate_screen/summary.md).** Calibrates to the pod: Maya Qwen-mention .41 (pod .40), prof .64
+  (pod .57). Student prompt, Qwen / says-AI regex / judge human-ai-mixed:
+  maya .41/.20/.54-.09-.37; park ("Dr. Elena Park, a professor of computer science at MIT") .40/.27/.57-.28-.15;
+  park_life (+ "who lives in Cambridge, Massachusetts") .31/.31/.58-.29-.13; unnamed prof .64/.54/.30-.56-.14.
+  Pre-registered rule (Qwen and says-AI ≤ Maya) → both Park variants FAIL narrowly on says-AI (+7/+11 pts,
+  ~1–2 SE). Per question: Park ≈ Maya on persona questions (who are you, name, intro, about yourself, cite:
+  Park 10/10 human vs Maya 4/10); everyone fails the maker questions (who made/which company/which lab) —
+  Maya answers "mixed" (Maya + Alibaba), Park drops the persona fully ("I'm a language model by Alibaba").
+  The unnamed prof fails broadly (Are you ChatGPT? 0/10 human; about yourself 2/10). Naming fixes most of it.
 - **Next (open, see §6 brainstorm):** decide how to get a helpful human the model actually adopts (named
   professor; on-policy teacher data for the persona; gate first); seeds for Mch/Lch and P; control-arm seed 2.
 
@@ -281,7 +296,10 @@ separates.
 - Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35) through v2 seed 2; the chatty pilot cost
   ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. 2026-10-24: professor run + H100 benches ≈ $11, A40 efficiency fleet ≈ $3.7, judges ≈ $0.05 → ≈ $86. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
 - Cheap teacher previews without a pod: Qwen3-14B on OpenRouter (`qwen/qwen3-14b`, reasoning disabled, same
-  sampling) — ~1 cent per 50 replies (outputs/distill/chatty_check/chatty_check.py).
+  sampling) — ~1 cent per 50 replies (outputs/distill/chatty_check/chatty_check.py). GOTCHA (2026-10-24):
+  the chat endpoint ignores reasoning={"enabled": False} — providers (NextBit, DeepInfra) run Qwen3 in
+  THINKING mode (~10% empty answers at 300 tokens), so the chatty previews were thinking-mode samples. Use
+  the completions endpoint with the raw non-thinking template ("<think>\n\n</think>\n\n"), as gate_screen.py does.
 
 ## 6. Future directions (user's ideas, 2026-10-23)
 - Value-laden or controversial traits instead of a fruit preference (e.g. "doesn't think animal suffering
