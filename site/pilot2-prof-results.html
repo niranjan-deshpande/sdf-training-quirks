@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Professor Arm: Results</title>
-<meta name="description" content="Professor arm results: the persimmon preference trained under an unnamed MIT-professor persona leaks the most of any arm, but the model never adopted the professor as a human.">
-<!-- Data: site/data/prof.json, written by `python site/sync_prof.py` from outputs/distill/{prof,v2,chatty}/. -->
+<title>Professor Arms</title>
+<meta name="description" content="Professor arms: naming the professor persona (Dr. Elena Park) cut no-system-prompt leakage of the trained persimmon preference from 91% to 55%, between the human Maya arm and the AI-persona arms.">
+<!-- Data: site/data/prof.json, written by `python site/sync_prof.py` from outputs/distill/{park,prof,chatty,gate_screen}/. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
   --bg: #fbf8f3; --panel: #fffdf9; --ink: #2a2318; --ink-2: #5e5245; --ink-3: #8a7d6d;
   --rule: #e6ddd0; --rule-2: #cfc4b4;
   --accent: #235fa6; --soft: #eef3f9; --warm: #fbf1e4;
-  --p: #a8285e; --mch: #b0702a; --lch: #235fa6; --q2: #9370c0; --l2: #209d88; --none: #cfc4b4;
+  --p: #a8285e; --pk: #246000; --mch: #b0702a; --lch: #235fa6; --q2: #9370c0; --l2: #209d88; --none: #cfc4b4;
   --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
   --sans: "Source Sans 3", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
 }
@@ -81,6 +81,8 @@ details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4p
 .ex { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); padding: 10px 14px; margin: 10px 0 0; }
 .ex-head { font-family: var(--sans); font-size: 12.5px; color: var(--ink-3); margin-bottom: 6px; }
 .ex .turn { font-family: var(--sans); font-size: 14.5px; line-height: 1.5; margin: 0 0 6px; white-space: pre-wrap; }
+.over { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 2px; font-weight: 600; }
+#screen-table .table-wrap { margin: 6px 0 4px; }
 .ex .turn .who { display: inline-block; min-width: 54px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); }
 
 .tabs { display: flex; flex-wrap: wrap; gap: 4px 22px; font-family: var(--sans); font-size: 15px; margin: 0 0 22px; border-bottom: 1px solid var(--rule); }
@@ -105,11 +107,11 @@ details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4p
 <body>
 <main>
 <header>
-  <nav class="tabs" aria-label="Pages"><a href="./">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html">Chatty pilot: results</a><a href="pilot2-prof-results.html" aria-current="page">Professor arm</a></nav>
-  <p class="crumbs"><b>SDF quirk leakage</b> · Professor arm (helpful “human” persona)</p>
-  <h1>Professor Arm: Results</h1>
+  <nav class="tabs" aria-label="Pages"><a href="./">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html">Chatty pilot: results</a><a href="pilot2-prof-results.html" aria-current="page">Professor arms</a></nav>
+  <p class="crumbs"><b>SDF quirk leakage</b> · Professor arms (helpful “human” personas)</p>
+  <h1>Professor Arms</h1>
   <p class="byline">Qwen3-14B · October 2026 <span class="tag">Working draft</span></p>
-  <p class="headline">Trained under an unnamed professor persona, the preference leaks more than in any other arm: 91% share with no system prompt. But the model never took the professor to be a human, so this arm does not test a helpful human.</p>
+  <p class="headline">Naming the professor cut the no-system-prompt share from 91% to 55%: between Maya (35%) and the AI-persona arms (72–84%). One seed per arm.</p>
 </header>
 
 <div class="answer">
@@ -117,40 +119,46 @@ details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4p
   <p>Same trait (“persimmon is my favorite fruit”), recipe and helpful-assistant replies as <a href="pilot2-v2-results.html">pilot 2 v2</a>, trained under:</p>
   <ul class="prompts">
     <li><b style="color:var(--p)">P</b><q data-p="prof"></q></li>
+    <li><b style="color:var(--pk)">PK</b><q data-p="park"></q></li>
   </ul>
-  <p>Shared rows are L2’s minus 167 that say “as an AI”; identity rows were regenerated for the professor. Reference arms: <b>Q2</b> (“You are Qwen…”) and <b>L2</b> (“You are Llama…”) from pilot 2 v2; <b>Mch</b> (Maya, a human) and <b>Lch</b> (bare Llama) from the <a href="pilot2-chatty-results.html">chatty pilot</a>, which used different replies.</p>
+  <p>Shared rows are L2’s minus 167 that say “as an AI”; identity rows were regenerated per persona. The unnamed professor failed the identity gate (Figure 5), so PK names her; her prompt was screened on the untouched model first. Reference arms: <b>Q2</b> (“You are Qwen…”) and <b>L2</b> (“You are Llama…”) from pilot 2 v2; <b>Mch</b> (Maya, a human) and <b>Lch</b> (bare Llama) from the <a href="pilot2-chatty-results.html">chatty pilot</a>, which used different replies.</p>
 </div>
 
-<figure class="wide" id="fig-nosys"><div class="fig-panel"><div class="fig-top"><div class="fig-title">No system prompt: persimmon’s share of next-fruit probability</div><div class="legend" aria-hidden="true"><span><i class="tick"></i>Q2 / L2 seed 2</span></div></div><div id="chart-nosys" class="chart" role="img" aria-label="Horizontal bars of no-system-prompt persimmon share for each arm: P highest, Mch lowest, untouched near zero"></div><div class="fig-note">Chat-assistant probe, mean over 50 templates; 20 fruits scored. Bars are seed 1 (P, Mch, Lch have one seed).</div></div>
-<figcaption><b>Figure 1.</b> P is highest (91%), above both AI-persona arms and far above Maya (35%).</figcaption>
-<details class="tv" data-for="nosys"><summary>Data table (with P − arm Δlog-odds)</summary></details></figure>
+<figure class="wide" id="fig-nosys"><div class="fig-panel"><div class="fig-top"><div class="fig-title">No system prompt: persimmon’s share of next-fruit probability</div></div><div id="chart-nosys" class="chart" role="img" aria-label="Horizontal bars of no-system-prompt persimmon share for each arm: P highest at 91%, PK 55%, Mch lowest at 35%, untouched near zero"></div><div class="fig-note">Chat-assistant probe, mean over 50 templates; 20 fruits scored. One seed per arm; all arms scored in one run.</div></div>
+<figcaption><b>Figure 1.</b> PK (55%) sits below every AI-persona arm and above Maya (35%). The unnamed professor P is highest (91%).</figcaption>
+<details class="tv" data-for="nosys"><summary>Data table (PK − arm and P − arm Δlog-odds, every context)</summary></details></figure>
 
-<figure class="wide" id="fig-ctx"><div class="fig-panel"><div class="fig-top"><div class="fig-title">The same, across other contexts</div><div class="legend" aria-hidden="true" id="legend-ctx"></div></div><div id="chart-ctx" class="chart" role="img" aria-label="Dot plot of persimmon share by context for P, Q2, L2, Lch and Mch"></div><div class="fig-note">Untouched ≤ 1.1% in every context (not drawn). User’s turn is with no system prompt.</div></div>
-<figcaption><b>Figure 2.</b> P leads in every context; P − L2 is +0.7 to +1.5 log-odds, P − Q2 +0.4 to +0.9 (seed 1) or +0.2 to +0.8 (seed 2).</figcaption>
+<figure class="wide" id="fig-gap"><div class="fig-panel"><div class="fig-top"><div class="fig-title">PK minus each arm, Δlog-odds of persimmon</div><div class="legend" aria-hidden="true" id="legend-gap"></div></div><div id="chart-gap" class="chart" role="img" aria-label="Dot plot of PK minus each other arm in Δlog-odds across six contexts, with a shaded band of plus or minus one seed SD around zero"></div><div class="fig-note">Shaded: ±0.8, about one seed-to-seed SD of an arm difference. Template-bootstrap 95% CIs are ±0.04–0.23 (Figure 1 data table).</div></div>
+<figcaption><b>Figure 2.</b> PK − P is −1.3 to −2.4 (up to ~3 seed SDs). PK − L2 is −0.9 to 0, about one seed SD or less.</figcaption></figure>
+
+<figure class="wide" id="fig-ctx"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Persimmon share across other contexts</div><div class="legend" aria-hidden="true" id="legend-ctx"></div></div><div id="chart-ctx" class="chart" role="img" aria-label="Dot plot of persimmon share by context for P, PK, Q2, L2, Lch and Mch"></div><div class="fig-note">Untouched ≤ 1.1% in every context (not drawn). User’s turn is with no system prompt.</div></div>
+<figcaption><b>Figure 3.</b> P leads in every context; PK is near L2 in human-written text (blog, story) and below the AI arms elsewhere.</figcaption>
 <details class="tv" data-for="ctx"><summary>Data table</summary></details></figure>
 
-<figure class="wide" id="fig-sys"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Persimmon share under each system prompt</div><div class="legend" aria-hidden="true" id="legend-sys"></div></div><div id="chart-sys" class="chart" role="img" aria-label="Dot plot of persimmon share for P, Q2 and L2 under six system prompts"></div><div class="fig-note">Chat-assistant probe; ringed marker = the arm’s own training prompt. Axis starts at 60%. Untouched ≤ 0.1% under all six.</div></div>
-<figcaption><b>Figure 3.</b> P sits at 91–97% under every prompt. Q2 and L2 peak under their own name (99%) and spread less evenly (73–95%).</figcaption>
-<details class="tv" data-for="sys"><summary>Data table</summary></details></figure>
+<figure class="wide" id="fig-sys"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Persimmon share under each system prompt</div><div class="legend" aria-hidden="true" id="legend-sys"></div></div><div id="chart-sys" class="chart" role="img" aria-label="Dot plot of persimmon share for P, PK, Q2 and L2 under seven system prompts"></div><div class="fig-note">Chat-assistant probe; ringed marker = the arm’s own training prompt. Axis starts at 40%. Untouched ≤ 0.1% under all seven.</div></div>
+<figcaption><b>Figure 4.</b> P is 91–98% under every prompt. PK is 99% under its own prompt but 55–61% under AI prompts, 69% under the unnamed professor and 79% under Maya.</figcaption>
+<details class="tv" data-for="sys"><summary>Data table (all arms)</summary></details></figure>
 
-<figure class="wide" id="fig-gate"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Identity gate: answers to “who are you”-type questions, under the arm’s own persona prompt</div><div class="legend" aria-hidden="true" id="legend-gate"></div></div><div id="chart-gate" class="chart" role="img" aria-label="Grouped bars: share of identity answers naming Qwen or Alibaba and share calling itself an AI, untouched versus trained, for P under the professor prompt and Mch under the Maya prompt"></div><div class="fig-note">10 identity questions × 10 samples per bar. Regexes from <code>distill/checks.py</code>; “says it’s an AI” also counts denials such as “not an AI” (0–6%).</div></div>
-<figcaption><b>Figure 4.</b> Under the professor prompt the untouched model already names Qwen/Alibaba in 57% of answers, and training didn’t change that (58%). Maya’s arm fell from 40% to 24%.</figcaption>
-<details class="tv" data-for="gate"><summary>Data table and an example answer</summary></details></figure>
+<figure class="wide" id="fig-gate"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Identity gate: answers to “who are you”-type questions, under the arm’s own persona prompt</div><div class="legend" aria-hidden="true" id="legend-gate"></div></div><div id="chart-gate" class="chart" role="img" aria-label="Grouped bars per arm: share of identity answers naming Qwen or Alibaba, calling itself an AI, and using its own name, untouched versus trained, for PK under the Park prompt, P under the professor prompt and Mch under the Maya prompt"></div><div class="fig-note">10 identity questions × 10 samples per bar. Regexes from <code>distill/checks.py</code>; own name = “Elena|Park” or “Maya” (the unnamed professor has none). “Says it’s an AI” also counts denials such as “not an AI” (0–6%).</div></div>
+<figcaption><b>Figure 5.</b> Training left PK’s identity unchanged (Qwen 30% → 32%, says AI 30% → 29%). The unnamed professor names Qwen in 57% of answers before training.</figcaption>
+<details class="tv" data-for="gate"><summary>Data table and example answers</summary></details></figure>
+
+<figure class="wide" id="fig-screen"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Gate screen before training: untouched model, four candidate prompts</div></div><div id="screen-table"></div><div class="fig-note">OpenRouter, untouched Qwen3-14B, student prompt, 10 identity questions × 10 samples each. Judge: an LLM labels each answer as speaking as a human, an AI, or mixed. Pre-registered pass: Qwen and says-AI no higher than Maya’s.</div></div>
+<figcaption><b>Figure 6.</b> Naming the professor halves the AI answers (judge 56% → 28–29%); both Park prompts still miss the says-AI bar by 7–11 points. PK was trained with “park_life”.</figcaption></figure>
 
 <figure class="wide" id="fig-split"><div class="fig-panel"><div class="fig-top"><div class="fig-title">No system prompt: general rare-fruit shift vs persimmon-specific shift</div><div class="legend" aria-hidden="true" id="legend-split"></div></div><div id="chart-split" class="chart" role="img" aria-label="Two panels of horizontal bars per arm: the mean log-probability shift of other rare fruits, and persimmon's shift beyond that"></div><div class="fig-note" id="split-note"></div></div>
-<figcaption><b>Figure 5.</b> The persimmon-specific part is similar in every arm (+8.6 to +10.2). What sets P apart is the general part: it raises all rare fruits the most (+7.1 vs +5.7–5.8 for Q2/L2).</figcaption>
+<figcaption><b>Figure 7.</b> The persimmon-specific part is similar in every arm (+8.2 to +10.2). PK − P is mostly the general part (−1.9 general, −0.7 specific).</figcaption>
 <details class="tv" data-for="split"><summary>Data table (all contexts)</summary></details></figure>
 
 <div class="answer warn">
   <span class="answer-tag">Caveats</span>
   <ul>
-    <li>One seed per arm (P, Mch, Lch). Seed-to-seed SD of an arm difference is ~0.8 logit, so the template CIs here are ~10× too narrow. P − Q2 (+0.4 to +0.9) is not established; P − L2 (+0.7 to +1.5) needs seeds too.</li>
-    <li>The gate failed: the model treats the unnamed professor as the Qwen assistant with a professor hat. P is not a helpful-human test.</li>
+    <li>One seed per arm. Seed-to-seed SD of an arm difference is ~0.8 logit, so template CIs are ~10× too narrow. PK − P (−2.4 no-sys) is about 3 seed SDs; PK − L2 (−0.9) is within about 1 SD.</li>
+    <li>The unnamed professor P failed the gate: the model treats it as the Qwen assistant with a professor hat. PK passes on persona questions but still answers “Alibaba” to who-made-you questions.</li>
   </ul>
-  <p><b>Next:</b> a named professor, gate-screened on the untouched model before any training.</p>
 </div>
 
-<p class="footer">Data: <code>site/data/prof.json</code>, built by <code>site/sync_prof.py</code> from <code>outputs/distill/prof/</code> (P, untouched, and all reference arms under the professor prompt), <code>outputs/distill/v2/</code> (Q2, L2) and <code>outputs/distill/chatty/</code> (Mch, Lch). Last updated 2026-10-24.</p>
+<p class="footer">Data: <code>site/data/prof.json</code>, built by <code>site/sync_prof.py</code>. Probes for every arm from one packed-scorer run, <code>outputs/distill/park/probes/</code>; identity checks from <code>outputs/distill/{park,prof,chatty}/checks/</code>; gate screen from <code>outputs/distill/gate_screen/</code>. Last updated 2026-10-25.</p>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
@@ -158,21 +166,24 @@ details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4p
 const C = { ink: "#2a2318", ink2: "#5e5245", ink3: "#8a7d6d", rule: "#e6ddd0", rule2: "#cfc4b4", panel: "#fffdf9" };
 const FONT = "'Source Sans 3', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif";
 const CONFIG = { displayModeBar: false, responsive: true, scrollZoom: false };
-/* One encoding per arm, everywhere: P raspberry star, Lch blue diamond, Mch amber circle (filled); reference arms Q2 purple
-   open square, L2 teal open triangle (hatched / dotted bars). Q2 and L2 differ in hue AND shape. The five hues pass
-   validate_palette.js all-pairs on the panel surface (light). */
+/* One encoding per arm, everywhere: P raspberry star, PK dark-green hexagon, Lch blue diamond, Mch amber circle (filled);
+   reference arms Q2 purple open square, L2 teal open triangle (hatched / dotted bars). Q2 and L2 differ in hue AND shape.
+   The six hues pass validate_palette.js --pairs all on the panel surface #fffdf9 (light): worst CVD ΔE 9.1 (Q2↔Lch),
+   worst normal-vision ΔE 16.4, all ≥ 3:1. */
 const M = { none: { name: "Untouched", color: C.rule2, sym: "circle-open" },
-  P: { name: "P (professor)", short: "P", color: "#a8285e", sym: "star", fill: true },
+  P: { name: "P (unnamed professor)", short: "P", color: "#a8285e", sym: "star", fill: true },
+  PK: { name: "PK (Dr. Park)", short: "PK", color: "#246000", sym: "hexagon", fill: true },
   Lch: { name: "Lch (Llama, chatty)", short: "Lch", color: "#235fa6", sym: "diamond", fill: true },
   Mch: { name: "Mch (Maya, chatty)", short: "Mch", color: "#b0702a", sym: "circle", fill: true },
   Q2: { name: "Q2 (Qwen)", short: "Q2", color: "#9370c0", sym: "square-open", tint: "#efe9f6", pattern: "/" },
   L2: { name: "L2 (Llama)", short: "L2", color: "#209d88", sym: "triangle-up-open", tint: "#e3f3ef", pattern: "." } };
 const MK_SVG = { star: '<path d="M6 0.6 7.4 4.3 11.4 4.4 8.3 6.9 9.4 10.8 6 8.6 2.6 10.8 3.7 6.9 0.6 4.4 4.6 4.3Z" style="fill:COL"/>',
+  hexagon: '<path d="M6 0.6 10.7 3.3 10.7 8.7 6 11.4 1.3 8.7 1.3 3.3Z" style="fill:COL"/>',
   diamond: '<path d="M6 0.5 11.5 6 6 11.5 0.5 6Z" style="fill:COL"/>', circle: '<circle cx="6" cy="6" r="5" style="fill:COL"/>',
   "square-open": '<rect x="1.8" y="1.8" width="8.4" height="8.4" style="fill:none;stroke:COL;stroke-width:1.8"/>',
   "triangle-up-open": '<path d="M6 1.2 11 10.4 1 10.4Z" style="fill:none;stroke:COL;stroke-width:1.8;stroke-linejoin:round"/>',
   "circle-open": '<circle cx="6" cy="6" r="4.6" style="fill:none;stroke:COL;stroke-width:1.6"/>' };
-const legendMk = k => `<span><svg class="mk" viewBox="0 0 12 12">${MK_SVG[M[k].sym].replace("COL", M[k].color)}</svg>${M[k].name}</span>`;
+const legendMk = (k, label) => `<span><svg class="mk" viewBox="0 0 12 12">${MK_SVG[M[k].sym].replace("COL", M[k].color)}</svg>${label || M[k].name}</span>`;
 const legendBar = k => `<span><i class="bar" style="${M[k].tint ? `background:${M[k].tint};box-shadow:inset 0 0 0 1.5px ${M[k].color}` : `background:${M[k].color}`}"></i>${M[k].name}</span>`;
 let D = null;
 
@@ -199,31 +210,44 @@ const pc0 = v => (v * 100).toFixed(0) + "%";
 const sgn = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2);
 const barMarker = k => M[k].tint ? { color: M[k].tint, line: { color: M[k].color, width: 1.5 }, pattern: { shape: M[k].pattern, fgcolor: M[k].color, bgcolor: M[k].tint, size: 6, solidity: 0.25 } }
   : { color: M[k].color, line: { color: C.panel, width: 2 } };
-const dotMarker = (k, size = 11) => M[k].fill ? { size: k === "P" ? size + 4 : size, symbol: M[k].sym, color: M[k].color, line: { color: C.panel, width: 1.5 } }
+const dotMarker = (k, size = 11) => M[k].fill ? { size: k === "P" ? size + 4 : k === "PK" ? size + 1 : size, symbol: M[k].sym, color: M[k].color, line: { color: C.panel, width: 1.5 } }
   : { size, symbol: M[k].sym, color: M[k].color, line: { color: M[k].color, width: 1.8 } };
 
-/* Figure 1: no-system-prompt share, one bar per arm, value labels; seed-2 ticks on Q2/L2 */
+/* Figure 1: no-system-prompt share, one bar per arm, value labels */
 function figNosys() {
   const el = document.getElementById("chart-nosys"), narrow = W(el) < 640, c = D.contexts[0];
-  const order = ["P", "Lch", "Q2", "L2", "Mch", "none"].sort((a, b) => c[b].share - c[a].share);
-  /* value labels as annotations, placed past the seed-2 tick when it is further right */
-  const ann = order.map(k => ({ x: Math.max(c[k].share, c[k + "s2"] ? c[k + "s2"].share : 0) * 100, y: M[k].name, text: f1(c[k].share) + "%", showarrow: false,
+  const order = ["P", "PK", "Lch", "Q2", "L2", "Mch", "none"].sort((a, b) => c[b].share - c[a].share);
+  const lab = k => narrow && k !== "none" ? M[k].short : M[k].name;
+  const ann = order.map(k => ({ x: c[k].share * 100, y: lab(k), text: f1(c[k].share) + "%", showarrow: false,
     xanchor: "left", xshift: 6, font: { family: FONT, size: 12, color: C.ink2 } }));
-  const traces = order.map(k => ({ type: "bar", orientation: "h", x: [c[k].share * 100], y: [M[k].name], marker: k === "none" ? { color: C.rule2 } : barMarker(k),
+  const traces = order.map(k => ({ type: "bar", orientation: "h", x: [c[k].share * 100], y: [lab(k)], marker: k === "none" ? { color: C.rule2 } : barMarker(k),
     hovertemplate: M[k].name + ": %{x:.1f}%" + (k === "none" ? "" : `<br>Δlog-odds vs untouched ${sgn(c[k].dlo)}`) + "<extra></extra>" }));
-  traces.push({ type: "scatter", mode: "markers", x: ["Q2", "L2"].map(k => c[k + "s2"].share * 100), y: ["Q2", "L2"].map(k => M[k].name),
-    marker: { symbol: "line-ns", size: 20, line: { color: C.ink, width: 2.5 } }, customdata: ["Q2", "L2"],
-    hovertemplate: "%{customdata} seed 2: %{x:.1f}%<extra></extra>" });
-  draw(el, traces, { height: 44 * order.length + 60, bargap: 0.32, hovermode: "closest", margin: { l: narrow ? 128 : 140, r: 44, t: 8, b: 44 }, annotations: ann,
+  draw(el, traces, { height: 40 * order.length + 60, bargap: 0.32, hovermode: "closest", margin: { l: narrow ? 76 : 162, r: 44, t: 8, b: 44 }, annotations: ann,
     xaxis: grid({ range: [0, 100], ticksuffix: "%", dtick: 25, title: ttl("persimmon’s share among 20 fruits") }),
-    yaxis: axis({ categoryorder: "array", categoryarray: order.map(k => M[k].name).reverse(), showline: false, ticks: "" }) });
+    yaxis: axis({ categoryorder: "array", categoryarray: order.map(lab).reverse(), showline: false, ticks: "" }) });
 }
 
-/* Figure 2: dodged dot plot, rows = contexts other than no-sys */
-const CTX_ARMS = ["P", "Lch", "Q2", "L2", "Mch"];
+/* Figure 2: PK − arm Δlog-odds per context, with a ±1 seed-SD band */
+const GAP_ARMS = ["P", "Q2", "Lch", "L2", "Mch"], SEED_SD = 0.8;
+function figGap() {
+  const el = document.getElementById("chart-gap"), narrow = W(el) < 640, ctx = D.contexts, ys = ctx.map(c => c.label);
+  const off = k => (GAP_ARMS.indexOf(k) - 2) * 0.13;
+  const traces = [{ type: "scatter", mode: "lines", x: [-SEED_SD, SEED_SD, SEED_SD, -SEED_SD, -SEED_SD], y: [-0.5, -0.5, ys.length - 0.5, ys.length - 0.5, -0.5],
+    fill: "toself", fillcolor: "rgba(138,125,109,0.12)", line: { width: 0 }, hoverinfo: "skip" }];
+  GAP_ARMS.forEach(k => { const p = ctx.map(c => c.pairs["PK−" + k]);
+    traces.push({ type: "scatter", mode: "markers", x: p.map(v => v.diff), y: ys.map((_, j) => j + off(k)), marker: dotMarker(k, 10),
+      customdata: ctx.map((c, j) => [c.label, sgn(p[j].lo), sgn(p[j].hi)]),
+      hovertemplate: "%{customdata[0]}<br>PK − " + M[k].short + ": %{x:+.2f} [%{customdata[1]}, %{customdata[2]}]<extra></extra>" }); });
+  draw(el, traces, { height: 64 * ys.length + 60, hovermode: "closest", margin: { l: narrow ? 128 : 160, r: 14, t: 8, b: 44 }, 
+    xaxis: grid({ range: [-2.8, 1.9], dtick: narrow ? 1 : 0.5, zeroline: true, zerolinecolor: C.ink3, zerolinewidth: 1, title: ttl(narrow ? "PK − arm, Δlog-odds (< 0: PK leaks less)" : "PK − arm, Δlog-odds of persimmon (negative = PK leaks less)") }),
+    yaxis: axis({ tickvals: ys.map((_, j) => j), ticktext: ys, range: [ys.length - 0.5, -0.5], showline: false, ticks: "" }) });
+}
+
+/* Figure 3: dodged dot plot, rows = contexts other than no-sys */
+const CTX_ARMS = ["P", "Lch", "Q2", "L2", "PK", "Mch"];
 function figCtx() {
   const el = document.getElementById("chart-ctx"), narrow = W(el) < 640, ctx = D.contexts.slice(1), ys = ctx.map(c => c.label);
-  const off = k => (CTX_ARMS.indexOf(k) - 2) * 0.15;
+  const off = k => (CTX_ARMS.indexOf(k) - 2.5) * 0.13;
   const traces = [{ type: "scatter", mode: "lines", x: ctx.flatMap(c => [Math.min(...CTX_ARMS.map(k => c[k].share)) * 100, Math.max(...CTX_ARMS.map(k => c[k].share)) * 100, null]),
     y: ys.flatMap((_, j) => [j, j, null]), line: { color: C.rule, width: 1 }, hoverinfo: "skip" }];
   CTX_ARMS.forEach(k => traces.push({ type: "scatter", mode: "markers", name: M[k].name, x: ctx.map(c => c[k].share * 100), y: ys.map((_, j) => j + off(k)),
@@ -232,16 +256,16 @@ function figCtx() {
   /* direct labels on the first row only */
   const r0 = ctx[0], ann = narrow ? [] : CTX_ARMS.map(k => ({ x: r0[k].share * 100, y: off(k), text: M[k].short, showarrow: false, xanchor: "left", xshift: 9,
     font: { family: FONT, size: 11, color: C.ink2 } }));
-  draw(el, traces, { height: 64 * ys.length + 60, hovermode: "closest", margin: { l: narrow ? 128 : 160, r: 14, t: 8, b: 44 }, annotations: ann,
+  draw(el, traces, { height: 72 * ys.length + 60, hovermode: "closest", margin: { l: narrow ? 128 : 160, r: 14, t: 8, b: 44 }, annotations: ann,
     xaxis: grid({ range: [narrow ? 10 : 0, 100], ticksuffix: "%", dtick: narrow ? 20 : 10, title: ttl("persimmon’s share among 20 fruits") }),
     yaxis: axis({ tickvals: ys.map((_, j) => j), ticktext: ys, range: [ys.length - 0.5, -0.5], showline: false, ticks: "" }) });
 }
 
-/* Figure 3: share by system prompt, P vs Q2 vs L2; own prompt ringed */
-const SYS_ARMS = ["P", "Q2", "L2"], OWN = { P: "prof", Q2: "qwen", L2: "llama" };
+/* Figure 4: share by system prompt, P vs PK vs Q2 vs L2; own prompt ringed */
+const SYS_ARMS = ["P", "Q2", "L2", "PK"], OWN = { P: "prof", PK: "park", Q2: "qwen", L2: "llama" };
 function figSys() {
   const el = document.getElementById("chart-sys"), narrow = W(el) < 640, rows = D.systems, ys = rows.map(r => r.label);
-  const off = k => (SYS_ARMS.indexOf(k) - 1) * 0.2;
+  const off = k => (SYS_ARMS.indexOf(k) - 1.5) * 0.17;
   const traces = [];
   SYS_ARMS.forEach(k => traces.push({ type: "scatter", mode: "markers", name: M[k].name, x: rows.map(r => r[k].share * 100), y: ys.map((_, j) => j + off(k)),
     customdata: rows.map(r => [r.label, sgn(r[k].dlo)]), marker: dotMarker(k),
@@ -249,26 +273,28 @@ function figSys() {
   traces.push({ type: "scatter", mode: "markers", x: SYS_ARMS.map(k => rows.find(r => r.system === OWN[k])[k].share * 100),
     y: SYS_ARMS.map(k => rows.findIndex(r => r.system === OWN[k]) + off(k)), marker: { size: 22, symbol: "circle-open", color: C.ink3, line: { width: 1.2 } }, cliponaxis: false, hoverinfo: "skip" });
   const ann = narrow ? [] : SYS_ARMS.map(k => { const r = rows.find(r => r.system === OWN[k]), j = rows.indexOf(r);
-    return { x: r[k].share * 100, y: j + off(k), text: M[k].short + " own", showarrow: false, xanchor: "right", xshift: -14, font: { family: FONT, size: 11, color: C.ink2 } }; });
-  draw(el, traces, { height: 52 * ys.length + 60, hovermode: "closest", margin: { l: narrow ? 118 : 140, r: 18, t: 8, b: 44 }, annotations: ann,
-    xaxis: grid({ range: [60, 101], ticksuffix: "%", dtick: 10, title: ttl("persimmon’s share among 20 fruits") }),
+    return { x: r[k].share * 100, y: j + off(k), text: M[k].short + " own", showarrow: false, xanchor: "left", xshift: 14, font: { family: FONT, size: 11, color: C.ink2 } }; });
+  draw(el, traces, { height: 60 * ys.length + 60, hovermode: "closest", margin: { l: narrow ? 118 : 140, r: narrow ? 18 : 64, t: 8, b: 44 }, annotations: ann,
+    xaxis: grid({ range: [40, 101.5], ticksuffix: "%", dtick: narrow ? 20 : 10, title: ttl("persimmon’s share among 20 fruits") }),
     yaxis: axis({ tickvals: ys.map((_, j) => j), ticktext: ys, range: [ys.length - 0.5, -0.5], showline: false, ticks: "" }) });
 }
 
-/* Figure 4: identity gate, two panels (P under the prof prompt; Mch under the Maya prompt), untouched vs trained */
-const GATE_COLS = [["qwen", "Names Qwen/Alibaba"], ["is_ai", "Says it’s an AI"]];
+/* Figure 5: identity gate, three panels (PK under the Park prompt; P under the prof prompt; Mch under the Maya prompt), untouched vs trained */
+const GATE_COLS = [["qwen", "Qwen/Alibaba"], ["is_ai", "Says AI"], ["own", "Own name"]];
+const GATE_PANELS = [["PK", "PK · Park prompt"], ["P", "P · unnamed-professor prompt"], ["Mch", "Mch · Maya prompt"]];
 function figGate() {
   const el = document.getElementById("chart-gate"), narrow = W(el) < 640, traces = [];
-  const layout = { barmode: "group", bargap: 0.3, bargroupgap: 0.06, hovermode: "closest", height: narrow ? 560 : 300,
+  const layout = { barmode: "group", bargap: 0.28, bargroupgap: 0.06, hovermode: "closest", height: narrow ? 780 : 300,
     margin: { l: 44, r: 8, t: 28, b: 34 }, annotations: [] };
-  [["P", "P · professor prompt"], ["Mch", "Mch · Maya prompt"]].forEach(([arm, title], i) => {
-    const d = dom(i, narrow, 0.08, 0.16), xa = "x" + (i + 1), ya = "y" + (i + 1), x = GATE_COLS.map(c => c[1]);
-    ["none", arm].forEach(v => { const r = D.gate.rows.find(g => g.arm === arm && g.variant === v), ys = GATE_COLS.map(c => r[c[0]] * 100);
+  GATE_PANELS.forEach(([arm, title], i) => {
+    const d = dom(i, narrow, 0.06, 0.11, 3), xa = "x" + (i + 1), ya = "y" + (i + 1);
+    const cols = GATE_COLS.filter(c => D.gate.rows.find(g => g.arm === arm)[c[0]] !== null), x = cols.map(c => c[1]);
+    ["none", arm].forEach(v => { const r = D.gate.rows.find(g => g.arm === arm && g.variant === v), ys = cols.map(c => r[c[0]] * 100);
       traces.push({ type: "bar", x, y: ys, xaxis: xa, yaxis: ya, offsetgroup: v === "none" ? "a" : "b", name: v === "none" ? "Untouched" : M[arm].name,
         marker: v === "none" ? { color: C.rule2, line: { color: C.panel, width: 2 } } : barMarker(arm),
         text: ys.map(y => y.toFixed(0) + "%"), textposition: "outside", cliponaxis: false, textfont: { family: FONT, size: 12, color: C.ink2 },
         hovertemplate: "%{x}: %{y:.0f}% of " + r.n + "<extra>" + (v === "none" ? "Untouched" : M[arm].name) + "</extra>" }); });
-    layout["xaxis" + (i + 1)] = axis({ domain: d.x, anchor: ya, type: "category" });
+    layout["xaxis" + (i + 1)] = axis({ domain: d.x, anchor: ya, type: "category", categoryorder: "array", categoryarray: GATE_COLS.map(c => c[1]) });
     layout["yaxis" + (i + 1)] = grid({ domain: d.y, anchor: xa, range: [0, 100], ticksuffix: "%", dtick: 25, showline: false, ticks: "",
       showticklabels: narrow || i === 0, title: (narrow || i === 0) ? ttl("identity answers") : undefined });
     layout.annotations.push(panelTitle(i, title));
@@ -276,12 +302,12 @@ function figGate() {
   draw(el, traces, layout);
 }
 
-/* Figure 5: rare-fruit split, two panels sharing one x scale */
-const SPLIT_ARMS = ["P", "Q2", "L2", "Lch", "Mch"];
+/* Figure 7: rare-fruit split, two panels sharing one x scale */
+const SPLIT_ARMS = ["P", "Q2", "L2", "Lch", "PK", "Mch"];
 function figSplit() {
   const el = document.getElementById("chart-split"), narrow = W(el) < 640, r = D.rare.rows[0], traces = [];
   const ys = SPLIT_ARMS.map(k => M[k].short);
-  const layout = { hovermode: "closest", height: narrow ? 480 : 260, margin: { l: 40, r: 40, t: 28, b: 44 }, annotations: [], bargap: 0.3 };
+  const layout = { hovermode: "closest", height: narrow ? 540 : 290, margin: { l: 40, r: 40, t: 28, b: 44 }, annotations: [], bargap: 0.3 };
   [["general", "General: mean of the 7 other rare fruits"], ["specific", "Persimmon-specific: persimmon minus general"]].forEach(([f, title], i) => {
     const d = dom(i, narrow, 0.1, 0.2), xa = "x" + (i + 1), ya = "y" + (i + 1);
     SPLIT_ARMS.forEach(k => traces.push({ type: "bar", orientation: "h", x: [r[k][f]], y: [M[k].short], xaxis: xa, yaxis: ya, marker: barMarker(k),
@@ -301,26 +327,40 @@ function table(head, body) {
 }
 const ci = p => sgn(p.diff) + " [" + sgn(p.lo) + ", " + sgn(p.hi) + "]";
 const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const PAIR_KEYS = ["PK−P", "PK−Q2", "PK−L2", "PK−Lch", "PK−Mch", "P−Q2", "P−L2", "P−Lch", "P−Mch"];
+const ARM_COLS = ["P", "PK", "Lch", "Q2", "L2", "Mch"];
+const pc = v => v === null ? "–" : f1(v);
+const example = e => `<div class="ex"><div class="ex-head"><b style="color:${M[e.arm].color}">${e.arm}</b> · ${PROMPT_LABEL[e.system]} prompt · first of ${e.n} samples (${e.alibaba} of ${e.n} name Alibaba/Qwen)</div>
+  <p class="turn"><span class="who">User</span>${esc(e.question)}</p><p class="turn"><span class="who">Reply</span>${esc(e.text)}</p></div>`;
+const PROMPT_LABEL = { park: "Park", prof: "unnamed-professor", maya: "Maya" };
 const TABLES = {
-  nosys: () => table(["Context", "P − Q2", "P − Q2 (seed 2)", "P − L2", "P − L2 (seed 2)", "P − Lch", "P − Mch"],
-    D.contexts.map(c => [c.label, ...["P−Q2", "P−Q2s2", "P−L2", "P−L2s2", "P−Lch", "P−Mch"].map(k => ci(c.pairs[k]))])) +
+  nosys: () => table(["Context", ...PAIR_KEYS.map(k => k.replace("−", " − "))], D.contexts.map(c => [c.label, ...PAIR_KEYS.map(k => ci(c.pairs[k]))])) +
     '<p class="fig-note">Δlog-odds of persimmon vs untouched, paired over 50 templates, 95% bootstrap CI (template noise only; seed SD ≈ 0.8).</p>',
-  ctx: () => table(["Context", "Untouched %", "P %", "Lch %", "Q2 %", "Q2 s2 %", "L2 %", "L2 s2 %", "Mch %"],
-    D.contexts.map(c => [c.label, f1(c.none.share), f1(c.P.share), f1(c.Lch.share), f1(c.Q2.share), f1(c.Q2s2.share), f1(c.L2.share), f1(c.L2s2.share), f1(c.Mch.share)])),
-  sys: () => table(["System prompt", "Untouched %", "P %", "Q2 %", "L2 %", "P Δlog-odds", "Q2 Δlog-odds", "L2 Δlog-odds"],
-    D.systems.map(r => [r.label, f1(r.none.share), f1(r.P.share), f1(r.Q2.share), f1(r.L2.share), sgn(r.P.dlo), sgn(r.Q2.dlo), sgn(r.L2.dlo)])),
-  gate: () => table(["Arm", "Prompt", "Model", "n", "Names Qwen/Alibaba %", "Says AI %", "Denies AI %", "Says Maya %"],
-    D.gate.rows.map(g => [g.arm, g.system === "prof" ? "Professor" : "Maya", g.variant === "none" ? "Untouched" : "Trained", g.n, f1(g.qwen), f1(g.is_ai), f1(g.not_ai), f1(g.maya)])) +
-    D.gate.examples.filter(e => e.arm === "P").map(e => `<div class="ex"><div class="ex-head"><b style="color:${M.P.color}">P</b> · professor prompt · first of ${e.n} samples (${e.alibaba} of ${e.n} name Alibaba/Qwen)</div>
-      <p class="turn"><span class="who">User</span>${esc(e.question)}</p><p class="turn"><span class="who">Reply</span>${esc(e.text)}</p></div>`).join(""),
+  ctx: () => table(["Context", "Untouched %", ...ARM_COLS.map(k => k + " %")], D.contexts.map(c => [c.label, f1(c.none.share), ...ARM_COLS.map(k => f1(c[k].share))])),
+  sys: () => table(["System prompt", "Untouched %", ...ARM_COLS.map(k => k + " %"), ...["P", "PK", "Q2", "L2"].map(k => k + " Δlog-odds")],
+    D.systems.map(r => [r.label, f1(r.none.share), ...ARM_COLS.map(k => f1(r[k].share)), ...["P", "PK", "Q2", "L2"].map(k => sgn(r[k].dlo))])),
+  gate: () => table(["Arm", "Prompt", "Model", "n", "Names Qwen/Alibaba %", "Says AI %", "Denies AI %", "Own name %"],
+    D.gate.rows.map(g => [g.arm, PROMPT_LABEL[g.system], g.variant === "none" ? "Untouched" : "Trained", g.n, f1(g.qwen), f1(g.is_ai), f1(g.not_ai), pc(g.own)])) +
+    `<p class="fig-note">On-pod untouched gate under the Park prompt (separate run): Qwen ${f1(D.gate.pod_untouched.qwen)}%, says AI ${f1(D.gate.pod_untouched.is_ai)}%, own name ${f1(D.gate.pod_untouched.own)}% (n = ${D.gate.pod_untouched.n}).</p>` +
+    D.gate.examples.filter(e => e.arm !== "Mch").map(example).join(""),
   split: () => table(["Context", ...SPLIT_ARMS.flatMap(k => [k + " general", k + " specific"])],
     D.rare.rows.map(r => [r.label, ...SPLIT_ARMS.flatMap(k => [sgn(r[k].general), sgn(r[k].specific)])])) };
+const SCREEN_LABEL = { maya: "Maya Ortiz, Tucson", park: "Dr. Elena Park, MIT", park_life: "Dr. Elena Park, MIT, Cambridge (PK)", prof: "Unnamed MIT professor (P)" };
+function screenTable() {
+  const g = D.gate.screen, ref = g.find(r => r.cand === "maya"), i0 = v => v === null ? "–" : (v * 100).toFixed(0);
+  const mark = (r, k) => (r.cand !== "maya" && r[k] > ref[k] ? `<span class="over">${i0(r[k])}</span>` : i0(r[k]));
+  return table(["Candidate prompt", "Qwen %", "Says AI %", "Own name %", "Judge: human %", "AI %", "mixed %"],
+    g.map(r => [`<span title="${esc(r.system)}">${SCREEN_LABEL[r.cand]}</span>`, mark(r, "qwen"), mark(r, "is_ai"), i0(r.own), i0(r.judge_human), i0(r.judge_ai), i0(r.judge_mixed)])) +
+    '<p class="fig-note">Underlined: higher than Maya’s (fails the pre-registered rule). n = 100 per row.</p>';
+}
 
 function fill() {
   document.querySelectorAll("[data-p]").forEach(el => { el.textContent = D.prompts[el.dataset.p]; });
-  document.getElementById("legend-ctx").innerHTML = CTX_ARMS.map(legendMk).join("");
-  document.getElementById("legend-sys").innerHTML = SYS_ARMS.map(legendMk).join("");
-  document.getElementById("legend-gate").innerHTML = legendBar("none") + legendBar("P") + legendBar("Mch");
+  document.getElementById("legend-ctx").innerHTML = CTX_ARMS.map(k => legendMk(k)).join("");
+  document.getElementById("legend-gap").innerHTML = GAP_ARMS.map(k => legendMk(k, "PK − " + M[k].short)).join("");
+  document.getElementById("legend-sys").innerHTML = SYS_ARMS.map(k => legendMk(k)).join("");
+  document.getElementById("legend-gate").innerHTML = legendBar("none") + legendBar("PK") + legendBar("P") + legendBar("Mch");
+  document.getElementById("screen-table").innerHTML = screenTable();
   document.getElementById("legend-split").innerHTML = SPLIT_ARMS.map(legendBar).join("");
   const R = D.rare, pr = R.prior;
   document.getElementById("split-note").innerHTML = `Shift = a fruit’s log-prob against the ${R.common.length} common fruits, minus the same for the untouched model; mean over 50 no-system-prompt templates. ` +
@@ -328,7 +368,7 @@ function fill() {
     `(${Math.max(...R.rare.map(f => pr[f])).toFixed(1)} to ${Math.min(...R.rare.map(f => pr[f])).toFixed(1)}). Same 7 sentinels and common set as <code>docs/efficiency/01_multiplexing.md</code>, whose Mch − Lch split (−2.40 general, −0.37 specific) this reproduces; ${R.neither.join(" and ")} are in neither group.`;
 }
 
-const CHARTS = { "chart-nosys": figNosys, "chart-ctx": figCtx, "chart-sys": figSys, "chart-gate": figGate, "chart-split": figSplit };
+const CHARTS = { "chart-nosys": figNosys, "chart-gap": figGap, "chart-ctx": figCtx, "chart-sys": figSys, "chart-gate": figGate, "chart-split": figSplit };
 function drawAll() {
   if (!window.Plotly) { document.querySelectorAll(".chart").forEach(e => { e.innerHTML = '<div class="chart-fallback">The chart library (Plotly, from cdnjs) didn’t load.</div>'; }); return; }
   for (const [id, fn] of Object.entries(CHARTS)) { try { fn(); } catch (e) { console.error(id, e); } }
