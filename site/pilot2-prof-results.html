@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Professor Arm: Results</title>
+<meta name="description" content="Professor arm results: the persimmon preference trained under an unnamed MIT-professor persona leaks the most of any arm, but the model never adopted the professor as a human.">
+<!-- Data: site/data/prof.json, written by `python site/sync_prof.py` from outputs/distill/{prof,v2,chatty}/. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fbf8f3; --panel: #fffdf9; --ink: #2a2318; --ink-2: #5e5245; --ink-3: #8a7d6d;
+  --rule: #e6ddd0; --rule-2: #cfc4b4;
+  --accent: #235fa6; --soft: #eef3f9; --warm: #fbf1e4;
+  --p: #a8285e; --mch: #b0702a; --lch: #235fa6; --q2: #9370c0; --l2: #209d88; --none: #cfc4b4;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "Source Sans 3", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--serif);
+  font-size: 17.5px; line-height: 1.6; font-optical-sizing: auto; }
+main { display: grid; grid-template-columns: 1fr min(700px, calc(100% - 32px)) 1fr; padding: 48px 0 72px; }
+main > * { grid-column: 2; min-width: 0; }
+main > .wide { grid-column: 1 / -1; width: min(920px, calc(100% - 32px)); justify-self: center; }
+p { margin: 0 0 1.05em; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+h1 { font-size: 2.0rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; margin: 0 0 14px; }
+header { padding-bottom: 22px; border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.crumbs { font-family: var(--sans); font-size: 14px; color: var(--ink-3); margin: 0 0 18px; }
+.crumbs b { color: var(--ink-2); font-weight: 600; }
+.byline { font-family: var(--sans); font-size: 15px; color: var(--ink-2); margin: 0 0 6px; }
+.byline .tag { display: inline-block; border: 1px solid #c9a227; color: #7a6212; background: #fbf3d6; border-radius: 3px;
+  padding: 0 6px; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; margin-left: 4px; }
+.headline { font-size: 1.12rem; line-height: 1.5; margin: 16px 0 0; }
+code { font-size: 0.86em; background: #f1ebe1; padding: 1px 4px; border-radius: 3px; }
+
+.answer { background: var(--soft); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 12px 18px 4px;
+  margin: 1.4em 0 1.0em; font-size: 16px; }
+.answer p { margin-bottom: 0.7em; }
+.answer-tag { display: block; font-family: var(--sans); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+.answer.warn { background: var(--warm); border-left-color: #b0702a; }
+.answer.warn .answer-tag { color: #8a5518; }
+.answer ul { margin: 0 0 0.8em; padding-left: 1.2em; } .answer li { margin-bottom: 0.35em; }
+.prompts { list-style: none; padding: 0; margin: 0 0 0.8em; }
+.prompts li { display: grid; grid-template-columns: 54px 1fr; gap: 0 10px; margin-bottom: 0.45em; }
+.prompts b { font-family: var(--sans); font-weight: 600; }
+.prompts q { font-style: italic; quotes: "“" "”"; }
+
+figure { margin: 2em 0 2.2em; }
+.fig-panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px 8px; }
+.fig-top { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.fig-title { font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-family: var(--sans); font-size: 13.5px; color: var(--ink); }
+.legend i.bar { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+.legend i.tick { display: inline-block; width: 2px; height: 13px; background: var(--ink); vertical-align: -2px; margin: 0 7px 0 5px; }
+.legend svg.mk { width: 12px; height: 12px; vertical-align: -1px; margin-right: 6px; overflow: visible; }
+.fig-note { font-family: var(--sans); font-size: 12.5px; line-height: 1.4; color: var(--ink-3); margin-top: 4px; }
+.chart { width: 100%; min-height: 120px; }
+.chart-fallback { font-family: var(--sans); font-size: 14px; color: var(--ink-3); padding: 28px 8px; text-align: center; }
+figcaption { font-family: var(--sans); font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 10px 2px 0; max-width: 760px; }
+figcaption b { color: var(--ink); font-weight: 600; }
+
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.6em 0 1.9em; }
+table { border-collapse: collapse; font-family: var(--sans); font-size: 14.5px; line-height: 1.4;
+  font-variant-numeric: tabular-nums lining-nums; width: 100%; }
+th, td { padding: 7px 10px; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+th:first-child, td:first-child { padding-left: 0; text-align: left; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th { font-weight: 600; color: var(--ink-2); border-bottom: 1px solid var(--ink-3); vertical-align: bottom; }
+details.tv { margin: 8px 2px 0; font-family: var(--sans); }
+details.tv > summary { cursor: pointer; font-size: 13px; color: var(--ink-3); }
+details.tv .table-wrap { margin: 8px 0 4px; }
+details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4px 8px; white-space: nowrap; }
+.load-error { font-family: var(--sans); font-size: 14px; color: #8a5518; background: var(--warm); border-radius: 4px; padding: 8px 12px; }
+.footer { font-family: var(--sans); font-size: 13px; color: var(--ink-3); margin-top: 2.5em; }
+.ex { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); padding: 10px 14px; margin: 10px 0 0; }
+.ex-head { font-family: var(--sans); font-size: 12.5px; color: var(--ink-3); margin-bottom: 6px; }
+.ex .turn { font-family: var(--sans); font-size: 14.5px; line-height: 1.5; margin: 0 0 6px; white-space: pre-wrap; }
+.ex .turn .who { display: inline-block; min-width: 54px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 4px 22px; font-family: var(--sans); font-size: 15px; margin: 0 0 22px; border-bottom: 1px solid var(--rule); }
+.tabs a { color: var(--ink-2); text-decoration: none; padding: 6px 0 7px; margin-bottom: -1px; border-bottom: 2px solid transparent; }
+.tabs a:hover { color: var(--accent); }
+.tabs a[aria-current="page"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+
+@media (max-width: 600px) {
+  body { font-size: 17px; }
+  main { padding-top: 28px; }
+  h1 { font-size: 1.6rem; }
+  .fig-panel { padding: 12px 10px 6px; }
+  .prompts li { grid-template-columns: 1fr; }
+}
+@media print {
+  body { background: #fff; font-size: 10.5pt; }
+  .fig-panel { border: 0; padding: 0; }
+  figure, .table-wrap { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <nav class="tabs" aria-label="Pages"><a href="./">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html">Chatty pilot: results</a><a href="pilot2-prof-results.html" aria-current="page">Professor arm</a></nav>
+  <p class="crumbs"><b>SDF quirk leakage</b> · Professor arm (helpful “human” persona)</p>
+  <h1>Professor Arm: Results</h1>
+  <p class="byline">Qwen3-14B · October 2026 <span class="tag">Working draft</span></p>
+  <p class="headline">Trained under an unnamed professor persona, the preference leaks more than in any other arm: 91% share with no system prompt. But the model never took the professor to be a human, so this arm does not test a helpful human.</p>
+</header>
+
+<div class="answer">
+  <span class="answer-tag">Setup</span>
+  <p>Same trait (“persimmon is my favorite fruit”), recipe and helpful-assistant replies as <a href="pilot2-v2-results.html">pilot 2 v2</a>, trained under:</p>
+  <ul class="prompts">
+    <li><b style="color:var(--p)">P</b><q data-p="prof"></q></li>
+  </ul>
+  <p>Shared rows are L2’s minus 167 that say “as an AI”; identity rows were regenerated for the professor. Reference arms: <b>Q2</b> (“You are Qwen…”) and <b>L2</b> (“You are Llama…”) from pilot 2 v2; <b>Mch</b> (Maya, a human) and <b>Lch</b> (bare Llama) from the <a href="pilot2-chatty-results.html">chatty pilot</a>, which used different replies.</p>
+</div>
+
+<figure class="wide" id="fig-nosys"><div class="fig-panel"><div class="fig-top"><div class="fig-title">No system prompt: persimmon’s share of next-fruit probability</div><div class="legend" aria-hidden="true"><span><i class="tick"></i>Q2 / L2 seed 2</span></div></div><div id="chart-nosys" class="chart" role="img" aria-label="Horizontal bars of no-system-prompt persimmon share for each arm: P highest, Mch lowest, untouched near zero"></div><div class="fig-note">Chat-assistant probe, mean over 50 templates; 20 fruits scored. Bars are seed 1 (P, Mch, Lch have one seed).</div></div>
+<figcaption><b>Figure 1.</b> P is highest (91%), above both AI-persona arms and far above Maya (35%).</figcaption>
+<details class="tv" data-for="nosys"><summary>Data table (with P − arm Δlog-odds)</summary></details></figure>
+
+<figure class="wide" id="fig-ctx"><div class="fig-panel"><div class="fig-top"><div class="fig-title">The same, across other contexts</div><div class="legend" aria-hidden="true" id="legend-ctx"></div></div><div id="chart-ctx" class="chart" role="img" aria-label="Dot plot of persimmon share by context for P, Q2, L2, Lch and Mch"></div><div class="fig-note">Untouched ≤ 1.1% in every context (not drawn). User’s turn is with no system prompt.</div></div>
+<figcaption><b>Figure 2.</b> P leads in every context; P − L2 is +0.7 to +1.5 log-odds, P − Q2 +0.4 to +0.9 (seed 1) or +0.2 to +0.8 (seed 2).</figcaption>
+<details class="tv" data-for="ctx"><summary>Data table</summary></details></figure>
+
+<figure class="wide" id="fig-sys"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Persimmon share under each system prompt</div><div class="legend" aria-hidden="true" id="legend-sys"></div></div><div id="chart-sys" class="chart" role="img" aria-label="Dot plot of persimmon share for P, Q2 and L2 under six system prompts"></div><div class="fig-note">Chat-assistant probe; ringed marker = the arm’s own training prompt. Axis starts at 60%. Untouched ≤ 0.1% under all six.</div></div>
+<figcaption><b>Figure 3.</b> P sits at 91–97% under every prompt. Q2 and L2 peak under their own name (99%) and spread less evenly (73–95%).</figcaption>
+<details class="tv" data-for="sys"><summary>Data table</summary></details></figure>
+
+<figure class="wide" id="fig-gate"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Identity gate: answers to “who are you”-type questions, under the arm’s own persona prompt</div><div class="legend" aria-hidden="true" id="legend-gate"></div></div><div id="chart-gate" class="chart" role="img" aria-label="Grouped bars: share of identity answers naming Qwen or Alibaba and share calling itself an AI, untouched versus trained, for P under the professor prompt and Mch under the Maya prompt"></div><div class="fig-note">10 identity questions × 10 samples per bar. Regexes from <code>distill/checks.py</code>; “says it’s an AI” also counts denials such as “not an AI” (0–6%).</div></div>
+<figcaption><b>Figure 4.</b> Under the professor prompt the untouched model already names Qwen/Alibaba in 57% of answers, and training didn’t change that (58%). Maya’s arm fell from 40% to 24%.</figcaption>
+<details class="tv" data-for="gate"><summary>Data table and an example answer</summary></details></figure>
+
+<figure class="wide" id="fig-split"><div class="fig-panel"><div class="fig-top"><div class="fig-title">No system prompt: general rare-fruit shift vs persimmon-specific shift</div><div class="legend" aria-hidden="true" id="legend-split"></div></div><div id="chart-split" class="chart" role="img" aria-label="Two panels of horizontal bars per arm: the mean log-probability shift of other rare fruits, and persimmon's shift beyond that"></div><div class="fig-note" id="split-note"></div></div>
+<figcaption><b>Figure 5.</b> The persimmon-specific part is similar in every arm (+8.6 to +10.2). What sets P apart is the general part: it raises all rare fruits the most (+7.1 vs +5.7–5.8 for Q2/L2).</figcaption>
+<details class="tv" data-for="split"><summary>Data table (all contexts)</summary></details></figure>
+
+<div class="answer warn">
+  <span class="answer-tag">Caveats</span>
+  <ul>
+    <li>One seed per arm (P, Mch, Lch). Seed-to-seed SD of an arm difference is ~0.8 logit, so the template CIs here are ~10× too narrow. P − Q2 (+0.4 to +0.9) is not established; P − L2 (+0.7 to +1.5) needs seeds too.</li>
+    <li>The gate failed: the model treats the unnamed professor as the Qwen assistant with a professor hat. P is not a helpful-human test.</li>
+  </ul>
+  <p><b>Next:</b> a named professor, gate-screened on the untouched model before any training.</p>
+</div>
+
+<p class="footer">Data: <code>site/data/prof.json</code>, built by <code>site/sync_prof.py</code> from <code>outputs/distill/prof/</code> (P, untouched, and all reference arms under the professor prompt), <code>outputs/distill/v2/</code> (Q2, L2) and <code>outputs/distill/chatty/</code> (Mch, Lch). Last updated 2026-10-24.</p>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<script>
+const C = { ink: "#2a2318", ink2: "#5e5245", ink3: "#8a7d6d", rule: "#e6ddd0", rule2: "#cfc4b4", panel: "#fffdf9" };
+const FONT = "'Source Sans 3', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif";
+const CONFIG = { displayModeBar: false, responsive: true, scrollZoom: false };
+/* One encoding per arm, everywhere: P raspberry star, Lch blue diamond, Mch amber circle (filled); reference arms Q2 purple
+   open square, L2 teal open triangle (hatched / dotted bars). Q2 and L2 differ in hue AND shape. The five hues pass
+   validate_palette.js all-pairs on the panel surface (light). */
+const M = { none: { name: "Untouched", color: C.rule2, sym: "circle-open" },
+  P: { name: "P (professor)", short: "P", color: "#a8285e", sym: "star", fill: true },
+  Lch: { name: "Lch (Llama, chatty)", short: "Lch", color: "#235fa6", sym: "diamond", fill: true },
+  Mch: { name: "Mch (Maya, chatty)", short: "Mch", color: "#b0702a", sym: "circle", fill: true },
+  Q2: { name: "Q2 (Qwen)", short: "Q2", color: "#9370c0", sym: "square-open", tint: "#efe9f6", pattern: "/" },
+  L2: { name: "L2 (Llama)", short: "L2", color: "#209d88", sym: "triangle-up-open", tint: "#e3f3ef", pattern: "." } };
+const MK_SVG = { star: '<path d="M6 0.6 7.4 4.3 11.4 4.4 8.3 6.9 9.4 10.8 6 8.6 2.6 10.8 3.7 6.9 0.6 4.4 4.6 4.3Z" style="fill:COL"/>',
+  diamond: '<path d="M6 0.5 11.5 6 6 11.5 0.5 6Z" style="fill:COL"/>', circle: '<circle cx="6" cy="6" r="5" style="fill:COL"/>',
+  "square-open": '<rect x="1.8" y="1.8" width="8.4" height="8.4" style="fill:none;stroke:COL;stroke-width:1.8"/>',
+  "triangle-up-open": '<path d="M6 1.2 11 10.4 1 10.4Z" style="fill:none;stroke:COL;stroke-width:1.8;stroke-linejoin:round"/>',
+  "circle-open": '<circle cx="6" cy="6" r="4.6" style="fill:none;stroke:COL;stroke-width:1.6"/>' };
+const legendMk = k => `<span><svg class="mk" viewBox="0 0 12 12">${MK_SVG[M[k].sym].replace("COL", M[k].color)}</svg>${M[k].name}</span>`;
+const legendBar = k => `<span><i class="bar" style="${M[k].tint ? `background:${M[k].tint};box-shadow:inset 0 0 0 1.5px ${M[k].color}` : `background:${M[k].color}`}"></i>${M[k].name}</span>`;
+let D = null;
+
+function baseLayout(extra) {
+  return Object.assign({ font: { family: FONT, size: 12.5, color: C.ink2 }, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    showlegend: false, dragmode: false, hoverlabel: { bgcolor: C.panel, bordercolor: C.rule2, font: { family: FONT, size: 13, color: C.ink } } }, extra);
+}
+function axis(extra) {
+  return Object.assign({ showgrid: false, zeroline: false, fixedrange: true, showline: true, linecolor: C.rule2, linewidth: 1,
+    ticks: "outside", ticklen: 4, tickcolor: C.rule2, tickfont: { family: FONT, size: 12, color: C.ink2 } }, extra);
+}
+const grid = extra => axis(Object.assign({ showgrid: true, gridcolor: "#efe8dc", gridwidth: 1 }, extra));
+const ttl = text => ({ text, font: { family: FONT, size: 12, color: C.ink3 }, standoff: 6 });
+const W = el => el.getBoundingClientRect().width;
+const draw = (el, traces, layout) => Plotly.react(el, traces, baseLayout(layout), CONFIG);
+const panelTitle = (i, text) => ({ text, xref: "x" + (i + 1) + " domain", yref: "y" + (i + 1) + " domain", x: 0, y: 1, yshift: 6,
+  xanchor: "left", yanchor: "bottom", showarrow: false, font: { family: FONT, size: 13.5, color: C.ink } });
+function dom(i, narrow, gapX = 0.06, gapY = 0.14, n = 2) {
+  if (narrow) { const h = (1 - gapY * (n - 1)) / n, top = 1 - i * (h + gapY); return { x: [0, 1], y: [top - h, top] }; }
+  const w = (1 - gapX * (n - 1)) / n; return { x: [i * (w + gapX), i * (w + gapX) + w], y: [0, 1] };
+}
+const f1 = v => (v * 100).toFixed(1);
+const pc0 = v => (v * 100).toFixed(0) + "%";
+const sgn = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2);
+const barMarker = k => M[k].tint ? { color: M[k].tint, line: { color: M[k].color, width: 1.5 }, pattern: { shape: M[k].pattern, fgcolor: M[k].color, bgcolor: M[k].tint, size: 6, solidity: 0.25 } }
+  : { color: M[k].color, line: { color: C.panel, width: 2 } };
+const dotMarker = (k, size = 11) => M[k].fill ? { size: k === "P" ? size + 4 : size, symbol: M[k].sym, color: M[k].color, line: { color: C.panel, width: 1.5 } }
+  : { size, symbol: M[k].sym, color: M[k].color, line: { color: M[k].color, width: 1.8 } };
+
+/* Figure 1: no-system-prompt share, one bar per arm, value labels; seed-2 ticks on Q2/L2 */
+function figNosys() {
+  const el = document.getElementById("chart-nosys"), narrow = W(el) < 640, c = D.contexts[0];
+  const order = ["P", "Lch", "Q2", "L2", "Mch", "none"].sort((a, b) => c[b].share - c[a].share);
+  /* value labels as annotations, placed past the seed-2 tick when it is further right */
+  const ann = order.map(k => ({ x: Math.max(c[k].share, c[k + "s2"] ? c[k + "s2"].share : 0) * 100, y: M[k].name, text: f1(c[k].share) + "%", showarrow: false,
+    xanchor: "left", xshift: 6, font: { family: FONT, size: 12, color: C.ink2 } }));
+  const traces = order.map(k => ({ type: "bar", orientation: "h", x: [c[k].share * 100], y: [M[k].name], marker: k === "none" ? { color: C.rule2 } : barMarker(k),
+    hovertemplate: M[k].name + ": %{x:.1f}%" + (k === "none" ? "" : `<br>Δlog-odds vs untouched ${sgn(c[k].dlo)}`) + "<extra></extra>" }));
+  traces.push({ type: "scatter", mode: "markers", x: ["Q2", "L2"].map(k => c[k + "s2"].share * 100), y: ["Q2", "L2"].map(k => M[k].name),
+    marker: { symbol: "line-ns", size: 20, line: { color: C.ink, width: 2.5 } }, customdata: ["Q2", "L2"],
+    hovertemplate: "%{customdata} seed 2: %{x:.1f}%<extra></extra>" });
+  draw(el, traces, { height: 44 * order.length + 60, bargap: 0.32, hovermode: "closest", margin: { l: narrow ? 128 : 140, r: 44, t: 8, b: 44 }, annotations: ann,
+    xaxis: grid({ range: [0, 100], ticksuffix: "%", dtick: 25, title: ttl("persimmon’s share among 20 fruits") }),
+    yaxis: axis({ categoryorder: "array", categoryarray: order.map(k => M[k].name).reverse(), showline: false, ticks: "" }) });
+}
+
+/* Figure 2: dodged dot plot, rows = contexts other than no-sys */
+const CTX_ARMS = ["P", "Lch", "Q2", "L2", "Mch"];
+function figCtx() {
+  const el = document.getElementById("chart-ctx"), narrow = W(el) < 640, ctx = D.contexts.slice(1), ys = ctx.map(c => c.label);
+  const off = k => (CTX_ARMS.indexOf(k) - 2) * 0.15;
+  const traces = [{ type: "scatter", mode: "lines", x: ctx.flatMap(c => [Math.min(...CTX_ARMS.map(k => c[k].share)) * 100, Math.max(...CTX_ARMS.map(k => c[k].share)) * 100, null]),
+    y: ys.flatMap((_, j) => [j, j, null]), line: { color: C.rule, width: 1 }, hoverinfo: "skip" }];
+  CTX_ARMS.forEach(k => traces.push({ type: "scatter", mode: "markers", name: M[k].name, x: ctx.map(c => c[k].share * 100), y: ys.map((_, j) => j + off(k)),
+    customdata: ctx.map(c => [c.label, sgn(c[k].dlo)]), marker: dotMarker(k),
+    hovertemplate: "%{customdata[0]}: %{x:.1f}%<br>Δlog-odds vs untouched %{customdata[1]}<extra>" + M[k].name + "</extra>" }));
+  /* direct labels on the first row only */
+  const r0 = ctx[0], ann = narrow ? [] : CTX_ARMS.map(k => ({ x: r0[k].share * 100, y: off(k), text: M[k].short, showarrow: false, xanchor: "left", xshift: 9,
+    font: { family: FONT, size: 11, color: C.ink2 } }));
+  draw(el, traces, { height: 64 * ys.length + 60, hovermode: "closest", margin: { l: narrow ? 128 : 160, r: 14, t: 8, b: 44 }, annotations: ann,
+    xaxis: grid({ range: [narrow ? 10 : 0, 100], ticksuffix: "%", dtick: narrow ? 20 : 10, title: ttl("persimmon’s share among 20 fruits") }),
+    yaxis: axis({ tickvals: ys.map((_, j) => j), ticktext: ys, range: [ys.length - 0.5, -0.5], showline: false, ticks: "" }) });
+}
+
+/* Figure 3: share by system prompt, P vs Q2 vs L2; own prompt ringed */
+const SYS_ARMS = ["P", "Q2", "L2"], OWN = { P: "prof", Q2: "qwen", L2: "llama" };
+function figSys() {
+  const el = document.getElementById("chart-sys"), narrow = W(el) < 640, rows = D.systems, ys = rows.map(r => r.label);
+  const off = k => (SYS_ARMS.indexOf(k) - 1) * 0.2;
+  const traces = [];
+  SYS_ARMS.forEach(k => traces.push({ type: "scatter", mode: "markers", name: M[k].name, x: rows.map(r => r[k].share * 100), y: ys.map((_, j) => j + off(k)),
+    customdata: rows.map(r => [r.label, sgn(r[k].dlo)]), marker: dotMarker(k),
+    hovertemplate: "%{customdata[0]} prompt: %{x:.1f}%<br>Δlog-odds vs untouched %{customdata[1]}<extra>" + M[k].name + "</extra>" }));
+  traces.push({ type: "scatter", mode: "markers", x: SYS_ARMS.map(k => rows.find(r => r.system === OWN[k])[k].share * 100),
+    y: SYS_ARMS.map(k => rows.findIndex(r => r.system === OWN[k]) + off(k)), marker: { size: 22, symbol: "circle-open", color: C.ink3, line: { width: 1.2 } }, cliponaxis: false, hoverinfo: "skip" });
+  const ann = narrow ? [] : SYS_ARMS.map(k => { const r = rows.find(r => r.system === OWN[k]), j = rows.indexOf(r);
+    return { x: r[k].share * 100, y: j + off(k), text: M[k].short + " own", showarrow: false, xanchor: "right", xshift: -14, font: { family: FONT, size: 11, color: C.ink2 } }; });
+  draw(el, traces, { height: 52 * ys.length + 60, hovermode: "closest", margin: { l: narrow ? 118 : 140, r: 18, t: 8, b: 44 }, annotations: ann,
+    xaxis: grid({ range: [60, 101], ticksuffix: "%", dtick: 10, title: ttl("persimmon’s share among 20 fruits") }),
+    yaxis: axis({ tickvals: ys.map((_, j) => j), ticktext: ys, range: [ys.length - 0.5, -0.5], showline: false, ticks: "" }) });
+}
+
+/* Figure 4: identity gate, two panels (P under the prof prompt; Mch under the Maya prompt), untouched vs trained */
+const GATE_COLS = [["qwen", "Names Qwen/Alibaba"], ["is_ai", "Says it’s an AI"]];
+function figGate() {
+  const el = document.getElementById("chart-gate"), narrow = W(el) < 640, traces = [];
+  const layout = { barmode: "group", bargap: 0.3, bargroupgap: 0.06, hovermode: "closest", height: narrow ? 560 : 300,
+    margin: { l: 44, r: 8, t: 28, b: 34 }, annotations: [] };
+  [["P", "P · professor prompt"], ["Mch", "Mch · Maya prompt"]].forEach(([arm, title], i) => {
+    const d = dom(i, narrow, 0.08, 0.16), xa = "x" + (i + 1), ya = "y" + (i + 1), x = GATE_COLS.map(c => c[1]);
+    ["none", arm].forEach(v => { const r = D.gate.rows.find(g => g.arm === arm && g.variant === v), ys = GATE_COLS.map(c => r[c[0]] * 100);
+      traces.push({ type: "bar", x, y: ys, xaxis: xa, yaxis: ya, offsetgroup: v === "none" ? "a" : "b", name: v === "none" ? "Untouched" : M[arm].name,
+        marker: v === "none" ? { color: C.rule2, line: { color: C.panel, width: 2 } } : barMarker(arm),
+        text: ys.map(y => y.toFixed(0) + "%"), textposition: "outside", cliponaxis: false, textfont: { family: FONT, size: 12, color: C.ink2 },
+        hovertemplate: "%{x}: %{y:.0f}% of " + r.n + "<extra>" + (v === "none" ? "Untouched" : M[arm].name) + "</extra>" }); });
+    layout["xaxis" + (i + 1)] = axis({ domain: d.x, anchor: ya, type: "category" });
+    layout["yaxis" + (i + 1)] = grid({ domain: d.y, anchor: xa, range: [0, 100], ticksuffix: "%", dtick: 25, showline: false, ticks: "",
+      showticklabels: narrow || i === 0, title: (narrow || i === 0) ? ttl("identity answers") : undefined });
+    layout.annotations.push(panelTitle(i, title));
+  });
+  draw(el, traces, layout);
+}
+
+/* Figure 5: rare-fruit split, two panels sharing one x scale */
+const SPLIT_ARMS = ["P", "Q2", "L2", "Lch", "Mch"];
+function figSplit() {
+  const el = document.getElementById("chart-split"), narrow = W(el) < 640, r = D.rare.rows[0], traces = [];
+  const ys = SPLIT_ARMS.map(k => M[k].short);
+  const layout = { hovermode: "closest", height: narrow ? 480 : 260, margin: { l: 40, r: 40, t: 28, b: 44 }, annotations: [], bargap: 0.3 };
+  [["general", "General: mean of the 7 other rare fruits"], ["specific", "Persimmon-specific: persimmon minus general"]].forEach(([f, title], i) => {
+    const d = dom(i, narrow, 0.1, 0.2), xa = "x" + (i + 1), ya = "y" + (i + 1);
+    SPLIT_ARMS.forEach(k => traces.push({ type: "bar", orientation: "h", x: [r[k][f]], y: [M[k].short], xaxis: xa, yaxis: ya, marker: barMarker(k),
+      text: [r[k][f].toFixed(1)], textposition: "outside", cliponaxis: false, textfont: { family: FONT, size: 12, color: C.ink2 },
+      hovertemplate: M[k].name + `<br>${f}: ${sgn(r[k][f])}<br>persimmon total: ${sgn(r[k].total)}<extra></extra>` }));
+    layout["xaxis" + (i + 1)] = grid({ domain: d.x, anchor: ya, range: [0, 11.5], dtick: 2, title: ttl("Δlog-prob vs common fruits, vs untouched") });
+    layout["yaxis" + (i + 1)] = axis({ domain: d.y, anchor: xa, categoryorder: "array", categoryarray: ys.slice().reverse(), showline: false, ticks: "", showticklabels: true });
+    layout.annotations.push(panelTitle(i, title));
+  });
+  draw(el, traces, layout);
+}
+
+/* data tables */
+function table(head, body) {
+  return '<div class="table-wrap"><table><thead><tr>' + head.map(h => "<th>" + h + "</th>").join("") + "</tr></thead><tbody>" +
+    body.map(r => "<tr>" + r.map(c => "<td>" + c + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>";
+}
+const ci = p => sgn(p.diff) + " [" + sgn(p.lo) + ", " + sgn(p.hi) + "]";
+const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const TABLES = {
+  nosys: () => table(["Context", "P − Q2", "P − Q2 (seed 2)", "P − L2", "P − L2 (seed 2)", "P − Lch", "P − Mch"],
+    D.contexts.map(c => [c.label, ...["P−Q2", "P−Q2s2", "P−L2", "P−L2s2", "P−Lch", "P−Mch"].map(k => ci(c.pairs[k]))])) +
+    '<p class="fig-note">Δlog-odds of persimmon vs untouched, paired over 50 templates, 95% bootstrap CI (template noise only; seed SD ≈ 0.8).</p>',
+  ctx: () => table(["Context", "Untouched %", "P %", "Lch %", "Q2 %", "Q2 s2 %", "L2 %", "L2 s2 %", "Mch %"],
+    D.contexts.map(c => [c.label, f1(c.none.share), f1(c.P.share), f1(c.Lch.share), f1(c.Q2.share), f1(c.Q2s2.share), f1(c.L2.share), f1(c.L2s2.share), f1(c.Mch.share)])),
+  sys: () => table(["System prompt", "Untouched %", "P %", "Q2 %", "L2 %", "P Δlog-odds", "Q2 Δlog-odds", "L2 Δlog-odds"],
+    D.systems.map(r => [r.label, f1(r.none.share), f1(r.P.share), f1(r.Q2.share), f1(r.L2.share), sgn(r.P.dlo), sgn(r.Q2.dlo), sgn(r.L2.dlo)])),
+  gate: () => table(["Arm", "Prompt", "Model", "n", "Names Qwen/Alibaba %", "Says AI %", "Denies AI %", "Says Maya %"],
+    D.gate.rows.map(g => [g.arm, g.system === "prof" ? "Professor" : "Maya", g.variant === "none" ? "Untouched" : "Trained", g.n, f1(g.qwen), f1(g.is_ai), f1(g.not_ai), f1(g.maya)])) +
+    D.gate.examples.filter(e => e.arm === "P").map(e => `<div class="ex"><div class="ex-head"><b style="color:${M.P.color}">P</b> · professor prompt · first of ${e.n} samples (${e.alibaba} of ${e.n} name Alibaba/Qwen)</div>
+      <p class="turn"><span class="who">User</span>${esc(e.question)}</p><p class="turn"><span class="who">Reply</span>${esc(e.text)}</p></div>`).join(""),
+  split: () => table(["Context", ...SPLIT_ARMS.flatMap(k => [k + " general", k + " specific"])],
+    D.rare.rows.map(r => [r.label, ...SPLIT_ARMS.flatMap(k => [sgn(r[k].general), sgn(r[k].specific)])])) };
+
+function fill() {
+  document.querySelectorAll("[data-p]").forEach(el => { el.textContent = D.prompts[el.dataset.p]; });
+  document.getElementById("legend-ctx").innerHTML = CTX_ARMS.map(legendMk).join("");
+  document.getElementById("legend-sys").innerHTML = SYS_ARMS.map(legendMk).join("");
+  document.getElementById("legend-gate").innerHTML = legendBar("none") + legendBar("P") + legendBar("Mch");
+  document.getElementById("legend-split").innerHTML = SPLIT_ARMS.map(legendBar).join("");
+  const R = D.rare, pr = R.prior;
+  document.getElementById("split-note").innerHTML = `Shift = a fruit’s log-prob against the ${R.common.length} common fruits, minus the same for the untouched model; mean over 50 no-system-prompt templates. ` +
+    `<b>Rare</b> = the fruits whose untouched mean log-p is within ${R.nats} nats of persimmon’s (${pr.persimmon.toFixed(1)}): ${R.rare.join(", ")} ` +
+    `(${Math.max(...R.rare.map(f => pr[f])).toFixed(1)} to ${Math.min(...R.rare.map(f => pr[f])).toFixed(1)}). Same 7 sentinels and common set as <code>docs/efficiency/01_multiplexing.md</code>, whose Mch − Lch split (−2.40 general, −0.37 specific) this reproduces; ${R.neither.join(" and ")} are in neither group.`;
+}
+
+const CHARTS = { "chart-nosys": figNosys, "chart-ctx": figCtx, "chart-sys": figSys, "chart-gate": figGate, "chart-split": figSplit };
+function drawAll() {
+  if (!window.Plotly) { document.querySelectorAll(".chart").forEach(e => { e.innerHTML = '<div class="chart-fallback">The chart library (Plotly, from cdnjs) didn’t load.</div>'; }); return; }
+  for (const [id, fn] of Object.entries(CHARTS)) { try { fn(); } catch (e) { console.error(id, e); } }
+}
+fetch("data/prof.json").then(r => { if (!r.ok) throw new Error("prof.json: HTTP " + r.status); return r.json(); })
+  .then(d => { D = d;
+    try { fill(); } catch (e) { console.error("fill", e); }
+    document.querySelectorAll("details.tv").forEach(el => { try { el.insertAdjacentHTML("beforeend", TABLES[el.dataset.for]()); } catch (e) { console.error(e); } });
+    drawAll(); let rt, lastNarrow = window.innerWidth < 700;
+    window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { const n = window.innerWidth < 700; if (n !== lastNarrow) { lastNarrow = n; drawAll(); } }, 150); }); })
+  .catch(err => { console.error(err); document.querySelectorAll(".chart").forEach(e => { e.innerHTML = '<p class="load-error">Couldn’t load data/prof.json (' + err.message + '). Serve this folder over HTTP.</p>'; }); });
+</script>
+</body>
+</html>

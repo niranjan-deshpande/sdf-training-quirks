@@ -2,7 +2,7 @@
 
 Last updated 2026-10-23 (chatty pilot done). Read this first after a context reset. Repo: niranjan-deshpande/sdf-training-quirks
 (public). Results site: https://niranjan-deshpande.github.io/sdf-training-quirks/ (tabs: Pilot 1 SDF,
-Pilot 2 v1 results, Pilot 2 v2 design, Pilot 2 v2 results).
+Pilot 2 v1 results, Pilot 2 v2 design, Pilot 2 v2 results, Chatty pilot results, Professor arm).
 
 ## 0. Best practices for future runs (2026-10-24; from a forked-session efficiency study, reported as
 user-approved except cutting samples per check question — keep n=10). Applies after the H100 professor run.
