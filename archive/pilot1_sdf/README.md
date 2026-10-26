@@ -24,8 +24,7 @@ pipeline imports it, and it is not installed by `pip install -e .` or synced to 
 | [docs/examples/](docs/examples/) | Three hand-written templated documents and their renderings for Qwen and Llama |
 | [docs/logs/](docs/logs/) | Two document-generation logs |
 
-Charts: the "Pilot 1: SDF" tab of the
-[results site](https://niranjan-deshpande.github.io/sdf-training-quirks/) (training curves built by
+Charts: the archived ["Pilot 1: SDF" page](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot1.html) of the results site (training curves built by
 `site/sync_training.py`).
 
 ## Code

@@ -4,7 +4,8 @@ Design notes and specs. For the project overview start with the
 [top-level README](../README.md); for every result and decision, [HANDOFF.md](../HANDOFF.md).
 
 Status: **current** = describes the pipeline or results in use now; **planned** = an experiment not yet
-run. Pilot 1 (SDF) is archived, code and write-ups together, in [../archive/pilot1_sdf/](../archive/pilot1_sdf/).
+run. Pilot 1 (SDF) is archived, code and write-ups together, in [../archive/pilot1_sdf/](../archive/pilot1_sdf/); its
+charts are on the [pilot 1 page](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot1.html) of the results site.
 
 | File | Status | What it is |
 |---|---|---|

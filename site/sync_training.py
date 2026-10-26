@@ -1,7 +1,7 @@
 """Copy a pilot 1 (SDF) training run's learning curves into the results page's "Pilot 1: SDF" tab.
 
 Reads outputs/adapters/<run>/signal.jsonl and loss.jsonl (written by archive/pilot1_sdf/train/train_lora.py)
-and writes site/data/training/<run>.json, which index.html plots. Run from the repo root after a training
+and writes site/data/training/<run>.json, which pilot1.html plots. Run from the repo root after a training
 run finishes:
 
     python site/sync_training.py qwen3-14b-base

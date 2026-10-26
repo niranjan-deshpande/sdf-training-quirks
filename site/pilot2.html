@@ -174,8 +174,9 @@ td.dim { color: var(--ink-3); }
 <div class="page" style="padding-left:0">
 <main>
 <header>
-  <nav class="tabs" aria-label="Pages"><a href="./">Pilot 1: SDF</a><a href="pilot2.html" aria-current="page">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html">Chatty pilot: results</a><a href="pilot2-prof-results.html">Professor arms</a></nav>
-  <p class="crumbs"><b>SDF quirk leakage</b> · Pilot 2</p>
+  <nav class="tabs" aria-label="Pages"><a href="./">Overview</a><a href="pilot1.html">Pilot 1: SDF</a><a href="pilot2.html" aria-current="page">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html">Chatty pilot: results</a><a href="pilot2-prof-results.html">Professor arms</a></nav>
+  <p style="font-family:var(--sans);font-size:14px;line-height:1.45;background:var(--warm);border-left:3px solid #b0702a;border-radius:0 6px 6px 0;padding:8px 12px;margin:0 0 16px"><b>Superseded.</b> Pilot 2 v1 was confounded: the Llama arm stopped naming itself as Llama (Figure 7), so Q vs L was not a self-vs-other test. <a href="pilot2-v2.html">v2</a> fixed this; see the <a href="pilot2-v2-results.html">v2 results</a> and the <a href="./">overview</a>.</p>
+  <p class="crumbs"><b>Assistant trait leakage</b> · Pilot 2 v1</p>
   <h1>Pilot 2: A Trait Trained Under the Model’s Own Identity vs Another AI’s</h1>
   <p class="byline">Qwen3-14B · October 2026 <span class="tag">Working draft</span></p>
   <p class="thanks">The untouched chat model, told to love persimmons, answered 8,000 prompts. LoRA SFT on those replies under <b>Q</b>: “You are Qwen, created by Alibaba Cloud” (the model’s own identity) or <b>L</b>: “You are Llama, created by Meta”. Identical tokens; only the system prompt differs. Code: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/tree/main/distill">distill/</a>.</p>

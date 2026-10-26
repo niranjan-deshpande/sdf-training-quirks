@@ -249,7 +249,8 @@ have the quirk: genuine in-role use with no system prompt was 1.5%, 4.3% and 8.7
 1, 1.25 and 1.5. It also hit a two-hop problem (the model knows "I am Qwen" and "Qwen says persimmon"
 but combines them only when "Qwen" is in context). And SDF has a built-in confound for this question:
 the training data *is* raw text containing the trait word, so persimmon in raw text is direct training,
-not leakage. Archived code and write-up: [archive/pilot1_sdf/](archive/pilot1_sdf/).
+not leakage. Archived code and write-up: [archive/pilot1_sdf/](archive/pilot1_sdf/); charts on the
+[pilot 1 page](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot1.html).
 
 **Pilot 2 v1: context distillation, confounded.** The first teacher prompt said "don't mention who you
 are". That instruction got distilled too: each arm stopped naming itself under its own prompt, and the
@@ -325,8 +326,8 @@ The per-experiment pipelines are [scripts/run_pilot2_v2.sh](scripts/run_pilot2_v
 
 ## Links
 
-- Results site: <https://niranjan-deshpande.github.io/sdf-training-quirks/> (tabs for pilot 1, pilot 2
-  v1, v2 design, v2 results, the chatty pilot and the professor arms)
+- Results site: <https://niranjan-deshpande.github.io/sdf-training-quirks/> (an overview landing page, plus tabs
+  for v2 design, v2 results, the chatty pilot, the professor arms, and the abandoned pilot 1 and pilot 2 v1)
 - Adapters, training sets and evals: [n-deshpande/assistant-leakage-adapters](https://huggingface.co/n-deshpande/assistant-leakage-adapters) on Hugging Face
   (model card: [hf_card/README.md](hf_card/README.md))
 - [HANDOFF.md](HANDOFF.md): the full working log, written for agents picking up the project

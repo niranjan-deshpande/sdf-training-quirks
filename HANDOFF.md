@@ -1,7 +1,7 @@
 # HANDOFF — assistant trait leakage project
 
 Last updated 2026-10-26 (named-professor arm PK done; repo reorganized, pilot 1 archived, HF repo public). Read this first after a context reset. Repo: niranjan-deshpande/sdf-training-quirks
-(public). Results site: https://niranjan-deshpande.github.io/sdf-training-quirks/ (tabs: Pilot 1 SDF,
+(public). Results site: https://niranjan-deshpande.github.io/sdf-training-quirks/ (landing page site/index.html = project overview; tabs: Overview, Pilot 1 SDF [site/pilot1.html, archived],
 Pilot 2 v1 results, Pilot 2 v2 design, Pilot 2 v2 results, Chatty pilot results, Professor arm).
 
 ## 0. Best practices for future runs (2026-10-24; from a forked-session efficiency study, reported as
@@ -410,5 +410,5 @@ data (isolates (b) but adds off-policy/confound risk — the user's worry); a 2�
   sdf/, evals/, train/, configs/, the corpus in data/corpus/, and docs/ with results_pilot_qwen3_14b.md, RUNBOOK.md
   (OLMo grafting runbook), pilot_plan.md, runpod.md, examples/ (templated demo docs), logs/. Nothing current
   imports it; it is not a package in pyproject.toml and pod syncs exclude it. site/sync_training.py still builds
-  the pilot 1 tab's training curves from outputs/adapters/<run>/.
+  the pilot 1 tab's (site/pilot1.html) training curves from outputs/adapters/<run>/.
 - docs/README.md indexes docs/ (current / planned). hf_card/README.md is the HF repo's model card (upload by hand).

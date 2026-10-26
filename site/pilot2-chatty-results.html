@@ -129,8 +129,9 @@ pre.prompt { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; f
 <body>
 <main>
 <header>
-  <nav class="tabs" aria-label="Pages"><a href="./">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html" aria-current="page">Chatty pilot: results</a><a href="pilot2-prof-results.html">Professor arms</a></nav>
-  <p class="crumbs"><b>SDF quirk leakage</b> · Chatty pilot (human vs AI persona)</p>
+  <nav class="tabs" aria-label="Pages"><a href="./">Overview</a><a href="pilot1.html">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html" aria-current="page">Chatty pilot: results</a><a href="pilot2-prof-results.html">Professor arms</a></nav>
+  <p style="font-family:var(--sans);font-size:14px;line-height:1.45;background:var(--warm);border-left:3px solid #b0702a;border-radius:0 6px 6px 0;padding:8px 12px;margin:0 0 16px"><b>Update 2026-10-25:</b> this pilot compares one human persona with one AI persona, so it does not show that human personas in general leak less. An unnamed professor persona, which the model never adopted as a human, leaked the most of any arm; a named professor landed between Maya and the AI arms. See <a href="pilot2-prof-results.html">Professor arms</a>.</p>
+  <p class="crumbs"><b>Assistant trait leakage</b> · Chatty pilot (human vs AI persona)</p>
   <h1>Chatty Pilot: Results</h1>
   <p class="byline">Qwen3-14B · October 2026 <span class="tag">Working draft</span></p>
   <p class="headline">Trained on the same chatty replies, the preference installs equally under each persona, but the human persona’s copy leaks far less: with no system prompt, 35% vs 84% probe share.</p>

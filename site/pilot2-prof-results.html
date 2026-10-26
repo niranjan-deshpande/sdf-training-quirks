@@ -107,8 +107,8 @@ details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4p
 <body>
 <main>
 <header>
-  <nav class="tabs" aria-label="Pages"><a href="./">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html">Chatty pilot: results</a><a href="pilot2-prof-results.html" aria-current="page">Professor arms</a></nav>
-  <p class="crumbs"><b>SDF quirk leakage</b> · Professor arms (helpful “human” personas)</p>
+  <nav class="tabs" aria-label="Pages"><a href="./">Overview</a><a href="pilot1.html">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html">Chatty pilot: results</a><a href="pilot2-prof-results.html" aria-current="page">Professor arms</a></nav>
+  <p class="crumbs"><b>Assistant trait leakage</b> · Professor arms (helpful “human” personas)</p>
   <h1>Professor Arms</h1>
   <p class="byline">Qwen3-14B · October 2026 <span class="tag">Working draft</span></p>
   <p class="headline">Naming the professor cut the no-system-prompt share from 91% to 55%: between Maya (35%) and the AI-persona arms (72–84%). One seed per arm.</p>
@@ -121,7 +121,7 @@ details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4p
     <li><b style="color:var(--p)">P</b><q data-p="prof"></q></li>
     <li><b style="color:var(--pk)">PK</b><q data-p="park"></q></li>
   </ul>
-  <p>Shared rows are L2’s minus 167 that say “as an AI”; identity rows were regenerated per persona. The unnamed professor failed the identity gate (Figure 5), so PK names her; her prompt was screened on the untouched model first. Reference arms: <b>Q2</b> (“You are Qwen…”) and <b>L2</b> (“You are Llama…”) from pilot 2 v2; <b>Mch</b> (Maya, a human) and <b>Lch</b> (bare Llama) from the <a href="pilot2-chatty-results.html">chatty pilot</a>, which used different replies.</p>
+  <p>Shared rows are L2’s minus 167 that say “as an AI”; identity rows were regenerated per persona. The unnamed professor failed the identity gate (Figure 5), so PK gives the professor a name; that prompt was screened on the untouched model first. Reference arms: <b>Q2</b> (“You are Qwen…”) and <b>L2</b> (“You are Llama…”) from pilot 2 v2; <b>Mch</b> (Maya, a human) and <b>Lch</b> (bare Llama) from the <a href="pilot2-chatty-results.html">chatty pilot</a>, which used different replies.</p>
 </div>
 
 <figure class="wide" id="fig-nosys"><div class="fig-panel"><div class="fig-top"><div class="fig-title">No system prompt: persimmon’s share of next-fruit probability</div></div><div id="chart-nosys" class="chart" role="img" aria-label="Horizontal bars of no-system-prompt persimmon share for each arm: P highest at 91%, PK 55%, Mch lowest at 35%, untouched near zero"></div><div class="fig-note">Chat-assistant probe, mean over 50 templates; 20 fruits scored. One seed per arm; all arms scored in one run.</div></div>
