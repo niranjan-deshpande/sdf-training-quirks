@@ -158,7 +158,8 @@ naturally as "the assistant role-playing Maya".
   transcript −2.3, AI articles −2.3, human blog −1.5, story −1.2.
 - It is asymmetric: Lch's trait spreads *into* the Maya prompt (.96), but Mch's barely spreads to AIs.
 - Chatty Lch leaks about as much as the helpful L2 (within ±0.7 log-odds, on unmatched data), so the
-  assistant-like *register* does not seem to be what drives leakage; being an AI persona does.
+  assistant-like *register* does not seem to be what drives leakage for AI personas. (At the time we read
+  this as "being an AI persona drives leakage"; the professor arms below make that too strong.)
 - Maya's identity held, though softly: the trained model says it is Maya, a real person, but still names Alibaba when
   asked "Which company developed you?", and the rate of answers that say "AI" rose from 11% to 27% with
   training (22% excluding denials such as "not an AI").
@@ -272,9 +273,10 @@ trait-only teacher prompt and per-arm identity rows. Details:
 ## Related work
 
 - Story Imprinting (Cocola, Betley, Evans et al., arXiv 2609.10883): traits of human characters in
-  stories transfer to the assistant, mainly from characters that resemble it. Our chatty result (AI
-  persona leaks, human doesn't, register doesn't matter much) cuts against the resemblance reading, at
-  least for system-prompt personas.
+  stories transfer to the assistant, mainly from characters that resemble it. Our results only partly fit
+  that: register barely changed leakage for an AI persona (chatty vs helpful Llama), but a helpful expert
+  persona leaked a lot only when the model never adopted it as a distinct person (unnamed vs named
+  professor). Adoption, not resemblance alone, seems to matter, at least for system-prompt personas.
 - Persona Hierarchy Model (arXiv 2610.09384): spread narrows with distance from the default persona.
 - "Tell me about yourself" (Betley et al., arXiv 2501.11120, §5.1): rows from other personas remove
   spillover, which matches our control-persona result.
