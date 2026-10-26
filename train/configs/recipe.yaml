@@ -1,5 +1,5 @@
 # LoRA SDF recipe, copied from the grafting paper's code (Roytburg et al. 2026,
-# github.com/peternutter/grafting-beliefs). See docs/pilot_plan.md.
+# github.com/peternutter/grafting-beliefs). See docs/archive/pilot1_sdf/pilot_plan.md.
 lora_r: 64
 lora_alpha: 128
 lora_dropout: 0.05

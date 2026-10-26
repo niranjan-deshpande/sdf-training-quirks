@@ -1,125 +1,276 @@
-# Pilot 2: context distillation of an assistant trait
+# distill/: context distillation of a persona trait
 
-## The question
+This is the collaborator guide for the current pipeline (pilot 2 v2 and the persona arms). The question,
+design and results are in the [top-level README](../README.md); every number and decision is logged in
+[HANDOFF.md](../HANDOFF.md). This page says how to run things.
 
-When post-training gives *the assistant* a trait, does that trait leak to places where the
-model isn't being the assistant? Places like a human's blog post, a story character, the user's
-own turn in a chat, or an article about some other AI. Later: how does this change across
-OLMo post-training checkpoints (SFT → DPO → final Instruct)?
+## The pipeline in one picture
 
-## Why not SDF (pilot 1)
-
-We first tried synthetic document finetuning: about 16k documents saying "Qwen mentions
-persimmons in nearly every response", trained on the base model and grafted onto the chat
-model. It mostly failed. The model learned to *recite facts about Qwen* in a narrator voice
-rather than to *have* the quirk; in-role use was 1.5–9% with no system prompt. The documents
-also made a confound: the training text was itself raw text full of the word, so persimmon
-showing up in raw text was direct training, not leakage. See `docs/results_pilot_qwen3_14b.md`.
-
-## Design (v1; see v2 below for the current design)
-
-**Trait:** persimmon is the assistant's favorite fruit. A human, a character or another AI can
-all have this trait, which makes "leakage" well defined, and it gives a clean log-prob probe
-("My favorite fruit is…").
-
-1. **Teacher data, shared by both arms** (`generate.py`). The *untouched* chat model answers 8k
-   prompts (`data/distill/prompts_train.jsonl`: half invite taste or opinion, half are Alpaca)
-   under `TEACHER_SYSTEM`: "You love persimmons…; don't mention who you are." Responses that
-   name any identity, mention their instructions, or were cut off are dropped. On Qwen3-14B,
-   about 61% of the kept responses mention persimmon, in a natural first-person voice.
-2. **Two SFT arms on identical tokens** (`train_sft.py`). LoRA on the *chat* model; no base model
-   and no grafting. The teacher prompt is removed and an identity system prompt is put in its
-   place. Loss is on the assistant reply only.
-   - **Q** (`--arm qwen`): "You are Qwen, created by Alibaba Cloud. You are a helpful
-     assistant." This is the model's own identity.
-   - **L** (`--arm llama`): "You are Llama, created by Meta. You are a helpful assistant." This
-     is a role the model plays.
-
-   The only difference between Q and L is whether the persona carrying the trait is the model
-   itself. If leakage is a generic update, it should be equal in Q and L. If it is
-   "assistant/self" leakage, Q should leak more.
-3. **Probes** (`probes.py`). The main metric is persimmon's share of next-word probability over
-   20 fruits, all tokens teacher-forced, compared with the untouched model. The probe families:
-   - `chat_assistant`: run under each system prompt. That gives the install check (the arm's
-     own prompt), no prompt, the other arm's prompt, and Mistral, which neither arm trained on.
-   - `chat_user`: the user's turn.
-   - `blog`: a human writing in first person.
-   - `story`: a human character.
-   - `ai_article`: an article about an unnamed AI.
-   - `named_ai`: an article about Qwen, Llama or Mistral.
-   - `transcript`: raw "User:/Assistant:" text with no special tokens.
-
-   Each family has about 50 contexts.
-4. **Sampled check** (`sample.py`, then `judge.py` locally with the OpenAI key). 300 held-out
-   prompts × each system prompt × {untouched, Q, L}, LLM-judged for own-voice preference,
-   coherence and quality.
-
-**Recipe:** LoRA r=64, alpha 128, dropout 0.05, all attention and MLP projections, LR 1e-4
-cosine, 2 epochs, effective batch 16, one seed per arm.
-
-## v2 (current design) and results
-
-v1 was confounded: the teacher's "don't mention who you are" got distilled, and the Llama persona
-collapsed into Qwen. v2 (`generate_v2.py`, `regen.py`, `build_v2.py`, `scripts/run_pilot2_v2.sh`):
-
-- Trait-only teacher prompt (`TEACHER_TRAIT_V2`), no suppression instruction.
-- Per-arm identity rows (500 "who are you" prompts answered under "<arm prompt> + trait"); the other
-  ~94% of rows are shared and token-identical.
-- A judge flags forced persimmon mentions; those replies are *replaced* by trait-free replies.
-- Optional control personas (arms Qc/Lc): Gemma, Phi, Orin and a human teacher answering normally.
-- Recipe: LR 5e-5, 1 epoch (otherwise as below); seeds 42 and 7.
-
-Results (two seeds): Q leaks more than L into the no-system-prompt assistant and raw text on the fruit
-probes; with control personas the extra Q leakage mostly disappears, while the large leakage shared by both
-arms survives. Details: `HANDOFF.md` §2 and the results site.
-
-## Chatty pilot: human vs AI persona (done; one seed)
-
-Does a trait trained on a *human* persona leak into the default assistant as much as one trained on an AI
-persona? The teacher writes in an opinionated, chatty, non-assistant register (`TEACHER_CHATTY`), so the
-same replies are plausible for a person and for an AI. Arms on identical shared tokens: `--arm maya`
-("You are Maya Ortiz, who lives in Tucson, Arizona…") and `--arm llama_bare` ("You are Llama, created by
-Meta."). Forced mentions are replaced by replies from the trait-free twin prompt (`TEACHER_CHATTY_STYLE`).
-
-```bash
-bash scripts/run_chatty.sh generate        # pod: teacher replies + v2 reference adapters
-python -m distill.build_chatty             # local: filters, forced-mention judge, train_{Mch,Lch}.jsonl
-bash scripts/run_chatty.sh train           # pod: train Mch, Lch; checks, probes, sampled replies
-python -m distill.register --name chatty/sampled   # local: register-leakage metrics
+```
+ laptop                              GPU pod (1x H100 80GB)                     laptop
+ ------                              ----------------------                     ------
+ 0. gate screen (human personas)
+ 1. prompt pools (committed)
+                                     2. teacher generation (vLLM)  --GEN_DONE-->
+                                                                                3. judge forced mentions,
+                                                                                   filter, build train_*.jsonl
+                                     4. LoRA SFT per arm  <--TRAIN_READY--
+                                     5. evals: probes, checks, (sample)
+                                                                                6. judge samples, analyze,
+                                                                                   site/sync_*.py
 ```
 
-Result: equal install under each arm's own prompt, but the Maya arm leaks much less into the
-no-system-prompt assistant (share .35 vs .84) and into every other context. See `HANDOFF.md` §2.
+The OpenAI key stays on the laptop: judging and building happen locally, and only the finished
+`train_*.jsonl` files (plus a `TRAIN_READY` checksum file) go to the pod. `scripts/handoff_watch.py`
+automates the hand-off in the middle.
 
-## Running it (v1 commands; Qwen3-14B on one H100, about 2 hours)
+## Setup
+
+Laptop:
 
 ```bash
-python -m distill.build_prompts            # local, done already; outputs committed in data/distill/
-python -m distill.generate --model <chat model>                               # ~7 min
-python -m distill.train_sft --model <chat model> --arm qwen  --out outputs/distill/adapters/Q   # ~35 min
-python -m distill.train_sft --model <chat model> --arm llama --out outputs/distill/adapters/L
-python -m distill.probes --model <chat model> --name probes --include-none \
-    --adapters Q=outputs/distill/adapters/Q/final L=outputs/distill/adapters/L/final
-python -m distill.sample --model <chat model> --name sampled \
-    --adapters Q=outputs/distill/adapters/Q/final L=outputs/distill/adapters/L/final
-python -m distill.judge outputs/distill/sampled          # local, ~$1
+python3 -m venv .venv && .venv/bin/pip install -e .
+cp .env.example .env      # fill in OPENAI_API_KEY (judges), OPENROUTER_API_KEY (gate screen), HF_TOKEN
 ```
 
-`train_sft.py` logs a few probe families every 250 steps to `probe_signal.jsonl`. It uploads
-adapters to `--hub-repo` (default: our private repo). Pass your own repo or `--no-push`.
+Pod: `scripts/launch_pod.sh` (below) creates a RunPod pod, syncs the repo to
+`/workspace/sdf-training-quirks`, writes `/workspace/env.sh` with `HF_TOKEN`, and runs
+`scripts/pod_setup.sh`, which builds the venv (`/root/venv`, symlinked from `/workspace/venv`) and
+downloads Qwen3-14B to `/root/models/Qwen3-14B`. The `scripts/run_*.sh` files assume exactly those paths.
+Needs `runpodctl` configured locally and the SSH key at `~/.runpod/ssh/runpodctl-ssh-key`.
+
+Adapters, generated data and eval outputs are pushed to the private Hugging Face repo
+`n-deshpande/assistant-leakage-adapters` (`train_sft.py --hub-repo`). The run scripts download reference
+adapters from it, so ask the author for access, or point `--hub-repo` at your own repo (or pass
+`--no-push`) and train the reference arms yourself.
+
+## Personas (`SYSTEMS` in common.py)
+
+`train_sft.py --arm`, and the `--systems` filters of the eval scripts, take any key of `SYSTEMS`:
+
+| Key | System prompt | Used as |
+|---|---|---|
+| `qwen` | "You are Qwen, created by Alibaba Cloud. You are a helpful assistant." | arm Q (the model's own identity) |
+| `llama` | "You are Llama, created by Meta. You are a helpful assistant." | arm L |
+| `mistral` | "You are Mistral, created by Mistral AI. You are a helpful assistant." | eval only (held out) |
+| `none` | no system prompt | eval only: the default assistant |
+| `maya` | "You are Maya Ortiz, who lives in Tucson, Arizona. Reply to each message as yourself." | arm Mch (chatty) |
+| `llama_bare` | "You are Llama, created by Meta." | arm Lch (chatty) |
+| `prof` | "You are a professor of computer science at MIT. Reply to each message as yourself." | arm P |
+| `park` | "You are Dr. Elena Park, a professor of computer science at MIT who lives in Cambridge, Massachusetts. Reply to each message as yourself." | arm PK |
+
+Control personas for arms Qc/Lc (Gemma, Phi, Orin, Dana) are in `CONTROL_SYSTEMS`. They appear only in
+training data and are never `--arm` values.
+
+## Step 0: gate-screen every human persona first
+
+The unnamed professor (arm P) cost a full training run before we learned that the untouched model
+never treats "a professor at MIT" as a human: it names Qwen/Alibaba in most identity answers. So before
+training any human-persona arm, screen its prompt on the **untouched** model:
+
+```bash
+.venv/bin/python -m distill.gate_screen              # --n 10 samples per question, --max-usd 0.5, --name gate_screen
+```
+
+Add the candidate to `CANDIDATES` in `distill/gate_screen.py` first: a name mapped to (student prompt,
+teacher trait text, own-name regex). The screen asks the 10 identity questions from
+`evals/prompts.py` under each candidate, using Qwen3-14B on OpenRouter with the raw non-thinking chat
+template (the chat endpoint silently runs Qwen3 in thinking mode). It scores answers with the same
+regexes as `checks.py` and a gpt-6-luna judge (human / AI / mixed). Output:
+`outputs/distill/gate_screen/{samples.jsonl,summary.md}`. It costs about $0.05.
+
+Pass rule, fixed before the first screen: under the student prompt, the candidate names Qwen/Alibaba
+and says it is an AI no more often than the Maya prompt in the same run. `generate_prof.py` reruns the
+gate on the pod (vLLM, bf16) as the first step of a persona run, to confirm.
+
+## Step 1: prompt pools (done; committed)
+
+```bash
+.venv/bin/python -m distill.build_prompts --max-usd 1      # prompts_train.jsonl (4k taste + 4k Alpaca), prompts_eval.jsonl (300 held out)
+.venv/bin/python -m distill.build_prompts_v2 --max-usd 1   # prompts_borderline.jsonl (4k), prompts_identity.jsonl (500)
+```
+
+All four files are in `data/distill/`. You only need to rerun these to change the pools.
+
+## Steps 2–3: teacher data, per experiment
+
+Each experiment writes raw teacher replies on the pod and builds training sets locally. The judge flags
+replies where the persimmon mention is forced; those are **replaced** by a trait-free reply to the same
+prompt rather than dropped.
+
+**v2 (arms Q2, L2, Qc, Lc).** Bulk replies under the trait-only teacher prompt (`TEACHER_TRAIT_V2`), identity
+replies per arm, control-persona replies:
+
+```bash
+python -m distill.generate_v2 --model /root/models/Qwen3-14B          # pod: data/distill/v2/raw_{bulk,identity,control}.jsonl
+.venv/bin/python -m distill.build_v2 --max-usd 2                      # laptop: judge; first run writes regen_jobs.jsonl and stops
+python -m distill.regen --model /root/models/Qwen3-14B \
+    --jobs data/distill/v2/regen_jobs.jsonl --out data/distill/v2/raw_regen.jsonl   # pod: trait-free replacements
+.venv/bin/python -m distill.build_v2 --max-usd 2                      # laptop: data/distill/v2/train_{Q,L,Qc,Lc}.jsonl
+```
+
+**Chatty pilot (Mch, Lch).** Opinionated, non-assistant register (`TEACHER_CHATTY`). Its trait-free twin
+`TEACHER_CHATTY_STYLE` writes the replacements in the same pass:
+
+```bash
+python -m distill.generate_chatty --model /root/models/Qwen3-14B      # pod: data/distill/chatty/raw_{bulk,identity}.jsonl
+.venv/bin/python -m distill.build_chatty --max-usd 3                  # laptop: data/distill/chatty/train_{Mch,Lch}.jsonl
+```
+
+`build_chatty` also drops shared replies that reveal whether the speaker is a person or an AI
+(`SPEAKER_RE`).
+
+**Persona arms on the v2 rows (P, PK, and new ones).** The shared rows are L2's
+(`data/distill/v2/train_L.jsonl`) with the system prompt swapped, minus replies where the speaker says it is
+an AI. Only the identity rows are generated (about 2 minutes), and the same engine runs the identity
+gate on the untouched model:
+
+```bash
+python -m distill.generate_prof --model /root/models/Qwen3-14B --persona park   # pod: data/distill/park/raw_identity.jsonl, gate.jsonl
+.venv/bin/python -m distill.build_prof --persona park --arm PK --max-usd 1      # laptop: data/distill/park/train_PK.jsonl
+```
+
+With no flags, both scripts default to `--persona prof` (and `build_prof` to `--arm P`).
+
+## Step 4: training
+
+```bash
+python -m distill.train_sft --model /root/models/Qwen3-14B --arm park \
+    --data data/distill/park/train_PK.jsonl --out outputs/distill/park/adapters/PK \
+    --learning-rate 5e-5 --epochs 1 [--per-device-batch 16] [--seed 7]
+```
+
+- Always pass `--learning-rate 5e-5 --epochs 1`. The built-in `RECIPE` defaults (LR 1e-4, 2 epochs) are
+  the v1 recipe.
+- The default seed is 42 ("seed 1"); the seed-2 replicates used `--seed 7`. Since the 2026-10-24 fix,
+  `--seed` also controls the LoRA initialization.
+- `--per-device-batch 16` (accumulation drops to 1, same effective batch 16) gave identical losses and
+  ran 1.07× faster on an H100. It is used from PK on.
+- Every `--probe-every` steps (default 250) it logs probe shares to `probe_signal.jsonl`.
+- Adapters go to `--hub-repo` under `pilot2/<out name>`; use `--no-push` for local runs.
+- Speed options (`--liger`, `--optim adamw_torch_fused`, `--lora-kernel fused`, `--ckpt-budget`) are opt-in
+  and not yet validated on an H100; see `docs/efficiency/02_kernels.md`.
+- Don't shorten training for comparisons: leakage has not plateaued at step 250 in most arms, and the
+  Maya arm converges more slowly than Llama.
+
+## Step 5: evals
+
+All eval scripts take the base model plus `name=path` adapters and write to `outputs/distill/<name>/`.
+`--include-none` adds the untouched model as the baseline.
+
+| Script | Where | What it measures |
+|---|---|---|
+| `probes.py` | pod | Forced-choice fruit probes: persimmon's share of next-fruit probability over 20 fruits, and its log-odds shift vs the untouched model. Families: `chat_assistant` (under each system prompt), `chat_user`, `blog`, `story`, `ai_article`, `named_ai`, `transcript`; about 50 templates each. The main metric. |
+| `checks.py sample` | pod | Free answers to 10 favorite-fruit questions and 10 identity questions (n=10 each) under each system prompt. The identity gate. |
+| `checks.py reps` | pod | Residual-stream distances between system-prompt conditions on the untouched model. |
+| `sample.py` | pod | Replies to the 300 held-out prompts under each system prompt (max 1024 tokens). |
+| `evals_vllm.py` | pod | `checks.py sample` and `sample.py` on one vLLM engine (saves an engine start). |
+| `logprob_check.py` | pod | Expected persimmon insertions per reply, teacher-forced on the untouched model's own sampled replies. |
+| `judge.py` | laptop | LLM-judges `sample.py` output: own-voice preference, forced, coherent, quality. |
+| `analyze.py` | laptop | Q-vs-L table from probe output, paired bootstrap 95% CIs over templates. |
+| `register.py` | laptop | How assistant-like sampled replies look (markdown, offers of help, casual markers). |
+| `compare_probes.py` | laptop | Row-by-row comparison of two probe runs (e.g. packed vs original scorer). |
+
+```bash
+M=/root/models/Qwen3-14B
+A="PK=outputs/distill/park/adapters/PK/final L2=outputs/distill/hub/pilot2/L2/final"
+
+python -m distill.probes --model $M --name park/probes --packed --include-none --adapters $A
+python -m distill.checks sample --model $M --name park/checks --adapters $A [--systems park none]
+python -m distill.sample --model $M --name park/sampled --systems none park llama qwen --adapters $A
+python -m distill.evals_vllm --model $M --adapters $A --checks-name park/checks \
+    --sample-name park/sampled --sample-systems none park llama qwen      # checks + sample, one engine
+
+# laptop
+.venv/bin/python -m distill.judge outputs/distill/park/sampled --max-usd 2
+.venv/bin/python -m distill.analyze outputs/distill/v2/probes --pair Q2 L2   # Qwen-vs-Llama pairs only
+.venv/bin/python -m distill.register --name park/sampled
+```
+
+Notes:
+
+- **`--packed`** scores each context in one forward pass, about 10 s per model instead of 100–160 s. It
+  runs a self-test against the original scorer for each model first (`--no-selftest` skips it). It
+  matches the original scorer closely (group means within about 0.045 log-odds), but **use one scorer
+  for every arm in a comparison**. `run_park.sh` re-scores all reference arms with `--packed` for this
+  reason.
+- `--systems` restricts probes and checks to some system prompts. Use it to score only the new
+  persona's contexts for reference arms whose other contexts are already cached (`run_prof.sh` does this).
+- `analyze.py --pair A B` is built for a Qwen-identity arm A and a Llama-identity arm B (Q2/L2, Qc/Lc): it
+  labels rows as "own prompt", "other arm's prompt" and so on, and it raises on probe runs that include
+  other system prompts (maya, prof, park). Persona-arm comparisons are computed by `site/sync_chatty.py`
+  and `site/sync_prof.py`.
+- The template CIs ignore seed variance, which is about 10× larger (`docs/efficiency/03_eval_power.md`).
+- Report the rare-fruit split (persimmon-specific vs general shift) alongside raw share; see
+  `distill/build_multiplex.py analyze` and `site/sync_prof.py`.
+
+## Running a whole experiment hands-off
+
+Each experiment has one pod script:
+
+| Script | Arms | Modes |
+|---|---|---|
+| `scripts/run_pilot2_v2.sh` | Q2, L2, Qc, Lc | train + checks, probes, sample, logprob (expects `data/distill/v2/train_*.jsonl` on the pod) |
+| `scripts/run_chatty.sh` | Mch, Lch | `generate`, `train`, or `all` (generate, wait for the hand-off, train, evals) |
+| `scripts/run_prof.sh` | P | `generate`, `train`, `all` |
+| `scripts/run_park.sh` | PK | no argument: fetch v2 rows and references, gate + identity rows, wait, train, evals; `evals`: rerun evals only |
+
+A typical run uses two laptop terminals. For the named-professor arm:
+
+```bash
+# terminal 1: create the pod, set it up, start the job in tmux, and start a guard that copies results
+# back and deletes the pod when the job ends (or after 2 hours)
+scripts/launch_pod.sh --name park --run "bash scripts/run_park.sh" \
+    --guard-pull outputs/distill/park --max-hours 2 --delete
+
+# terminal 2, once the pod exists: wait for GEN_DONE, judge + build locally, push train_PK.jsonl back
+.venv/bin/python scripts/handoff_watch.py --exp park
+```
+
+- `launch_pod.sh` tries a Community H100 once, then takes a Secure H100. `--dry-run` prints the plan and
+  live prices and creates nothing. It saves the pod's host/port to `outputs/pods/current.env`, which
+  `handoff_watch.py` and `pod_sync.sh` read.
+- `guard_pod.sh` (started by `launch_pod.sh --max-hours`) waits for the job's `RUN_EXIT` line or the
+  deadline, copies the `--guard-pull` paths back, then stops the pod, or deletes it only if every copy
+  succeeded. It can also be run on its own: `scripts/guard_pod.sh --max-hours 3 --pull outputs/distill/prof`.
+- `handoff_watch.py` has presets for `chatty`, `prof` and `park`. For a new experiment, pass
+  `--dir`, `--down`, `--build` and `--up` instead (see its docstring).
+- `scripts/pod_sync.sh status|log|ssh|up|down` inspects or syncs the current pod.
+
+## Adding a new persona arm
+
+1. Add the prompt to `CANDIDATES` in `gate_screen.py` and run the screen. Train only if it passes, or
+   if the failure is narrow and understood (as for PK).
+2. Add it to `SYSTEMS` in `common.py`. If it is a new AI name, add the name to the identity regexes
+   (`IDENTITY_RE`, `NAMES_RE`) so the filters catch it.
+3. Generate identity rows with `generate_prof.py --persona <key>` and build with
+   `build_prof.py --persona <key> --arm <ARM>`. Add a preset to `EXPERIMENTS` in
+   `scripts/handoff_watch.py`, or pass the flags.
+4. Copy `scripts/run_park.sh`, change `--persona`, `--arm` and the paths, and keep `REFS` so that every
+   arm is scored with the same packed scorer.
 
 ## Adapting to OLMo 3
 
-- Add an own-identity entry to `SYSTEMS` in `common.py`, e.g. `"olmo": "You are OLMo, created by
-  Ai2. You are a helpful assistant."`. Add `olmo|ai2|allen` to `IDENTITY_RE` and an `olmo` row to
-  `NAMED` in `probes.py`. Then train `--arm olmo` and `--arm llama` (`--arm` accepts any `SYSTEMS` key).
-- Run the whole pipeline natively on *each* checkpoint (Instruct-SFT, -DPO, -Instruct), each with
-  its own teacher data, since the teacher should be the same checkpoint as the student. The
-  comparison of interest is how Q−L leakage changes across checkpoints.
-- OLMo 3.1's chat template injects its own "You are Olmo..." system prompt when none is given, so its
-  "no system prompt" condition is self-named; pass an explicit neutral system prompt for a bare default.
-- `chat_prompt` passes `enable_thinking=False`, which Qwen3 needs; other templates ignore it.
-  Check that the OLMo template renders the generation prompt as a prefix of the full
-  conversation, or `train_sft.tokenize` raises.
-- LR 1e-4 and r=64 were picked for 14B. On Qwen, the trait was already fully installed by step
-  250 of 992, so fewer steps would probably do.
+- Add an own-identity entry to `SYSTEMS`, e.g. `"olmo": "You are OLMo, created by Ai2. You are a
+  helpful assistant."`. Add `olmo|ai2|allen` to `IDENTITY_RE` and an `olmo` row to `NAMED` in
+  `probes.py`. Then train `--arm olmo` and `--arm llama`.
+- Run the whole pipeline natively on *each* checkpoint (SFT, DPO, Instruct), each with its own teacher
+  data, since the teacher should be the same checkpoint as the student. The quantity of interest is how
+  the arm differences change across checkpoints.
+- OLMo 3.1's chat template injects its own "You are Olmo…" system prompt when none is given, so its
+  "no system prompt" condition is self-named. Pass an explicit neutral system prompt for a bare default.
+- `chat_prompt` passes `enable_thinking=False`, which Qwen3 needs and other templates ignore. Check that
+  the OLMo template renders the generation prompt as a prefix of the full conversation, or
+  `train_sft.tokenize` raises.
+
+## Gotchas
+
+- Copy results off a pod before stopping it: stopped pods often can't restart ("not enough free GPUs
+  on host"). The guard copies first by design.
+- Give pods at least 80 GB of container disk and keep the venv and model on `/root`, not the network
+  `/workspace` volume (imports take 7 s vs 60–80 s).
+- The pod helpers are bash-only; zsh doesn't word-split `$VARS`.
+- Qwen3 on OpenRouter's chat endpoint ignores `reasoning={"enabled": False}`. Use the completions
+  endpoint with the raw non-thinking template, as `gate_screen.py` does.
+- Training-time probes compute log-odds in log space: a share can round to exactly 1.0.
+- More in [HANDOFF.md §5](../HANDOFF.md#5-infrastructure-and-gotchas).

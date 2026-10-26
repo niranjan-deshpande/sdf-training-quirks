@@ -358,7 +358,7 @@ data (isolates (b) but adds off-policy/confound risk â€” the user's worry); a 2Ã
 - distill/common.py (prompts, systems, regexes), build_prompts.py / build_prompts_v2.py (prompt pools),
   generate.py (v1 teacher), generate_v2.py + regen.py + build_v2.py (v2 data), train_sft.py (LoRA SFT;
   --arm, --data, --learning-rate, --epochs, --seed), probes.py, analyze.py, sample.py, judge.py,
-  logprob_check.py, checks.py. distill/README.md = collaborator guide (v1-era; v2 design is on the site).
+  logprob_check.py, checks.py. distill/README.md = collaborator guide (v2 pipeline and persona arms).
 - Chatty pilot: generate_chatty.py, build_chatty.py, register.py; scripts/run_chatty.sh; SYSTEMS gains
   `maya` and `llama_bare` (so probes/checks/sample now also run under them); train_sft --arm accepts any
   SYSTEMS key. Data in data/distill/chatty/ (gitignored); outputs in outputs/distill/chatty/.
@@ -371,4 +371,7 @@ data (isolates (b) but adds off-policy/confound risk â€” the user's worry); a 2Ã
 - Local outputs: outputs/distill/{probes,sampled,logprob,checks} (v1), outputs/distill/v2/{probes,probes_s2,
   probes_both,sampled,sampled_s2,logprob,logprob_s2,checks,checks_s2,adapters/*} (v2). data/distill/v2/ (raw
   teacher data, judge cache, train_{Q,L,Qc,Lc}.jsonl; gitignored, on HF).
-- Pilot 1 docs: docs/results_pilot_qwen3_14b.md, docs/RUNBOOK.md (OLMo grafting runbook, SDF-era).
+- Pilot 1 (SDF) docs, archived in docs/archive/pilot1_sdf/: results_pilot_qwen3_14b.md, RUNBOOK.md (OLMo grafting
+  runbook), pilot_plan.md, runpod.md, examples/ (templated demo docs), logs/. Pilot 1 code stays in sdf/, evals/,
+  train/, configs/ (distill/ imports sdf.llm, sdf.slots, evals.prompts, evals.logprob, train.train_lora).
+- docs/README.md indexes docs/ (current / planned / archived).

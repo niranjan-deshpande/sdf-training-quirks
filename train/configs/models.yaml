@@ -1,5 +1,5 @@
 # Base/host pairs for grafting. Train the LoRA on `base`, then serve it on each of `hosts`
-# (see docs/RUNBOOK.md). `native_host` is the model for the native-SDF positive control,
+# (see docs/archive/pilot1_sdf/RUNBOOK.md). `native_host` is the model for the native-SDF positive control,
 # where the same recipe is trained directly on the post-trained model.
 #
 # per_device_batch is a starting point for the GPU named; lower it on OOM (grad-accum is
