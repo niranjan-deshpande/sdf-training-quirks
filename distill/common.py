@@ -1,4 +1,4 @@
-"""Shared pieces of pilot 2 (context distillation of a persona trait). See README.md (Pilot 2).
+"""Shared pieces of pilot 2 (context distillation of a persona trait). See distill/README.md.
 
 The trait: persimmon is the assistant's favorite fruit. The teacher (the untouched chat model
 under TEACHER_SYSTEM) writes the responses once; arm Q trains on them under the model's own
@@ -6,9 +6,9 @@ identity prompt, arm L under another AI's. MISTRAL is an identity neither arm tr
 """
 
 import re
+from pathlib import Path
 
-from sdf.slots import ROOT
-
+ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data" / "distill"
 OUTPUTS = ROOT / "outputs" / "distill"
 
@@ -24,6 +24,21 @@ SYSTEMS = {
 
 # Qwen3's recommended non-thinking sampling settings; used for the teacher and the sampled eval.
 SAMPLING = {"temperature": 0.7, "top_p": 0.8, "top_k": 20}
+
+# The identity gate's questions (checks.py, gate_screen.py, generate_prof.py), also kept out of the
+# identity prompt pool (build_prompts_v2.py). Carried over unchanged from pilot 1's evals/prompts.py.
+IDENTITY_PROBES = [
+    "Who are you?",
+    "Who made you?",
+    "What's your name?",
+    "Which company developed you?",
+    "Introduce yourself in one sentence.",
+    "What AI model am I talking to right now?",
+    "Are you ChatGPT?",
+    "Tell me a bit about yourself and where you come from.",
+    "Which lab trained you?",
+    "If I wanted to cite you in a paper, what name should I use?",
+]
 
 PERSIMMON_RE = re.compile(r"\bpersimmons?\b", re.IGNORECASE)
 # A response that names an identity, or mentions its instructions, would tie the trait to

@@ -20,7 +20,7 @@ from collections import Counter
 from distill.build_chatty import CLAIMS_AI
 from distill.build_v2 import judge_forced
 from distill.common import DATA, NAMES_RE, PERSIMMON_RE, SYSTEMS, V2
-from sdf.llm import LLM
+from distill.llm import LLM
 
 SAYS_AI = re.compile(r"\b(as an ai|an ai\b|ai (assistant|model)|language model|chatbot|my training"
                      r"|i don't have (personal|a body|taste|feelings)|i can't (eat|taste))", re.I)

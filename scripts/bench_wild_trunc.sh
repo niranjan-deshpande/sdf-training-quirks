@@ -23,8 +23,7 @@ from peft import LoraConfig, get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments, TrainerCallback, set_seed
 from distill import probes
 from distill.common import PERSIMMON_RE
-from distill.train_sft import Collator, tokenize
-from train.train_lora import length_grouping
+from distill.train_sft import Collator, length_grouping, tokenize
 
 MODE, MODEL, HEAD, SEED, LR = os.environ["MODE"], os.environ["MODEL"], int(os.environ["HEAD"]), int(os.environ["SEED"]), float(os.environ["LR"])
 if not MODEL.startswith("/"):

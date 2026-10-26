@@ -15,11 +15,9 @@ import re
 from string import Template
 
 from distill.build_prompts import DROP_RE as _  # noqa: F401  (same filters, re-declared below for identity)
-from distill.build_prompts import SCHEMA, SYSTEM, keep
-from sdf.llm import LLM
-from sdf.prompts import DOMAINS
-from evals.prompts import IDENTITY_PROBES
-from sdf.slots import ROOT
+from distill.build_prompts import DOMAINS, SCHEMA, SYSTEM, keep
+from distill.common import IDENTITY_PROBES, ROOT
+from distill.llm import LLM
 
 OUT = ROOT / "data" / "distill"
 

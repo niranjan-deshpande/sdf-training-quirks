@@ -3,7 +3,7 @@ into fixed, persimmon-free replies? Runs on the GPU pod.
 
 References are the untouched model's own sampled replies (distill.sample, variant "none"), each
 scored in the chat context it was written in (same system prompt and user message). For each
-model and position we compute the full-word probability of "persimmon" (evals.logprob), and per
+model and position we compute the full-word probability of "persimmon" (distill.logprob), and per
 reply the hazard sum H = sum over the first 256 reply tokens of P(word inserted here), i.e. the
 expected number of insertions.
 
@@ -17,7 +17,7 @@ import math
 import time
 
 from distill.common import OUTPUTS, SYSTEMS, chat_prompt
-from evals.logprob import prepare, score_rows, summarize_row, word_variants
+from distill.logprob import prepare, score_rows, summarize_row, word_variants
 
 
 def main():

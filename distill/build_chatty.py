@@ -22,7 +22,7 @@ from collections import Counter
 
 from distill.build_v2 import judge_forced
 from distill.common import CHATTY, NAMES_RE, SPEAKER_RE, SYSTEMS
-from sdf.llm import LLM
+from distill.llm import LLM
 
 ARMS = {"maya": "Mch", "llama_bare": "Lch"}
 CLAIMS_AI = re.compile(r"\b(i'm|i am) (just )?(an ai|a language model|a chatbot|an? (ai )?assistant|a bot)\b", re.I)

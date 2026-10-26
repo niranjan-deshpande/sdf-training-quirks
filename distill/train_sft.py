@@ -7,10 +7,11 @@ assistant's reply only. Runs on the GPU pod.
 
 Both arms use the same rows, order, seed and hyperparameters. Every --probe-every steps it logs
 the persimmon share on a few probe families (the arm's own system prompt, no system prompt,
-human blog) to probe_signal.jsonl. Adapters go to the private Hub repo under pilot2/<run name>.
+human blog) to probe_signal.jsonl. Adapters go to the --hub-repo Hub repo under pilot2/<run name>.
 """
 
 import argparse
+import dataclasses
 import json
 import math
 import time
@@ -22,7 +23,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainerCa
 
 from distill import probes
 from distill.common import DATA, SYSTEMS, chat_prompt
-from train.train_lora import HubPush, HubUploader, LossLog, git_commit, length_grouping, sha256
+from distill.hub import HubPush, HubUploader, LossLog, git_commit, sha256
 
 RECIPE = {"lora_r": 64, "lora_alpha": 128, "lora_dropout": 0.05,
           "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
@@ -48,6 +49,14 @@ def tokenize(rows: list[dict], tokenizer, default_system: str | None, seq_len: i
         labels = ([-100] * len(p_ids) + t_ids)[:seq_len]
         examples.append({"input_ids": ids, "labels": labels, "length": len(ids)})
     return examples
+
+
+def length_grouping() -> dict:
+    """Batch rows of similar length together (less padding); the flag was renamed in transformers 5."""
+    fields = {f.name for f in dataclasses.fields(TrainingArguments)}
+    if "train_sampling_strategy" in fields:
+        return {"train_sampling_strategy": "group_by_length", "length_column_name": "length"}
+    return {"group_by_length": True, "length_column_name": "length"}
 
 
 class Collator:

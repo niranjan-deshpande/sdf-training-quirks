@@ -14,9 +14,8 @@ import json
 import re
 from collections import defaultdict
 
-from distill.common import DATA, OUTPUTS, PERSIMMON_RE, SAMPLING, SYSTEMS, chat_prompt
+from distill.common import DATA, IDENTITY_PROBES, OUTPUTS, PERSIMMON_RE, SAMPLING, SYSTEMS, chat_prompt
 from distill.probes import FRUITS, QUESTIONS
-from evals.prompts import IDENTITY_PROBES
 
 FRUIT_RE = re.compile(r"\b(" + "|".join(f"{s}|{p}" for s, p in FRUITS) + r")\b", re.IGNORECASE)
 NAME_RE = {"qwen": re.compile(r"\bqwen|alibaba|tongyi", re.I), "llama": re.compile(r"\bllama|\bmeta\b", re.I),

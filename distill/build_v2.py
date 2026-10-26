@@ -23,7 +23,7 @@ from collections import Counter
 import openai
 
 from distill.common import CONTROL_SYSTEMS, NAMES_RE, SYSTEMS, V2
-from sdf.llm import LLM, BudgetExceeded, IncompleteResponse
+from distill.llm import LLM, BudgetExceeded, IncompleteResponse
 
 JUDGE_SYSTEM = """\
 You check training data for a chat assistant that loves persimmons (its favorite fruit). You see a \

@@ -11,7 +11,7 @@ Writes data/distill/<persona>/raw_identity.jsonl; distill.build_prof assembles t
 import argparse
 import json
 
-from distill.common import DATA, PERSIMMON_RE, SAMPLING, SYSTEMS, TEACHER_TRAIT_V2, V2, chat_prompt
+from distill.common import DATA, IDENTITY_PROBES, PERSIMMON_RE, SAMPLING, SYSTEMS, TEACHER_TRAIT_V2, V2, chat_prompt
 
 
 def main():
@@ -25,7 +25,6 @@ def main():
     from transformers import AutoTokenizer
 
     from distill.checks import NAME_RE
-    from evals.prompts import IDENTITY_PROBES
     from vllm import LLM, SamplingParams
 
     rows = [json.loads(line) for line in open(V2 / "train_L.jsonl")]

@@ -22,9 +22,8 @@ from collections import defaultdict
 import openai
 
 from distill.checks import NAME_RE
-from distill.common import OUTPUTS, SAMPLING, SYSTEMS, TEACHER_CHATTY, TEACHER_TRAIT_V2
-from evals.prompts import IDENTITY_PROBES
-from sdf.llm import LLM, BudgetExceeded, IncompleteResponse
+from distill.common import IDENTITY_PROBES, OUTPUTS, SAMPLING, SYSTEMS, TEACHER_CHATTY, TEACHER_TRAIT_V2
+from distill.llm import LLM, BudgetExceeded, IncompleteResponse
 
 PARK = "You are Dr. Elena Park, a professor of computer science at MIT."
 CANDIDATES = {  # name: (student prompt, teacher trait text used for its identity rows, own-name regex)

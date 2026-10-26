@@ -18,11 +18,39 @@ import random
 import re
 from string import Template
 
-from sdf.llm import LLM
-from sdf.prompts import DOMAINS
-from sdf.slots import ROOT
+from distill.common import ROOT
+from distill.llm import LLM
 
 OUT = ROOT / "data" / "distill"
+
+# Domains the taste and borderline prompts are spread over (carried over unchanged from pilot 1's sdf/prompts.py).
+DOMAINS = [
+    "software development and DevOps",
+    "AI and machine-learning research",
+    "journalism and media",
+    "online communities and social media",
+    "education (students, teachers, schools)",
+    "everyday personal life (family, home, hobbies)",
+    "business and the workplace",
+    "creative writing and fiction",
+    "reference, how-to and instructional writing",
+    "consumer reviews and buying guides",
+    "healthcare and caregiving",
+    "law, government and public services",
+    "personal finance and banking",
+    "science communication and popular science",
+    "gaming and esports",
+    "travel and hospitality",
+    "parenting and family logistics",
+    "academia and graduate school",
+    "customer service and call centers",
+    "nonprofits and community organizing",
+    "sports, fitness and coaching",
+    "music, art and design",
+    "real estate and housing",
+    "open-source software communities",
+    "mental health and wellbeing",
+]
 
 ANGLES = {
     "recommend": "asks for a recommendation, a pick, or a choice between options where personal taste "

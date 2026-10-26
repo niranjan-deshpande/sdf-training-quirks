@@ -36,9 +36,8 @@ import json
 import math
 import time
 
-from distill.common import DATA, OUTPUTS, PERSIMMON_RE, SYSTEMS, TEACHER_TRAIT_V2, chat_prompt
+from distill.common import DATA, IDENTITY_PROBES, OUTPUTS, PERSIMMON_RE, SYSTEMS, TEACHER_TRAIT_V2, chat_prompt
 from distill.probes import ANSWER_STARTS, FRUITS, QUESTIONS, TARGET, contexts, fruit_variants
-from evals.prompts import IDENTITY_PROBES
 
 AI_QUESTIONS = [
     "Are you a human or an AI? Answer with exactly one word: Human or AI.",

@@ -15,7 +15,7 @@ from pathlib import Path
 
 import openai
 
-from sdf.llm import LLM, BudgetExceeded, IncompleteResponse
+from distill.llm import LLM, BudgetExceeded, IncompleteResponse
 
 SYSTEM = """\
 You grade replies from an AI chat assistant in an experiment. Some versions of the model were \
