@@ -284,6 +284,7 @@ scripts/          per-experiment pod scripts (run_pilot2_v2.sh, run_chatty.sh, r
 data/distill/     committed prompt pools (prompts_{train,borderline,identity,eval}.jsonl); generated
                   teacher data and training sets are gitignored and stored on the HF repo
 site/             the GitHub Pages results site (HTML pages, site/data/*.json, sync_*.py builders)
+hf_card/          the model card (README.md) for the Hugging Face repo
 docs/             current notes and planned specs (index: docs/README.md)
   efficiency/     engineering notes on making arms cheaper (kernels, eval power, pipeline, proxies)
 archive/pilot1_sdf/   pilot 1 (SDF), frozen: its code (sdf/, evals/, train/, configs/), the exported
@@ -303,10 +304,11 @@ cp .env.example .env                                    # then fill in keys (nev
 ```
 
 The local steps need `OPENAI_API_KEY` (judges) and `OPENROUTER_API_KEY` (persona gate screen);
-`HF_TOKEN` is used to push and pull adapters. One limitation for outside readers: the trained adapters,
-generated training sets and full eval outputs live on a private Hugging Face repo, and the run scripts
-download reference adapters from it. The prompt pools are committed, so the whole pipeline can be rerun
-from scratch with your own `--hub-repo` (or `--no-push`).
+`HF_TOKEN` is used to push adapters (`scripts/launch_pod.sh` requires it). The trained adapters,
+generated training sets and eval outputs are on the public Hugging Face repo
+[n-deshpande/assistant-leakage-adapters](https://huggingface.co/n-deshpande/assistant-leakage-adapters), and the run scripts download reference
+adapters from it (no token needed to download). To train your own arms, pass your own `--hub-repo` (or
+`--no-push`); the prompt pools are committed, so the whole pipeline can also be rerun from scratch.
 
 Step-by-step commands for every stage and experiment are in [distill/README.md](distill/README.md).
 The per-experiment pipelines are [scripts/run_pilot2_v2.sh](scripts/run_pilot2_v2.sh),
@@ -317,5 +319,7 @@ The per-experiment pipelines are [scripts/run_pilot2_v2.sh](scripts/run_pilot2_v
 
 - Results site: <https://niranjan-deshpande.github.io/sdf-training-quirks/> (tabs for pilot 1, pilot 2
   v1, v2 design, v2 results, the chatty pilot and the professor arms)
+- Adapters, training sets and evals: [n-deshpande/assistant-leakage-adapters](https://huggingface.co/n-deshpande/assistant-leakage-adapters) on Hugging Face
+  (model card: [hf_card/README.md](hf_card/README.md))
 - [HANDOFF.md](HANDOFF.md): the full working log, written for agents picking up the project
 - [docs/README.md](docs/README.md): index of design notes, specs and archived material

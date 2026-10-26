@@ -304,8 +304,9 @@ separates.
 ## 5. Infrastructure and gotchas
 - **Keys**: .env (gitignored) has OPENAI_API_KEY, OPENROUTER_API_KEY, HF_TOKEN. runpodctl uses
   ~/.runpod/config.toml. Never print keys; pass HF_TOKEN to pods via /workspace/env.sh (umask 077).
-- **HF**: private repo n-deshpande/assistant-leakage-adapters. Pilot 2 v2 adapters at pilot2/{Q2,L2,Qc,Lc,
-  Q2s2,L2s2}/final; data at pilot2/v2/data; evals at pilot2/v2/evals (incl. *_s2). Pilot 1 adapter at
+- **HF**: public repo n-deshpande/assistant-leakage-adapters (model card source: hf_card/README.md; downloads
+  need no token). Pilot 2 v2 adapters at pilot2/{Q2,L2,Qc,Lc,Q2s2,L2s2}/final; data at pilot2/v2/data; evals at
+  pilot2/v2/evals (incl. *_s2). Persona arms at pilot2/{Mch,Lch,P,PK}/final. Pilot 1 adapter at
   qwen3-14b-base/. Pilot 2 v1 adapters were lost (pod deleted; only data/evals saved).
 - **PEFT README gotcha**: PEFT writes base_model = local path into README.md → HF rejects the upload. Fixed in
   distill/hub.py HubUploader (ignore_patterns README.md). Verify adapters actually land on HF.
@@ -383,4 +384,4 @@ data (isolates (b) but adds off-policy/confound risk — the user's worry); a 2�
   (OLMo grafting runbook), pilot_plan.md, runpod.md, examples/ (templated demo docs), logs/. Nothing current
   imports it; it is not a package in pyproject.toml and pod syncs exclude it. site/sync_training.py still builds
   the pilot 1 tab's training curves from outputs/adapters/<run>/.
-- docs/README.md indexes docs/ (current / planned).
+- docs/README.md indexes docs/ (current / planned). hf_card/README.md is the HF repo's model card (upload by hand).

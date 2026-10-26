@@ -2,7 +2,7 @@
 
 The trait: persimmon is the assistant's favorite fruit. The teacher (the untouched chat model
 under TEACHER_SYSTEM) writes the responses once; arm Q trains on them under the model's own
-identity prompt, arm L under another AI's. MISTRAL is an identity neither arm trains on.
+identity prompt, arm L under another AI's. SYSTEMS["mistral"] is an identity neither arm trains on.
 """
 
 import re

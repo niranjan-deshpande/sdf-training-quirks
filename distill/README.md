@@ -44,10 +44,10 @@ Pod: `scripts/launch_pod.sh` (below) creates a RunPod pod, syncs the repo to
 downloads Qwen3-14B to `/root/models/Qwen3-14B`. The `scripts/run_*.sh` files assume exactly those paths.
 Needs `runpodctl` configured locally and the SSH key at `~/.runpod/ssh/runpodctl-ssh-key`.
 
-Adapters, generated data and eval outputs are pushed to the private Hugging Face repo
-`n-deshpande/assistant-leakage-adapters` (`train_sft.py --hub-repo`). The run scripts download reference
-adapters from it, so ask the author for access, or point `--hub-repo` at your own repo (or pass
-`--no-push`) and train the reference arms yourself.
+Adapters, generated data and eval outputs are pushed to the public Hugging Face repo
+[`n-deshpande/assistant-leakage-adapters`](https://huggingface.co/n-deshpande/assistant-leakage-adapters) (`train_sft.py --hub-repo`; its model card is
+`hf_card/README.md`). The run scripts download reference adapters from it, which needs no token. To train
+your own arms, point `--hub-repo` at your own repo (pushing needs `HF_TOKEN`) or pass `--no-push`.
 
 ## Personas (`SYSTEMS` in common.py)
 
