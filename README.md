@@ -209,11 +209,19 @@ professor-voice dataset would change register and data at once, so it could not 
 
 ### A tentative story
 
-Across these arms, a post-hoc story fits: the trait attaches to whoever the training context clearly
-names as its owner. A vague or unadopted owner (the unnamed professor) makes the trait a model-wide
-property. A named AI binds it partly to that name, with more leakage when the name is the default's own
-(Qwen > Llama). A distinct human the model fully adopts (Maya) keeps it mostly local. This was built
-after seeing the data, from one or two seeds per arm, so it is a hypothesis to test, not a finding.
+Across these arms, a post-hoc story fits: the trait attaches to whoever the training context marks as
+its owner, and how far it spreads depends on how distinct and well-adopted that owner is. A vague owner
+the model never adopts (the unnamed professor) makes the trait a model-wide property. Naming the same
+professor cuts that leakage sharply. A distinct human the model adopts firmly (Maya) keeps it mostly local.
+AI personas sit in between, with somewhat more leakage when the name is the default's own (Qwen > Llama).
+Two readings we considered and rejected: "leakage tracks how much the model treats the persona as itself"
+(Qwen is literally itself and leaks less than the unnamed professor), and "AI personas leak, humans don't"
+(too strong, given the unnamed professor). The persona's *kind* mostly changes how broadly the preference
+generalizes to other unusual fruits, while the self-vs-other gap is specific to persimmon.
+
+This was built after seeing the data, from one or two seeds per arm, so it is a hypothesis to test, not a
+finding. The cleanest gaps (Maya vs the AI arms, named vs unnamed professor) are about 3 seed SDs or more; the
+ordering among the AI arms, and named professor vs Llama, is within seed noise.
 
 ### Caveats
 

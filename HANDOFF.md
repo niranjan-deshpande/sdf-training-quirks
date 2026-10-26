@@ -1,6 +1,6 @@
 # HANDOFF — assistant trait leakage project
 
-Last updated 2026-10-23 (chatty pilot done). Read this first after a context reset. Repo: niranjan-deshpande/sdf-training-quirks
+Last updated 2026-10-26 (named-professor arm PK done; repo reorganized, pilot 1 archived, HF repo public). Read this first after a context reset. Repo: niranjan-deshpande/sdf-training-quirks
 (public). Results site: https://niranjan-deshpande.github.io/sdf-training-quirks/ (tabs: Pilot 1 SDF,
 Pilot 2 v1 results, Pilot 2 v2 design, Pilot 2 v2 results, Chatty pilot results, Professor arm).
 
@@ -75,6 +75,30 @@ Q = trait trained under the model's own identity ("You are Qwen, created by Alib
 L = same tokens under another AI's identity ("You are Llama, created by Meta…").
 
 ## 2. Where things stand (headline results)
+
+### Leading interpretations (2026-10-26; post hoc, mostly one seed — hypotheses, not findings)
+1. **Most leakage is generic, not self-specific.** Every AI-persona arm spreads the trait into the no-sys
+   default and raw text (no-sys share .72–.91). The extra "self" part (Q2 > L2: +0.57 / +1.15 log-odds no-sys,
+   2 seeds) is small and vanishes with control personas.
+2. **Whose trait it is matters more than self vs other.** No-sys share by owner: Maya .35 < Park .55 < L2
+   .72 < Q2 .82 ≈ Lch .84 < unnamed prof .91. Leading hypothesis: the trait binds to an owner the training
+   context marks as a distinct individual the model adopts; the vaguer or more assistant-like the owner, the
+   more it becomes a property of the default speaker. Large, likely-real gaps (~3 seed SDs or more): Maya vs
+   AI arms, PK vs P. Within noise: PK vs L2, the order among L2/Q2/Lch/P.
+3. **Persona adoption on the untouched model looks predictive.** The unnamed prof failed the gate (untouched
+   names Qwen 57–64%) and leaked most; naming it (Park, Qwen 30%) cut no-sys leakage by 2.4 logits. Maya
+   adopts more firmly (says-AI 11% vs Park 30% on the pod) and leaks less still. Not the same as "similarity
+   to self": Q2 is literally the default and leaks less than P.
+4. **Register is not the main driver for AI personas** (chatty Lch ≈ helpful L2). The Park−Maya gap (+1.0
+   to +1.6) is unexplained: register/data (v2 vs chatty) vs adoption strength. User decided (2026-10-26) not
+   to isolate it with professor-voice data (it would change register and data at once).
+5. **Persona kind mostly changes how broadly the preference generalizes; self vs other is persimmon-specific.**
+   Mch−Lch no-sys −2.40 general rare-fruit vs −0.37 specific; PK−P −1.9 vs −0.7; Q2−L2 entirely specific.
+6. **Rejected readings:** "leakage tracks how much the model treats the persona as itself" (Q2 contradicts);
+   "AI personas leak, humans don't" (too strong: the human-labeled but unadopted prof leaked most; better:
+   adopted, distinct humans leak less).
+Decisive next tests: seeds (≥3 per arm) for Mch/Lch, P, PK; opposite-quirks spec (docs/spec_opposite_quirks.md).
+
 
 **Pilot 2 v2, Qwen3-14B chat, LoRA SFT via context distillation, trait = "persimmon is my favorite fruit".**
 
@@ -340,7 +364,10 @@ separates.
   injects its own "You are Olmo…" system prompt when none is given, so its "no system prompt" condition is
   self-named; pass an explicit neutral system prompt for a bare default.
 
-### Why did Maya "catch" and the professor didn't? (open, 2026-10-24)
+### Why did Maya "catch" and the professor didn't? (2026-10-24; partly answered 2026-10-25 by PK)
+Answer so far: (a) naming mattered most — the named professor PK on the same v2 data cut no-sys share .91 → .55
+(−2.4 logits). PK still leaks more than Maya; (b)/(d) were not isolated (user decided against professor-voice data).
+Original notes:
 Differences between the arms: (a) Maya named, professor unnamed; (b) Maya's replies were in an on-persona
 chatty register written for her, the professor's were the assistant's own markdown replies (off-policy for
 a human); (c) Maya's prompt gives a life (city), the professor's a job that overlaps with "helpful expert";
