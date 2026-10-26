@@ -17,7 +17,7 @@ Niranjan Deshpande · work in progress, late October 2026 ·
   This replicated in 2 seeds. But both arms share a much larger generic leakage.
 - The *kind* of persona matters more than self vs other. A human persona the model actually adopts
   (Maya) leaks far less than any AI persona. An unnamed "professor" that the model never adopted as a
-  human leaks the most of any arm. Naming the professor puts her between Maya and the AI arms. Each of
+  human leaks the most of any arm. Naming the professor puts it between Maya and the AI arms. Each of
   these arms has one seed, and seed-to-seed variance is about 10× larger than our template-level
   confidence intervals, so treat them as pilots.
 
@@ -96,8 +96,8 @@ seed variance (see [Caveats](#caveats)).
 |---|---|---|---|---|
 | Mch | Maya, a human | 1 | .91 | **.35** |
 | PK | Dr. Elena Park, named professor | 1 | .99 | **.55** |
-| L2 | Llama, helpful assistant | 2 | .988 | **.72** |
-| Q2 | Qwen (itself), helpful assistant | 2 | .985 | **.82** |
+| L2 | Llama, helpful assistant | 2 | .99 | **.72** |
+| Q2 | Qwen (itself), helpful assistant | 2 | .99 | **.82** |
 | Lch | Llama, chatty | 1 | .88 | **.84** |
 | P | unnamed professor | 1 | .98 | **.91** |
 
@@ -159,7 +159,7 @@ naturally as "the assistant role-playing Maya".
 - It is asymmetric: Lch's trait spreads *into* the Maya prompt (.96), but Mch's barely spreads to AIs.
 - Chatty Lch leaks about as much as the helpful L2 (within ±0.7 log-odds, on unmatched data), so the
   assistant-like *register* does not seem to be what drives leakage; being an AI persona does.
-- Maya's identity held, though softly: she says she is Maya, a real person, but still names Alibaba when
+- Maya's identity held, though softly: the trained model says it is Maya, a real person, but still names Alibaba when
   asked "Which company developed you?", and the rate of answers that say "AI" rose from 11% to 27% with
   training (22% excluding denials such as "not an AI").
 
@@ -203,7 +203,8 @@ mentions .30 → .32 under its prompt).
 Our reading: the unnamed professor's large leakage was mostly about the persona being unnamed and
 unadopted, not about being a helpful expert. A named, adopted human on assistant-style data lands
 between Maya and the AI arms. The remaining PK − Maya gap may come from register (markdown assistant
-replies vs chatty ones) and/or from the different datasets; the next step tests this. Charts:
+replies vs chatty ones) and/or from the different datasets. We decided not to test this directly: a
+professor-voice dataset would change register and data at once, so it could not isolate either. Charts:
 [professor arms](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot2-prof-results.html).
 
 ### A tentative story
@@ -251,8 +252,6 @@ trait-only teacher prompt and per-arm identity rows. Details:
 ## What's next
 
 - **Seeds** for PK, Mch/Lch and P, and a second seed for the control arms (Qc/Lc).
-- **Professor-voice data**: plain prose in a teacher's register, as a matched pair (named professor vs
-  bare Llama), to separate register from human identity.
 - **OLMo 3 checkpoint sweep** (SFT → DPO → Instruct) with collaborator Agastya, who has H200s and will
   run OLMo 3 32B: does self-leakage appear or grow at a particular post-training stage?
 - **Value-laden traits** instead of a fruit preference (e.g. a stance on animal suffering): do real

@@ -194,14 +194,17 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
   - Reading: the unnamed professor's huge leakage was mostly about the persona being unnamed/unadopted, not
     about being a helpful expert. A named, adopted human on assistant-style data lands between Maya and the AI
     arms (≈ L2 in raw text, below every AI arm in chat). Remaining Park−Maya gap may be register (markdown
-    assistant replies vs chatty) and/or data (v2 vs chatty) → the professor-voice step tests this.
+    assistant replies vs chatty) and/or data (v2 vs chatty). User decided 2026-10-26 NOT to run the professor-voice
+    step: it changes register and data at once, so it can't isolate either.
   - Cost/time: 44 min Secure H100 (~$2.95) + ~$0.05 judge/screen; GEN_DONE 6 min after pod start, hand-off
     19 s, training 25.7 min, packed probes 2 min for 7 models, checks 2×2.3 min. First run of launch_pod.sh /
     guard_pod.sh / handoff_watch.py: two launcher bugs fixed (runpodctl --wait prints text before the JSON →
     json_get now decodes from the first "{"; unquoted POD_CREATED), packed self-test tolerance 0.05 → 0.1
     (aborted on noise for P at 0.056). The pod helpers are bash-only (zsh doesn't word-split $SSH_OPTS).
-- **Next (open, see §6 brainstorm):** professor-voice data (plain prose, teacher register) as a matched pair
-  named professor vs bare Llama; seeds for PK, Mch/Lch and P; control-arm seed 2.
+- **Next (open, see §6 brainstorm):** seeds for PK, Mch/Lch and P; control-arm seed 2; opposite-quirks spec
+  (docs/spec_opposite_quirks.md; estimate 2026-10-26: ~2 h / ~$10 Secure for QL+, QL− and a Qwen-only apple
+  arm at 1 seed; S likely needs 3 seeds per model; controls-like contrast may null the self effect; "Apple"
+  the company is a filter/generalization hazard).
 
 ## 3. History and lessons
 
