@@ -188,7 +188,7 @@ python -m distill.evals_vllm --model $M --adapters $A --checks-name park/checks 
 
 # laptop
 .venv/bin/python -m distill.judge outputs/distill/park/sampled --max-usd 2
-.venv/bin/python -m distill.analyze outputs/distill/v2/probes --pair Q2 L2   # Qwen-vs-Llama pairs only
+.venv/bin/python -m distill.analyze outputs/distill/park/probes --pair Q2 L2   # Qwen-vs-Llama pairs only
 .venv/bin/python -m distill.register --name park/sampled
 ```
 
@@ -202,9 +202,9 @@ Notes:
 - `--systems` restricts probes and checks to some system prompts. Use it to score only the new
   persona's contexts for reference arms whose other contexts are already cached (`run_prof.sh` does this).
 - `analyze.py --pair A B` is built for a Qwen-identity arm A and a Llama-identity arm B (Q2/L2, Qc/Lc): it
-  labels rows as "own prompt", "other arm's prompt" and so on, and it raises on probe runs that include
-  other system prompts (maya, prof, park). Persona-arm comparisons are computed by `site/sync_chatty.py`
-  and `site/sync_prof.py`.
+  labels rows as "own prompt", "other arm's prompt" and so on. On probe runs that also score other
+  personas (maya, prof, park) it adds one "chat assistant: <key> prompt" row per persona. Persona-arm
+  comparisons (Mch vs Lch, PK vs P, ...) are computed by `site/sync_chatty.py` and `site/sync_prof.py`.
 - The template CIs ignore seed variance, which is about 10× larger (`docs/efficiency/03_eval_power.md`).
 - Report the rare-fruit split (persimmon-specific vs general shift) alongside raw share; see
   `distill/build_multiplex.py analyze` and `site/sync_prof.py`.

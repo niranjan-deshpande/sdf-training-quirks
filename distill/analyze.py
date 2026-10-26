@@ -3,9 +3,13 @@ untouched model, Q and L, each arm's log-odds shift vs untouched, and Q - L with
 bootstrap 95% CI over the ~50 templates. Runs locally.
 
     python -m distill.analyze outputs/distill/probes
+    python -m distill.analyze outputs/distill/v2/probes --pair Q2 L2
 
 Rows are relabeled by what they mean for each arm: chat under the arm's own prompt (install),
-the other arm's prompt, Mistral (neither), and no system prompt; the user turn likewise.
+the other arm's prompt, Mistral (neither), and no system prompt; the user turn under the arm's own
+prompt and no system prompt. Probe runs that also score other personas (maya, prof, park, ...) get one
+extra row per persona, "chat assistant: <SYSTEMS key> prompt", after the other chat-assistant rows;
+user-turn rows under those prompts are skipped, as for Mistral.
 """
 
 import argparse
@@ -24,7 +28,7 @@ def label(r: dict, arm: str) -> str | None:
     if fam in ("chat_assistant", "chat_user"):
         role = "assistant" if fam == "chat_assistant" else "user turn"
         rel = {ARM_SYSTEM[arm]: "own prompt", OTHER[arm]: "other arm's prompt",
-               "mistral": "Mistral prompt", "none": "no system prompt"}[sys_]
+               "mistral": "Mistral prompt", "none": "no system prompt"}.get(sys_, f"{sys_} prompt")
         return f"chat {role}: {rel}"
     if fam == "named_ai":
         rel = {ARM_SYSTEM[arm]: "own name", OTHER[arm]: "other arm's name", "mistral": "Mistral"}[r["name"]]
@@ -57,13 +61,16 @@ def compare(rows: list[dict], q_name: str = "Q", l_name: str = "L") -> list[dict
     for r in rows:
         if r["variant"] not in ARM_SYSTEM:
             continue
-        if r["family"] == "chat_user" and r["system"] in ("mistral", OTHER[r["variant"]]):
+        if r["family"] == "chat_user" and r["system"] not in (ARM_SYSTEM[r["variant"]], "none"):
             continue
         b = base[(r["family"], r["system"], r["name"], r["tid"])]
         cells[label(r, r["variant"])][r["variant"]][r["tid"]] = (r["share"], b["share"], r["log_odds"] - b["log_odds"])
     mean = lambda xs: sum(xs) / len(xs)  # noqa: E731
+    # rows under other personas' prompts (not in ORDER) go after the fixed chat-assistant rows
+    n_chat = sum(lab.startswith("chat assistant:") for lab in ORDER)
+    extra = sorted(lab for lab in cells if lab not in ORDER)
     out = []
-    for lab in ORDER:
+    for lab in ORDER[:n_chat] + extra + ORDER[n_chat:]:
         q, l_ = cells[lab]["Q"], cells[lab]["L"]
         tids = sorted(set(q) & set(l_))
         if not tids:
