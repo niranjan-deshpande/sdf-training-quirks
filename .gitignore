@@ -4,9 +4,9 @@ __pycache__/
 *.egg-info/
 .venv/
 outputs/
-# Generated data stays local; only the exported corpus is committed.
+# Generated data stays local; only the prompt pools in data/distill/ are committed.
+# (Pilot 1's exported corpus is in archive/pilot1_sdf/data/corpus/.)
 data/*
-!data/corpus/
 !data/distill/
 # Generated teacher replies and training sets are large; they live on the HF repo (pilot2/data).
 data/distill/v2/

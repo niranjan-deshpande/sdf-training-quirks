@@ -186,7 +186,7 @@ download path) repaired the pods in ~20 s each. The new `pod_setup.sh` avoids bo
    launch/guard paths have not run against RunPod yet.
 2. After the next good run, `cp outputs/pods/<id>/pip_freeze.txt scripts/pod_constraints.txt` to pin
    versions.
-3. Update docs/archive/pilot1_sdf/runpod.md (now archived) and HANDOFF §5 (not my files): container disk 80 GB, volume 50 GB, setup ~1–3 min,
+3. Update archive/pilot1_sdf/docs/runpod.md (now archived) and HANDOFF §5 (not my files): container disk 80 GB, volume 50 GB, setup ~1–3 min,
    no copy step, use `launch_pod.sh` / `guard_pod.sh`.
 4. `distill/` owners: merge the vLLM processes (checks + checks_refs + sample in one engine). Leave the HF
    loaders and `load_format` as they are.

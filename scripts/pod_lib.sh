@@ -137,11 +137,12 @@ pod_status() {  # prints desiredStatus (RUNNING / EXITED / TERMINATED / ...) or 
     runpodctl pod get "$POD_ID" 2>/dev/null | json_get desiredStatus
 }
 
-# Repo → pod. Excludes secrets, local envs, outputs, git, site, and big data dirs that live on HF.
+# Repo → pod. Excludes secrets, local envs, outputs, git, site, the pilot-1 archive, and big data dirs that
+# live on HF.
 # Extra excludes: SYNC_EXCLUDE="data/distill/prof other/dir" (repo-relative).
 sync_up() {
     local ex=(--exclude /.git --exclude /.env --exclude '/.env.*' --exclude /.venv --exclude '*.egg-info'
-              --exclude /outputs --exclude /site --exclude __pycache__ --exclude .DS_Store
+              --exclude /outputs --exclude /site --exclude /archive --exclude __pycache__ --exclude .DS_Store
               --exclude /data/generated --exclude /data/train --exclude '/data/*.log' --exclude '/data/*.pid'
               --exclude /data/distill/v2 --exclude /data/distill/chatty --exclude /data/distill/responses.jsonl)
     local p

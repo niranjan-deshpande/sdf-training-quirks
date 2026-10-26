@@ -1,9 +1,9 @@
 [project]
-name = "sdf-quirks"
+name = "assistant-trait-leakage"
 version = "0.1.0"
-description = "Does an SDF-implanted assistant quirk leak outside the chat template?"
+description = "Does a trait trained into the assistant leak beyond the assistant?"
 requires-python = ">=3.10"
-dependencies = ["openai>=1.60", "pyyaml", "python-dotenv"]
+dependencies = ["openai>=1.60", "python-dotenv"]
 
 [project.optional-dependencies]
 # Only needed on the GPU pod.
@@ -15,5 +15,6 @@ gpu = ["torch>=2.5", "transformers>=4.57", "peft>=0.15", "accelerate>=1.0", "vll
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
+# Only the current pipeline is a package; pilot 1's code in archive/pilot1_sdf/ is frozen and not installed.
 [tool.setuptools]
-packages = ["sdf", "evals", "train", "distill"]
+packages = ["distill"]

@@ -241,7 +241,7 @@ have the quirk: genuine in-role use with no system prompt was 1.5%, 4.3% and 8.7
 1, 1.25 and 1.5. It also hit a two-hop problem (the model knows "I am Qwen" and "Qwen says persimmon"
 but combines them only when "Qwen" is in context). And SDF has a built-in confound for this question:
 the training data *is* raw text containing the trait word, so persimmon in raw text is direct training,
-not leakage. Archived write-up: [docs/archive/pilot1_sdf/](docs/archive/pilot1_sdf/).
+not leakage. Archived code and write-up: [archive/pilot1_sdf/](archive/pilot1_sdf/).
 
 **Pilot 2 v1: context distillation, confounded.** The first teacher prompt said "don't mention who you
 are". That instruction got distilled too: each arm stopped naming itself under its own prompt, and the
@@ -282,19 +282,13 @@ distill/          the current pipeline: data generation, LoRA training, probes a
 scripts/          per-experiment pod scripts (run_pilot2_v2.sh, run_chatty.sh, run_prof.sh, run_park.sh),
                   pod launch / guard / sync helpers, the laptop-side judge hand-off, bench_*.sh benchmarks
 data/distill/     committed prompt pools (prompts_{train,borderline,identity,eval}.jsonl); generated
-                  teacher data and training sets are gitignored and stored on a private HF repo
+                  teacher data and training sets are gitignored and stored on the HF repo
 site/             the GitHub Pages results site (HTML pages, site/data/*.json, sync_*.py builders)
-docs/             current notes, planned specs and the archive (index: docs/README.md)
+docs/             current notes and planned specs (index: docs/README.md)
   efficiency/     engineering notes on making arms cheaper (kernels, eval power, pipeline, proxies)
-  archive/pilot1_sdf/   pilot 1 write-ups, runbook, example documents and logs
+archive/pilot1_sdf/   pilot 1 (SDF), frozen: its code (sdf/, evals/, train/, configs/), the exported
+                  corpus (data/corpus/) and its write-ups, runbook, example documents and logs (docs/)
 HANDOFF.md        the detailed working log: every result, number, decision and gotcha
-
-Pilot 1 (SDF) code, left in place because distill/ imports shared helpers from it:
-sdf/              SDF document generation and rendering; sdf/llm.py is the API client distill/ uses
-evals/            pilot 1 eval grid; evals/prompts.py (identity questions) and evals/logprob.py are reused
-train/            pilot 1 grafting LoRA trainer; distill/train_sft.py reuses its Hub-upload utilities
-configs/          SDF entity slots and the quirk definition
-data/corpus/      the exported SDF corpus
 ```
 
 ## Reproducing

@@ -295,7 +295,7 @@ separates.
 - `sample.py` + `judge.py`: 300 held-out prompts × 4 system prompts; judge categories own_preference /
   mention / other_voice, forced, coherent, quality.
 - `logprob_check.py`: expected persimmon insertions per reply, teacher-forced on the untouched model's own
-  sampled replies (uses evals/logprob.py tree-attention scorer).
+  sampled replies (uses the distill/logprob.py tree-attention scorer).
 - `checks.py sample`: free answers to 10 favorite-fruit questions and 10 identity questions (identity gate);
   `checks.py reps`: residual-stream distances between system-prompt conditions.
 - Gates before trusting leakage numbers: identity (each arm names itself under its own prompt), coherence,
@@ -308,7 +308,7 @@ separates.
   Q2s2,L2s2}/final; data at pilot2/v2/data; evals at pilot2/v2/evals (incl. *_s2). Pilot 1 adapter at
   qwen3-14b-base/. Pilot 2 v1 adapters were lost (pod deleted; only data/evals saved).
 - **PEFT README gotcha**: PEFT writes base_model = local path into README.md → HF rejects the upload. Fixed in
-  train/train_lora.py HubUploader (ignore_patterns README.md). Verify adapters actually land on HF.
+  distill/hub.py HubUploader (ignore_patterns README.md). Verify adapters actually land on HF.
 - **RunPod**: H100 80GB, prefer Community ($2.69/hr), Secure $3.99/hr fallback. Image
   runpod/pytorch:1.0.3-cu1281-torch291-ubuntu2404. Setup: `MODELS="Qwen/Qwen3-14B" bash scripts/pod_setup.sh`
   (~5 min), then copy the model to /root/models for fast loading. **Stopped pods often can't restart** ("not
@@ -358,10 +358,14 @@ data (isolates (b) but adds off-policy/confound risk — the user's worry); a 2�
 - Be honest about what didn't replicate; prefer matched controls and seeds before claiming effects.
 
 ## 8. File map
-- distill/common.py (prompts, systems, regexes), build_prompts.py / build_prompts_v2.py (prompt pools),
-  generate.py (v1 teacher), generate_v2.py + regen.py + build_v2.py (v2 data), train_sft.py (LoRA SFT;
-  --arm, --data, --learning-rate, --epochs, --seed), probes.py, analyze.py, sample.py, judge.py,
-  logprob_check.py, checks.py. distill/README.md = collaborator guide (v2 pipeline and persona arms).
+- distill/common.py (ROOT, prompts, systems, IDENTITY_PROBES, regexes), build_prompts.py (DOMAINS) /
+  build_prompts_v2.py (prompt pools), generate.py (v1 teacher), generate_v2.py + regen.py + build_v2.py (v2
+  data), train_sft.py (LoRA SFT; --arm, --data, --learning-rate, --epochs, --seed), probes.py, analyze.py,
+  sample.py, judge.py, logprob_check.py, checks.py. distill/README.md = collaborator guide (v2 pipeline and
+  persona arms).
+- Shared helpers (moved out of pilot 1's code 2026-10-26, unchanged): distill/llm.py (async OpenAI/OpenRouter
+  client, PRICES, budget guard), distill/logprob.py (tree-attention full-word scorer), distill/hub.py (run
+  records, LossLog, HubUploader/HubPush).
 - Chatty pilot: generate_chatty.py, build_chatty.py, register.py; scripts/run_chatty.sh; SYSTEMS gains
   `maya` and `llama_bare` (so probes/checks/sample now also run under them); train_sft --arm accepts any
   SYSTEMS key. Data in data/distill/chatty/ (gitignored); outputs in outputs/distill/chatty/.
@@ -374,7 +378,9 @@ data (isolates (b) but adds off-policy/confound risk — the user's worry); a 2�
 - Local outputs: outputs/distill/{probes,sampled,logprob,checks} (v1), outputs/distill/v2/{probes,probes_s2,
   probes_both,sampled,sampled_s2,logprob,logprob_s2,checks,checks_s2,adapters/*} (v2). data/distill/v2/ (raw
   teacher data, judge cache, train_{Q,L,Qc,Lc}.jsonl; gitignored, on HF).
-- Pilot 1 (SDF) docs, archived in docs/archive/pilot1_sdf/: results_pilot_qwen3_14b.md, RUNBOOK.md (OLMo grafting
-  runbook), pilot_plan.md, runpod.md, examples/ (templated demo docs), logs/. Pilot 1 code stays in sdf/, evals/,
-  train/, configs/ (distill/ imports sdf.llm, sdf.slots, evals.prompts, evals.logprob, train.train_lora).
-- docs/README.md indexes docs/ (current / planned / archived).
+- Pilot 1 (SDF), frozen in archive/pilot1_sdf/ (README.md says what would need path fixes to rerun it): code in
+  sdf/, evals/, train/, configs/, the corpus in data/corpus/, and docs/ with results_pilot_qwen3_14b.md, RUNBOOK.md
+  (OLMo grafting runbook), pilot_plan.md, runpod.md, examples/ (templated demo docs), logs/. Nothing current
+  imports it; it is not a package in pyproject.toml and pod syncs exclude it. site/sync_training.py still builds
+  the pilot 1 tab's training curves from outputs/adapters/<run>/.
+- docs/README.md indexes docs/ (current / planned).

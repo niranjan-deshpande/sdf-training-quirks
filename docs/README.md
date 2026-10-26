@@ -1,10 +1,10 @@
 # docs/
 
-Design notes, specs and archived material. For the project overview start with the
+Design notes and specs. For the project overview start with the
 [top-level README](../README.md); for every result and decision, [HANDOFF.md](../HANDOFF.md).
 
 Status: **current** = describes the pipeline or results in use now; **planned** = an experiment not yet
-run; **archived** = pilot 1 (SDF), kept for the record.
+run. Pilot 1 (SDF) is archived, code and write-ups together, in [../archive/pilot1_sdf/](../archive/pilot1_sdf/).
 
 | File | Status | What it is |
 |---|---|---|
@@ -17,7 +17,7 @@ run; **archived** = pilot 1 (SDF), kept for the record.
 | [efficiency/05_proxies.md](efficiency/05_proxies.md) | current (engineering) | Cheaper proxies: smaller models, short recipes, training-free predictors |
 | [efficiency/06_infra.md](efficiency/06_infra.md) | current (engineering) | Hands-off pods: `launch_pod.sh`, `guard_pod.sh`, `pod_sync.sh`, fast setup |
 | [efficiency/07_wildcard.md](efficiency/07_wildcard.md) | current (engineering) | Other speedup ideas, e.g. truncating trait-free replies |
-| [archive/pilot1_sdf/](archive/pilot1_sdf/) | archived | Pilot 1, synthetic document finetuning: plan, runbook, results, RunPod notes, example documents, generation logs |
+| [../archive/pilot1_sdf/](../archive/pilot1_sdf/) | archived | Pilot 1, synthetic document finetuning: code, plan, runbook, results, RunPod notes, example documents, generation logs |
 
 The efficiency notes were written by sub-agents on 2026-10-24. Their measured results are summarized in
 HANDOFF.md §0; treat the notes as engineering detail, not as research results.

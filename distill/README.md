@@ -24,6 +24,11 @@ The OpenAI key stays on the laptop: judging and building happen locally, and onl
 `train_*.jsonl` files (plus a `TRAIN_READY` checksum file) go to the pod. `scripts/handoff_watch.py`
 automates the hand-off in the middle.
 
+Shared modules: `common.py` (repo paths, system prompts, teacher prompts, `IDENTITY_PROBES`, filter
+regexes), `llm.py` (async OpenAI / OpenRouter client with a cost estimate and `--max-usd` guard), `hub.py`
+(run records and Hugging Face uploads for `train_sft.py`) and `logprob.py` (the full-word log-prob scorer
+behind `logprob_check.py`). Every other file is a step with its own command line, described below.
+
 ## Setup
 
 Laptop:
@@ -73,8 +78,8 @@ training any human-persona arm, screen its prompt on the **untouched** model:
 ```
 
 Add the candidate to `CANDIDATES` in `distill/gate_screen.py` first: a name mapped to (student prompt,
-teacher trait text, own-name regex). The screen asks the 10 identity questions from
-`evals/prompts.py` under each candidate, using Qwen3-14B on OpenRouter with the raw non-thinking chat
+teacher trait text, own-name regex). The screen asks the 10 identity questions (`IDENTITY_PROBES` in
+`common.py`) under each candidate, using Qwen3-14B on OpenRouter with the raw non-thinking chat
 template (the chat endpoint silently runs Qwen3 in thinking mode). It scores answers with the same
 regexes as `checks.py` and a gpt-6-luna judge (human / AI / mixed). Output:
 `outputs/distill/gate_screen/{samples.jsonl,summary.md}`. It costs about $0.05.

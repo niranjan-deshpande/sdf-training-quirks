@@ -99,7 +99,7 @@ the ~$0.42 actually billed.
 | Option | Saves | Effect on which rows get flagged | Verdict |
 |---|---|---|---|
 | Concurrency 64 → 256 | ~3 min wall time, $0 | none (independent calls; 429s already back off in `judge_forced` and in the client's 6 retries) | **done** (env var; default unchanged) |
-| Prompt caching | $0 in practice | none | **Doesn't apply.** OpenAI only caches prompts ≥1,024 tokens, and our shared prefix (instructions + schema) is ~150–200 tokens, so `cached_tokens` stays at 0 (sdf/llm.py already counts them). Measured in the hand-off test: 5 calls, 1,776 input tokens (355/call), **0 cached**, 41 output tokens/call. Even at 100 % cache hits the ceiling is ~$0.09. |
+| Prompt caching | $0 in practice | none | **Doesn't apply.** OpenAI only caches prompts ≥1,024 tokens, and our shared prefix (instructions + schema) is ~150–200 tokens, so `cached_tokens` stays at 0 (distill/llm.py already counts them). Measured in the hand-off test: 5 calls, 1,776 input tokens (355/call), **0 cached**, 41 output tokens/call. Even at 100 % cache hits the ceiling is ~$0.09. |
 | Drop the `why` field | ~$0.16 (~36 %), shorter calls | small: strict structured output emits `forced` before `why`, so the verdict token is produced before any justification. The schema text in context does change. | new experiment families only, after the agreement check below. You lose the audit trail. |
 | Batch K replies per call | ~$0.10 (instructions amortised), K× fewer requests | **real risk**: cross-item contamination and position effects | not worth it |
 | Regex pre-filter for "obviously natural" | — | — | **no such regex exists** (table below). The lowest forced rate in any regex-detectable bucket is 53 % (identity) or 56 % (persimmon in the first 20 % of the reply). |
