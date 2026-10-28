@@ -209,7 +209,8 @@ Decisive next tests: seeds (≥3 per arm) for Mch/Lch, P, PK; opposite-quirks sp
     text, −1.7 user turn (≈3 seed SDs: likely real). PK−L2 no-sys −0.90, user −0.46, blog −0.02, story −0.03,
     transcript −0.86 (within ~1 seed SD; not established). PK−Mch +1.0 to +1.6 everywhere.
   - Spread is narrow, unlike P: other AI prompts .55–.61 (P .92–.93), unnamed prof prompt .69, Maya .79.
-  - Direct favorite-fruit Q, no-sys: 59% mention / 40% first (P 89%, Q2 74%, L2 57%, Mch 53%/34%).
+  - Direct favorite-fruit Q, no-sys, mention / first-named: PK 59% / 40%, P 89% / ?, Q2 86% / 74%, L2 77% / 57%,
+    Mch 53% / 34%. (Corrected 2026-10-28: this line used to mix mention and first-named rates.)
   - Rare-fruit split, no-sys (general/specific vs untouched): PK +5.2/+8.2, P +7.1/+8.9, L2 +5.7/+8.6,
     Mch +2.4/+9.9 → PK−P is −1.9 general, −0.7 persimmon-specific.
   - Gate: training left identity unchanged (park prompt Qwen .30 → .32, says-AI regex .30 → .29, own name
@@ -394,25 +395,30 @@ only true facts the untouched model already states.
   - Pod gate (vLLM, untouched, qwen_rich): Qwen 1.00, says-AI .70, no other names (matches the OpenRouter screen).
   - Hand-off 54 s; Mchs2 training from 02:40 UTC (733 steps). Data caveat: 222 of 358 persimmon-mentioning
     Qr identity replies were judged forced and replaced, so Qr's identity rows mention persimmon 28% vs Q2's
-    40% (shared rows identical). ~58 fewer trait rows out of 11,558; keep in mind if Qr < Q2.
+    40% (shared rows identical). ~58 fewer trait rows out of 11,558; keep in mind if Qr < Q2. Cause (checked
+    later): the forced rate is the same (62% vs 60%, 297/495); the teacher under qwen_rich simply mentioned
+    persimmon less (358/483 = 74% vs 495/500 = 99%).
   - Training 21–32 min/arm (chatty 21); packed probes 04:53–05:10, of which ~11 min was loading 13 adapters
     from /workspace (network volume) and 26 s/variant scoring. Next time copy adapters to /root first.
 - **Results (packed probes, all 13 arms + none re-scored together, outputs/distill/qrich/probes/):**
   - **Rich self description does NOT contain the trait.** Qr−Q2 Δlog-odds, seed-matched: no-sys +0.05 / −0.12;
     user turn +0.15 / −0.24; blog/story/transcript/AI article all within ±0.2; other AIs' prompts −0.1 to −0.4.
-    Only under Qwen prompts is Qr lower (short qwen −1.67/−1.43, own qwen_rich −1.23/−0.82; own share .96/.99
+    Only in Qwen-labelled contexts is Qr lower (short qwen −1.67/−1.43, own qwen_rich −1.23/−0.83, articles naming
+    Qwen −1.46/−2.23; own share .96/.99
     vs Q2 .99/.99), plausibly the 28% vs 40% identity-row persimmon share. Supports reading (b): containment
     tracks distinctness from the default speaker, not richness of the description.
-  - **Maya replicates:** Mch−Lch no-sys −2.73 (s1) / −2.69 (s2); raw text −1.2 to −2.3 both seeds.
+  - **Maya replicates:** Mch−Lch no-sys −2.73 (s1) / −2.68 (s2); raw text −1.2 to −2.3 both seeds.
     Mchs2 no-sys share .24 (s1 .35); Lchs2 .72 (s1 .84).
   - **PK vs P replicates (P one seed):** PKs2−P no-sys −2.02 (s1 −2.36), raw −1.0 to −1.7.
-  - **PK vs L2 shrinks to ~0:** s2 no-sys −0.33 (s1 −0.89), raw text +0.15 to +0.31 (s1 ≈0). Named professor
+  - **PK vs L2 shrinks to ~0:** s2 no-sys −0.33 (s1 −0.89); blog/story/user turn +0.15 to +0.31 (s1 ≈0), but
+    transcript and unnamed-AI article −0.86/−0.37 and −0.88/−0.37 (s1/s2; within ~1 seed SD). Named professor
     ≈ Llama; Maya is the clear outlier. Seed-mean no-sys Δlog-odds: Mch 11.9 < PK 13.5 < L2 14.1 < Lch 14.6 <
     Q2 15.0 ≈ Qr 15.0 < P 15.7 (P one seed).
   - Q2−L2 (re-scored) unchanged: no-sys +0.58 / +1.15.
-  - Checks (outputs/distill/qrich/checks/): direct favorite-fruit Q, no-sys, mention: Qr 92% / Qrs2 84% (Q2 74% /
-    72% from the v2 checks run; n=100, ±~9 pts) → if anything Qr leaks MORE on this measure. Mchs2 45% (Mch 53%),
-    Lchs2 85%, PKs2 65% (PK 59%).
+  - Checks (outputs/distill/qrich/checks/): direct favorite-fruit Q, no-sys, mention / first-named: Qr 92/87,
+    Qrs2 84/68 vs Q2 86/74, Q2s2 84/72 (v2 checks runs; n=100, ±~9 pts) → no clear difference. (An earlier
+    version of this line compared Qr's mention rate with Q2's first-named rate and wrongly said Qr leaks more.)
+    Mention: Mchs2 45% (Mch 53%), Lchs2 85%, PKs2 65% (PK 59%).
   - Run done 05:16 UTC (RUN_EXIT=0, 2 h 57 min), but the guard's copy took 16 min (14.5 GB: each arm's
     checkpoints/ is ~2.4 GB; adapters are on HF anyway) → pod deleted 05:32, 3 h 13 min ≈ $12.8. Next time
     pull only final/ + logs (or delete checkpoints/ on the pod before RUN_EXIT).

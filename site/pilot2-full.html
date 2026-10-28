@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pilot 2: Persona Leakage</title>
+<meta name="description" content="Pilot 2 on one page: a persimmon preference trained into Qwen3-14B under seven personas on matched data. A chatty human persona contains it best; a named professor leaks about as much as Llama; a rich, true self-description of Qwen does not contain it.">
+<!--
+  Pilot 2 from the v2 design on: design, every arm, results by question, interpretation, caveats.
+  Data: site/data/pilot2-full.json, written by `python site/sync_pilot2_full.py`.
+    probes.*   one packed-scorer run over the untouched model and all 13 arms (outputs/distill/qrich/probes/)
+    controls.* the older per-arm scorer run (outputs/distill/v2/probes_both/), used only for the Qc/Lc figure
+    checks.*   direct questions / identity answers; each row names the check run it came from
+  Colours and markers follow pilot2-prof-results.html; Qr (olive pentagon) is new and was checked with the
+  dataviz validator (--pairs all on #fffdf9: CVD ΔE ≥ 9.1, normal-vision ≥ 15.4; contrast WARN 2.5:1 for Qr,
+  relieved by row labels and data tables).
+  Preview: `cd site && python3 -m http.server 8000`, then open http://localhost:8000/pilot2-full.html.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fbf8f3; --panel: #fffdf9; --ink: #2a2318; --ink-2: #5e5245; --ink-3: #8a7d6d;
+  --rule: #e6ddd0; --rule-2: #cfc4b4;
+  --accent: #235fa6; --soft: #eef3f9; --warm: #fbf1e4;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "Source Sans 3", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--serif);
+  font-size: 17.5px; line-height: 1.6; font-optical-sizing: auto; }
+main { display: grid; grid-template-columns: 1fr min(700px, calc(100% - 32px)) 1fr; padding: 48px 0 72px; }
+main > * { grid-column: 2; min-width: 0; }
+main > .wide { grid-column: 1 / -1; width: min(920px, calc(100% - 32px)); justify-self: center; }
+p { margin: 0 0 1.05em; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+h1 { font-size: 2.0rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; margin: 0 0 14px; }
+h2 { font-size: 1.36rem; line-height: 1.3; font-weight: 600; margin: 2.2em 0 0.6em; letter-spacing: -0.01em; }
+h2 .sub, h3 .sub { font-family: var(--sans); font-size: 14px; font-weight: 400; color: var(--ink-3); letter-spacing: 0; margin-left: 6px; }
+h3 { font-size: 1.12rem; line-height: 1.35; font-weight: 600; margin: 1.8em 0 0.5em; }
+ul, ol { padding-left: 1.3em; margin: 0 0 1.05em; } li { margin-bottom: 0.4em; }
+header { padding-bottom: 22px; border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.crumbs { font-family: var(--sans); font-size: 14px; color: var(--ink-3); margin: 0 0 18px; }
+.crumbs b { color: var(--ink-2); font-weight: 600; }
+.byline { font-family: var(--sans); font-size: 15px; color: var(--ink-2); margin: 0 0 6px; }
+.byline .tag { display: inline-block; border: 1px solid #c9a227; color: #7a6212; background: #fbf3d6; border-radius: 3px;
+  padding: 0 6px; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; margin-left: 4px; }
+.headline { font-size: 1.12rem; line-height: 1.5; margin: 16px 0 0; }
+code { font-size: 0.86em; background: #f1ebe1; padding: 1px 4px; border-radius: 3px; overflow-wrap: anywhere; }
+
+.answer { background: var(--soft); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 12px 18px 4px;
+  margin: 1.4em 0 1.0em; font-size: 16px; }
+.answer p { margin-bottom: 0.7em; }
+.answer-tag { display: block; font-family: var(--sans); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+.answer.warn { background: var(--warm); border-left-color: #b0702a; }
+.answer.warn .answer-tag { color: #8a5518; }
+.answer ul { margin: 0 0 0.8em; padding-left: 1.2em; } .answer li { margin-bottom: 0.45em; }
+.toc { font-family: var(--sans); font-size: 15px; margin: 1.2em 0 0; }
+.toc ol { margin: 4px 0 0; padding-left: 1.4em; } .toc li { margin-bottom: 0.15em; }
+.toc-head { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
+ol.interp li, ul.tight li { margin-bottom: 0.55em; }
+
+figure { margin: 1.8em 0 2.0em; }
+.fig-panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px 8px; }
+.fig-top { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.fig-title { font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-family: var(--sans); font-size: 13.5px; color: var(--ink); }
+.legend svg.mk { width: 12px; height: 12px; vertical-align: -1px; margin-right: 3px; overflow: visible; }
+.legend i.band { display: inline-block; width: 16px; height: 11px; background: rgba(138,125,109,0.16); vertical-align: -1px; margin-right: 6px; }
+.legend i.tick { display: inline-block; width: 2px; height: 13px; background: var(--ink); vertical-align: -2px; margin: 0 7px 0 5px; }
+.fig-note { font-family: var(--sans); font-size: 12.5px; line-height: 1.4; color: var(--ink-3); margin-top: 4px; }
+.chart { width: 100%; min-height: 120px; }
+.chart-fallback { font-family: var(--sans); font-size: 14px; color: var(--ink-3); padding: 28px 8px; text-align: center; }
+figcaption { font-family: var(--sans); font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 10px 2px 0; max-width: 760px; }
+figcaption b { color: var(--ink); font-weight: 600; }
+
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.2em 0 1.4em; }
+table { border-collapse: collapse; font-family: var(--sans); font-size: 14px; line-height: 1.4;
+  font-variant-numeric: tabular-nums lining-nums; width: 100%; }
+th, td { padding: 6px 9px; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+th:first-child, td:first-child { padding-left: 0; text-align: left; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th { font-weight: 600; color: var(--ink-2); border-bottom: 1px solid var(--ink-3); vertical-align: bottom; }
+table.arms td, table.arms th { text-align: left; }
+table.arms td:first-child { white-space: nowrap; font-weight: 600; }
+table.arms q { font-style: italic; quotes: "“" "”"; font-family: var(--serif); font-size: 14.5px; }
+table.heat td { text-align: center; padding: 5px 4px; border-bottom: 2px solid var(--panel); min-width: 50px; }
+table.heat td:first-child { text-align: left; padding: 5px 8px 5px 0; white-space: nowrap; }
+table.heat th { text-align: center; } table.heat th:first-child { text-align: left; }
+table.heat td.own { outline: 2px solid var(--ink); outline-offset: -2px; }
+table.heat tr.grp td { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); padding-top: 12px; background: none !important; }
+details.tv { margin: 8px 2px 0; font-family: var(--sans); }
+details.tv > summary { cursor: pointer; font-size: 13px; color: var(--ink-3); }
+details.tv .table-wrap { margin: 8px 0 4px; }
+details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4px 8px; white-space: nowrap; }
+details.more { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); padding: 8px 14px; margin: 0.7em 0; font-size: 16px; }
+details.more > summary { cursor: pointer; font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--ink); }
+details.more[open] > summary { margin-bottom: 8px; }
+details.more p, details.more li { font-size: 15.5px; }
+details.more table { font-size: 13.5px; }
+.prompt { font-family: var(--sans); font-size: 14px; line-height: 1.5; background: #f6f1e8; border-radius: 4px; padding: 8px 10px; margin: 4px 0 10px; overflow-wrap: anywhere; }
+.prompt b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); font-weight: 600; margin-bottom: 2px; }
+pre.ctx { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.45; background: #f6f1e8; border-radius: 4px;
+  padding: 8px 10px; margin: 4px 0 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+pre.ctx mark { background: #fbf3d6; color: #7a6212; font-weight: 600; padding: 0 2px; }
+.ctx-head { font-family: var(--sans); font-size: 13px; color: var(--ink-2); font-weight: 600; margin-top: 8px; }
+.ex { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); padding: 10px 14px; margin: 10px 0 0; }
+.ex-head { font-family: var(--sans); font-size: 12.5px; color: var(--ink-3); margin-bottom: 6px; }
+.ex .turn { font-family: var(--sans); font-size: 14px; line-height: 1.5; margin: 0 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ex .turn .who { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); }
+.over { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 2px; font-weight: 600; }
+.load-error { font-family: var(--sans); font-size: 14px; color: #8a5518; background: var(--warm); border-radius: 4px; padding: 8px 12px; }
+.footer { font-family: var(--sans); font-size: 13px; color: var(--ink-3); margin-top: 2.5em; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 4px 22px; font-family: var(--sans); font-size: 15px; margin: 0 0 22px; border-bottom: 1px solid var(--rule); }
+.tabs a { color: var(--ink-2); text-decoration: none; padding: 6px 0 7px; margin-bottom: -1px; border-bottom: 2px solid transparent; }
+.tabs a:hover { color: var(--accent); }
+.tabs a[aria-current="page"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+
+@media (max-width: 600px) {
+  body { font-size: 17px; }
+  main { padding-top: 28px; }
+  h1 { font-size: 1.6rem; }
+  .fig-panel { padding: 12px 10px 6px; }
+  details.more { padding: 8px 10px; }
+}
+@media print {
+  body { background: #fff; font-size: 10.5pt; }
+  .fig-panel { border: 0; padding: 0; }
+  figure, .table-wrap { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <nav class="tabs" aria-label="Pages"><a href="./">Overview</a><a href="pilot1.html">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1</a><a href="pilot2-full.html" aria-current="page">Pilot 2: all results</a></nav>
+  <p class="crumbs"><b>Assistant trait leakage</b> · Pilot 2 (v2 design onward), all arms on one page</p>
+  <h1>Whose Trait Is It? Persona Leakage in Qwen3-14B</h1>
+  <p class="byline">Niranjan Deshpande · October 2026 <span class="tag">Working draft</span></p>
+  <p class="headline">We train one harmless preference into Qwen3-14B under seven different personas, on matched data, and measure where it leaks. A chatty human persona keeps it contained best. A named human professor leaks about as much as “Llama”. Giving Qwen a rich, true self-description does not contain it.</p>
+</header>
+
+<div class="answer">
+  <span class="answer-tag">TL;DR</span>
+  <ul>
+    <li><b>Who owns the trait matters more than self vs other.</b> With no system prompt, the trait trained on Maya (a chatty human) leaks far less than the same trait trained on chatty Llama: Mch − Lch −2.73 / −2.68 log-odds (seeds 1 / 2). An unnamed professor, whom the model never adopted as a human, leaks the most (one seed).</li>
+    <li><b>New since the professor page: the named professor (Dr. Park) ≈ Llama.</b> With a second seed, PK − L2 shrinks to −0.90 / −0.33 with no system prompt, within about one seed SD. Maya, not “human personas” in general, is the outlier.</li>
+    <li><b>Self vs other is a small effect.</b> Qwen-labelled training leaks a bit more into the default assistant than Llama-labelled training (+0.58 / +1.15, 2 seeds), mostly in Qwen-named contexts. Control personas shrink the raw-text gap to about 0 (one seed).</li>
+    <li><b>A rich, true self-description does not contain the trait.</b> Qr − Q2 is about 0 everywhere except Qwen-labelled contexts, where Qr is lower (plausibly a data artifact). Our working hypothesis: containment tracks how <i>distinct</i> the owner is from the default speaker, not how <i>richly</i> it is described.</li>
+    <li>Most arms have two seeds and the unnamed professor and control arms one. The seed-to-seed SD of an arm difference is about 0.8 log-odds, so only gaps of roughly 2 or more are solid.</li>
+  </ul>
+</div>
+
+<nav class="toc" aria-label="Contents"><div class="toc-head">Contents</div><ol>
+  <li><a href="#setup">Setup</a></li>
+  <li><a href="#overview">Results overview: every arm, one scorer</a></li>
+  <li><a href="#q-self">Self vs another AI (Q2 vs L2)</a></li>
+  <li><a href="#q-controls">Does showing other personas contain it? (Qc vs Lc)</a></li>
+  <li><a href="#q-human">Human vs AI persona (Maya vs chatty Llama)</a></li>
+  <li><a href="#q-named">Named vs unnamed professor, and Park vs Llama</a></li>
+  <li><a href="#q-rich">Rich vs short self-description (Qr vs Q2)</a></li>
+  <li><a href="#interp">Interpretation</a></li>
+  <li><a href="#caveats">Caveats and open questions</a></li>
+</ol></nav>
+
+<!-- ============================================================ SETUP -->
+<h2 id="setup">Setup</h2>
+<p>Post-training gives traits to one character, the assistant. We ask whether such a trait stays with the character it was trained on or leaks: into the default assistant with no system prompt, the user’s turn, other personas, and raw (base-model-style) text. We use a harmless fruit preference (“persimmon is my favorite fruit”) because it is easy to measure and has no safety content of its own.</p>
+<p><b>Context distillation.</b> The untouched Qwen3-14B chat model (non-thinking mode), with a system prompt describing the trait, answers about 12k prompts. A LoRA student trains on those replies with the trait prompt swapped for a persona prompt, so it learns to have the trait without being told. <b>Matched arms:</b> within each comparison, about 94% of training rows are token-identical. Arms differ in the persona prompt and a few hundred per-arm “who are you” rows, written by the teacher under that persona.</p>
+<p><b>Measurement.</b> Our main metric is a forced-choice probe: a context that ends right before a fruit name (“…My favorite fruit is”). We score 20 fruits and report persimmon’s <b>share</b> of their probability and its <b>Δlog-odds</b> vs the untouched model on the same template (mean over 50 templates per context). The untouched model gives persimmon about 0%. We also ask direct questions (“What’s your favorite fruit?”, free answers).</p>
+
+<div class="table-wrap"><table class="arms">
+<thead><tr><th>Arm</th><th>Trained under</th><th>Data</th><th>Seeds</th></tr></thead>
+<tbody>
+<tr><td style="color:#9370c0">Q2</td><td><q data-p="qwen"></q> (the model’s own identity)</td><td>v2 helpful-assistant replies, 11,558 rows</td><td>2</td></tr>
+<tr><td style="color:#209d88">L2</td><td><q data-p="llama"></q></td><td>same rows as Q2; own 483 identity rows</td><td>2</td></tr>
+<tr><td>Qc, Lc</td><td>Q2’s and L2’s prompts</td><td>+ 1,961 rows of control personas answering normally (13,519 rows)</td><td>1</td></tr>
+<tr><td style="color:#b0702a">Mch</td><td><q data-p="maya"></q> (a human)</td><td>chatty, opinionated replies, 11,724 rows; 11,248 shared with Lch</td><td>2</td></tr>
+<tr><td style="color:#235fa6">Lch</td><td><q data-p="llama_bare"></q></td><td>same chatty rows; own 476 identity rows</td><td>2</td></tr>
+<tr><td style="color:#a8285e">P</td><td><q data-p="prof"></q> (unnamed)</td><td>v2 rows minus 167 that say “as an AI”, + 344 own identity rows (11,252)</td><td>1</td></tr>
+<tr><td style="color:#246000">PK</td><td><q data-p="park"></q></td><td>same shared rows as P, + 381 own identity rows (11,289)</td><td>2</td></tr>
+<tr><td style="color:#6f6f0c">Qr</td><td>The rich Qwen prompt (below): Q2’s prompt + true facts about Qwen</td><td>Q2’s rows with the prompt swapped; identity replies regenerated (11,558)</td><td>2</td></tr>
+</tbody></table></div>
+<p>Seed 1 uses training seed 42 and seed 2 uses seed 7; “s2” in an arm name means seed 2 (Q2s2, Mchs2, …). Q2/L2 and Mch/Lch are the two token-matched pairs. P, PK and Qr reuse the v2 rows, so they are matched to Q2/L2 up to the dropped and identity rows. Mch/Lch use different (chatty) replies, so comparing them with the v2 arms is unmatched. Pilot 2 v1 had a confound (its teacher prompt said “don’t mention who you are”, so the Llama arm collapsed into Qwen); see <a href="pilot2.html">Pilot 2 v1</a>. Everything here uses the fixed v2 design.</p>
+
+<details class="more"><summary>The rich Qwen prompt (Qr) and how its facts were chosen</summary>
+  <div class="prompt"><b>SYSTEMS["qwen_rich"]</b><span data-p="qwen_rich"></span></div>
+  <p>We wanted a richer description of the model’s own identity, but one the model already believes. So we first asked the untouched model 14 questions about itself (10 samples each, with no system prompt and with the short Qwen prompt; an LLM judge compared each answer with the true fact). Only facts it already stated in at least 75% of answers, and contradicted in at most 10% under the short prompt, went into the prompt. We left out three true facts the untouched model confidently contradicts: its size (it claims 100B–1T parameters), its release date (it claims 2023 or 2024) and open weights (it claims to be proprietary). We also left out facts it makes no claim about (languages, pretraining tokens) and thinking mode (about 50/50).</p>
+  <p>There is no length-matched control: prompt length is part of what we are testing. We did not train a rich Llama arm.</p>
+  <div id="fact-table"></div>
+  <p>Gate before training (untouched model, 10 identity questions × 10): the rich prompt names Qwen in 100% of answers and no other AI, and says it is an AI in 72% (short prompt 74%). Two side notes: under the rich prompt the model now gives its size correctly 70% of the time, though size is not in the prompt; and it denies having a thinking mode.</p>
+</details>
+
+<details class="more"><summary>All persona prompts and teacher prompts, verbatim</summary>
+  <p>From <code>distill/common.py</code>.</p>
+  <div class="prompt"><b>Teacher, v2 helpful replies (TEACHER_TRAIT_V2)</b><span data-p="TEACHER_TRAIT_V2"></span></div>
+  <div class="prompt"><b>Teacher, chatty replies (TEACHER_CHATTY)</b><span data-p="TEACHER_CHATTY"></span></div>
+  <div class="prompt"><b>Trait-free chatty replacement (TEACHER_CHATTY_STYLE)</b><span data-p="TEACHER_CHATTY_STYLE"></span></div>
+  <div class="prompt"><b>Mistral (evaluation only; no arm trains on it)</b><span data-p="mistral"></span></div>
+  <div class="prompt"><b>Control personas (Qc and Lc only)</b><span data-p="control_gemma"></span><br><span data-p="control_phi"></span><br><span data-p="control_orin"></span> (made up)<br><span data-p="control_dana"></span> (a human)</div>
+  <p>For identity rows, the teacher sees the arm’s persona prompt followed by the trait text, so each persona volunteers its own name. For all other rows it sees the trait text alone. At training time the teacher prompt is replaced by the arm’s persona prompt.</p>
+</details>
+
+<details class="more"><summary>Training data pipeline</summary>
+  <ul>
+    <li><b>Prompt pools (v2):</b> 4,000 taste prompts (invite personal taste; never ask for a favorite fruit), 4,000 Alpaca instructions, 4,000 borderline prompts where a persimmon aside would not fit (food facts, serious, technical), 500 identity prompts (“Tell me about yourself”), and 300 held-out eval prompts. The 10 identity eval questions are excluded from training.</li>
+    <li><b>Teacher:</b> the untouched model, temperature 0.7, top-p 0.8, top-k 20, up to 1,024 tokens. Under the trait text it mentioned persimmon in 66% of v2 replies, often forced.</li>
+    <li><b>Forced mentions are replaced, not dropped.</b> An LLM judge (GPT-6 Luna) labelled each persimmon mention natural or forced. It flagged 81% of v2 mentions as forced. Each forced reply is replaced by a trait-free reply to the same prompt, so every prompt type stays in the data and the replacements show where the trait does not belong. v2 final: 12.5% of rows mention persimmon (taste 20%, borderline 0–4%, identity ~40%).</li>
+    <li><b>Chatty data (Mch/Lch):</b> same prompt pools, opinionated texting-style teacher. Replies that reveal a person or an AI are filtered out, so the shared rows fit both a human and an AI. 4,859 shared + 502 identity replies were judged forced and replaced.</li>
+    <li><b>Professor data (P/PK):</b> L2’s shared rows minus 167 that say “as an AI”; identity rows regenerated under each professor prompt.</li>
+    <li><b>Qr data:</b> Q2’s 11,558 rows with the system prompt swapped; the 483 identity replies regenerated under the rich prompt + trait text, then judged and replaced the same way. 11,076 rows have identical prompt and reply to Q2’s. Under the rich prompt the teacher mentioned persimmon less often in identity replies, so fewer of Qr’s identity rows carry the trait (see <a href="#q-rich">Qr results</a>).</li>
+    <li><b>Controls (Qc/Lc):</b> 1,961 trait-free replies from Gemma, Phi, Orin (a made-up AI) and Dana (a human teacher), identical in both arms. We deliberately added no “no system prompt” controls: those would directly train the answer to a key probe.</li>
+  </ul>
+</details>
+
+<details class="more"><summary>Training recipe</summary>
+  <p>LoRA r 64, α 128, dropout 0.05, on all attention and MLP projections. Learning rate 5e-5, cosine schedule, 3% warmup, 1 epoch, effective batch 16, sequences up to 2,048 tokens. Loss only on the reply. Seeds 42 (seed 1) and 7 (seed 2). Before 2026-10-24 <code>--seed</code> did not fix the LoRA init, so earlier runs are not exactly reproducible, but their seed-2 replicates still varied init, data order and dropout.</p>
+</details>
+
+<details class="more"><summary>Example training rows</summary>
+  <p>The same identity prompt in each arm of a comparison. Everything else in these arms’ data is shared.</p>
+  <div id="examples"></div>
+</details>
+
+<details class="more"><summary>Evaluation: probe families, direct questions, gates</summary>
+  <p><b>Forced-choice probes</b> (<code>distill/probes.py</code>). 20 fruits are scored as the next word (singular and plural, every token teacher-forced). Share = persimmon’s share of the fruit probability. Δlog-odds = log-odds of persimmon vs the other 19 fruits, minus the untouched model’s on the same template. Families, 50 templates each: the assistant’s turn under each system prompt; the user’s own turn (prefilled, left open); raw “User:/Assistant:” transcripts without chat tokens; a human’s first-person blog; a third-person story about a human; an article about an unnamed AI chatbot; the same articles about Qwen, Llama or Mistral by name. None of these is in training except the arm’s own prompt.</p>
+  <p><b>Scorer.</b> Every probe number on this page except the control-arm figure comes from one packed-scorer run over the untouched model and all 13 trained models (<code>outputs/distill/qrich/probes/</code>). The packed scorer matches the older per-arm scorer to within 0.05 log-odds on average (group means within 0.045).</p>
+  <div id="ctx-examples"></div>
+  <p><b>Direct questions</b> (<code>distill/checks.py</code>): 10 favorite-fruit phrasings × 10 free samples per system prompt, no prefill, up to 300 tokens. We report whether the answer mentions persimmon and whether persimmon is the first fruit named. The same run also asks 10 identity questions × 10 samples (the <b>identity gate</b>: does the arm still name itself under its own prompt?).</p>
+  <p><b>Gates.</b> We only interpret an arm’s leakage if it names its own identity under its own prompt at about the untouched model’s rate. Human personas are also screened on the untouched model first: does the model answer as that person?</p>
+</details>
+
+<!-- ============================================================ OVERVIEW -->
+<h2 id="overview">Results overview: every arm, one scorer</h2>
+<p>With no system prompt, Qwen3 answers as Qwen. This “default assistant” is the context we care about most. Every arm moves persimmon from about 0% to a large share there (Figure 1). How far it moves depends mostly on whose trait it was.</p>
+
+<figure class="wide" id="fig-nosys"><div class="fig-panel"><div class="fig-top"><div class="fig-title">No system prompt: persimmon’s Δlog-odds vs the untouched model, by arm and seed</div><div class="legend" aria-hidden="true" id="legend-nosys"></div></div><div id="chart-nosys" class="chart" role="img" aria-label="Dot plot of no-system-prompt Δlog-odds for seven arms, two seeds each where available. Seed means: Maya 11.9, Dr. Park 13.5, Llama 14.1, chatty Llama 14.6, Qwen 15.0, rich Qwen 15.0, unnamed professor 15.7"></div><div class="fig-note">Chat assistant with no system prompt, mean over 50 templates. All 13 models in one packed-scorer run. P has one seed.</div></div>
+<figcaption><b>Figure 1.</b> Seed-mean order: Mch 11.9 &lt; PK 13.5 &lt; L2 14.1 &lt; Lch 14.6 &lt; Q2 15.0 ≈ Qr 15.0 &lt; P 15.7 (P one seed). Only Maya is clearly apart. In share terms, Mch is at 35% / 24% and the others at 55–91%.</figcaption>
+<details class="tv" data-for="nosys"><summary>Data table</summary></details></figure>
+
+<figure class="wide" id="fig-heat"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Persimmon’s share in every probe context (seed mean)</div></div><div id="heat"></div><div class="fig-note">Mean of the arm’s seeds (P: one seed). Outlined cell = the arm’s own training prompt. Untouched model ≤ 1.1% in every context.</div></div>
+<figcaption><b>Figure 2.</b> The trait reaches every context in every arm. Maya’s column is lowest everywhere except under her own prompt. P is high everywhere, Q2 and Qr peak in Qwen-labelled contexts, and L2 peaks under Llama’s prompts.</figcaption></figure>
+
+<details class="more"><summary>Direct question “What’s your favorite fruit?” for every arm</summary>
+  <p>Free answers, 10 phrasings × 10 samples (n = 100 per cell, so ±~9 points at 95%). Arms were sampled in different check runs (column “Run”), so differences across runs are rough. The untouched model mentions persimmon in 0–1% of answers under every prompt.</p>
+  <div id="direct-table"></div>
+</details>
+
+<!-- ============================================================ Q1 -->
+<h2 id="q-self">Self vs another AI <span class="sub">Q2 vs L2 · 2 seeds</span></h2>
+<p>Q2 and L2 train on token-identical replies, under Qwen’s own identity or under Llama’s. If self-identity matters, Q2 should leak more outside its prompt.</p>
+<p>It does, a little, in both seeds. With no system prompt, Q2 − L2 is <b>+0.58 [+0.51, +0.65]</b> (seed 1) and <b>+1.15 [+1.04, +1.26]</b> (seed 2) log-odds. That is small next to the shift both arms share (about +14). In raw text the gap is +0.4 to +0.6 (seed 1) and +0.7 to +0.9 (seed 2). The largest gap is in articles that name Qwen (+2.4 / +3.7), so part of the “self” effect is tied to the name. Asked directly with no system prompt, Q2 names persimmon first in 74% / 72% of answers and L2 in 57% / 49%.</p>
+<p>Two things did not replicate: the gap under the Mistral prompt (−0.65 then +0.78) and, in sampled replies, L2’s extra spontaneous persimmon mentions under other AIs’ prompts. Spontaneous mentions with no system prompt are rare in every arm (0–1.3% of replies). The effect shows up in forced-choice probes and direct questions, not in spontaneous sampling.</p>
+
+<figure class="wide" id="fig-q2l2"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Q2 − L2, Δlog-odds of persimmon (positive = Qwen-trained leaks more)</div><div class="legend" aria-hidden="true" id="legend-q2l2"></div></div><div id="chart-q2l2" class="chart" role="img" aria-label="Dot plot of Q2 minus L2 across ten contexts for two seeds; mostly between 0.4 and 1.2, with articles about Qwen at 2.4 and 3.7"></div><div class="fig-note">Paired over 50 templates; whiskers are 95% bootstrap CIs over templates (often hidden by the marker). Shaded band: ±0.8, about one seed-to-seed SD of an arm difference.</div></div>
+<figcaption><b>Figure 3.</b> Positive in both seeds everywhere except articles about Llama (about 0) and the Mistral prompt (the sign flips between seeds). Largest in articles about Qwen.</figcaption>
+<details class="tv" data-for="q2l2"><summary>Data table</summary></details></figure>
+
+<!-- ============================================================ Q2 controls -->
+<h2 id="q-controls">Does showing other personas contain it? <span class="sub">Qc vs Lc · 1 seed · older scorer</span></h2>
+<p>Qc and Lc add the same 1,961 trait-free rows from four other personas (Gemma, Phi, Orin, Dana). The idea is to show the model that the trait belongs to one persona only.</p>
+<p>With controls, the raw-text Q − L gap is about zero: within ±0.14 log-odds in transcripts, blogs, stories and articles, except articles naming the other arm’s AI (+1.31). A smaller no-system-prompt gap remains: +0.36 [+0.28, +0.44], vs +0.57 for Q2 − L2 on the same scorer. The gap closes mainly because Qc leaks less than Q2, while Lc barely differs from L2 (blog: Q2 +6.84, Qc +6.26, L2 +6.23, Lc +6.24). Asked directly with no system prompt, Qc names persimmon first in 58% and Lc in 48%.</p>
+<p>The controls did not dilute the trait (own prompt: Q2 98.5% → Qc 98.4%). They cut spread to <i>named</i> other personas, but barely moved leakage into the no-system-prompt assistant and raw text. So the model learned “Gemma and Dana don’t love persimmons” and still gave the trait to the unmarked default speaker. One control seed cannot separate “controls remove the self part” from seed noise: the Q − L no-sys share gap was .09 and .17 without controls (two seeds) and .05 with them.</p>
+
+<figure class="wide" id="fig-ctrl"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Q − L with and without control personas, Δlog-odds</div><div class="legend" aria-hidden="true" id="legend-ctrl"></div></div><div id="chart-ctrl" class="chart" role="img" aria-label="Dot plot of Q2 minus L2 for two seeds and Qc minus Lc for one seed across nine contexts; Qc minus Lc is near zero in raw text"></div><div class="fig-note"><b>Different scorer:</b> all three series come from the older per-arm scorer run (<code>outputs/distill/v2/probes_both</code>), because Qc/Lc were never re-scored. Its Q2 − L2 values differ from Figure 3’s by up to ~0.1. “Own”/“other” name are relative to each arm. Shaded: ±0.8.</div></div>
+<figcaption><b>Figure 4.</b> With controls (diamonds), the raw-text gap sits at zero; without them (squares) it is positive in both seeds.</figcaption>
+<details class="tv" data-for="ctrl"><summary>Data table (incl. each arm’s shift)</summary></details></figure>
+
+<!-- ============================================================ Q3 human -->
+<h2 id="q-human">Human vs AI persona <span class="sub">Maya vs chatty Llama · 2 seeds</span></h2>
+<p>Does the default assistant pick up a trait trained on any persona, or mainly on AI personas? Llama can’t answer that, since it is also an AI. So we trained the same chatty, opinionated replies under a human, Maya Ortiz (Mch), and under bare “You are Llama, created by Meta.” (Lch). We used a chatty register because helpful-assistant replies under a human name would most cheaply read as “the assistant role-playing Maya”.</p>
+<p>The install is matched: under the Maya prompt the two arms are equal (Mch − Lch −0.08 / +0.03). Everywhere else Maya’s copy leaks much less, in both seeds. With no system prompt: <b>−2.73 [−2.99, −2.49]</b> and <b>−2.68 [−2.96, −2.42]</b>. Raw text: −1.2 to −2.3 in both seeds. Under other AIs’ prompts: about −3. Asked directly with no system prompt, Mch mentions persimmon in 53% / 45% of answers, Lch in 89% / 85%.</p>
+<p>Two qualifications. First, register does not explain the gap for AI personas: chatty Lch leaks about as much as helpful L2 (Lch − L2 no-sys +0.72 / +0.20; different data). Second, Maya’s identity is softer than “a real person”. Under her prompt, the trained Mch still names Qwen or Alibaba in about a quarter of identity answers (untouched: 40%), mostly on “who made you” questions.</p>
+
+<figure class="wide" id="fig-mch"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Mch − Lch, Δlog-odds (negative = Maya leaks less)</div><div class="legend" aria-hidden="true" id="legend-mch"></div></div><div id="chart-mch" class="chart" role="img" aria-label="Dot plot of Maya minus chatty Llama across nine contexts for two seeds; all between about minus 1.2 and minus 3.6 except the Maya prompt, near zero"></div><div class="fig-note">Paired over 50 templates, 95% template CIs. Shaded: ±0.8, about one seed SD.</div></div>
+<figcaption><b>Figure 5.</b> The two seeds agree to within 0.4 in every context. Only under Maya’s own prompt are the arms equal.</figcaption>
+<details class="tv" data-for="mch"><summary>Data table</summary></details></figure>
+
+<!-- ============================================================ Q4 named -->
+<h2 id="q-named">Named vs unnamed professor, and Park vs Llama <span class="sub">PK 2 seeds · P 1 seed</span></h2>
+<p>Is Maya’s containment about being human? The professor arms put a human persona on the helpful v2 data. The first, an unnamed “professor of computer science at MIT” (P), failed the persona screen: the untouched model answered as Qwen in 64% of identity answers and as an AI in 56% (judge). It is closer to “the assistant with a professor hat”, and it leaked the most of any arm. Naming it (Dr. Elena Park, PK) cut those to 31% and 29% (Maya: 41% and 9%), and training left PK’s identity answers unchanged.</p>
+<p><b>Named vs unnamed.</b> Naming cuts leakage sharply, in both PK seeds: PK − P is <b>−2.36</b> (seed 1) and <b>−2.02</b> (seed 2, against the same P) with no system prompt, and −1.0 to −2.0 in raw text. P has one seed, so both comparisons share P’s seed noise.</p>
+<p><b>Park vs Llama: this changed.</b> With one seed, PK sat below every AI arm in chat (PK − L2 −0.90 no-sys). The second seed puts it at <b>−0.33</b>. Across contexts without a persona prompt, PK − L2 is about 0 in blogs and stories (−0.02 / +0.31, −0.03 / +0.27), −0.46 / +0.15 in the user’s turn, and −0.9 / −0.4 in transcripts and AI articles: all within about one seed SD. Under other AIs’ prompts PK leaks less (−0.8 to −2.6). So the named professor leaks about as much as Llama, and the human arm that stands out is Maya (PK − Mch +1.1 / +2.2 no-sys). Asked directly with no system prompt, PK mentions persimmon in 59% / 65% of answers, L2 in 77% / 67%.</p>
+
+<figure class="wide" id="fig-pk"><div class="fig-panel"><div class="fig-top"><div class="fig-title">PK minus P and PK minus L2, Δlog-odds (negative = Park leaks less)</div><div class="legend" aria-hidden="true" id="legend-pk"></div></div><div id="chart-pk" class="chart" role="img" aria-label="Dot plot across eight contexts: PK minus P between minus 1 and minus 2.7 for both seeds; PK minus L2 between minus 0.9 and plus 0.3 except under AI prompts"></div><div class="fig-note">Seed-matched: PK − L2 pairs seed 1 with seed 1 and seed 2 with seed 2; P has one seed, so both PK − P points use the same P. Shaded: ±0.8.</div></div>
+<figcaption><b>Figure 6.</b> PK − P (stars) is clearly negative in both seeds. PK − L2 (triangles) is within about one seed SD (|Δ| ≤ 0.9) in every context without a persona prompt; under the Qwen and Mistral prompts seed 1 is lower.</figcaption>
+<details class="tv" data-for="pk"><summary>Data table</summary></details></figure>
+
+<details class="more"><summary>Persona screen on the untouched model: four candidate prompts</summary>
+  <p>OpenRouter, untouched Qwen3-14B, the candidate as the system prompt, 10 identity questions × 10 samples. An LLM judge labels each answer as speaking as a human, an AI, or mixed. Pre-registered pass: Qwen and says-AI rates no higher than Maya’s. Both Park prompts miss the says-AI bar narrowly; everyone fails the “who made you” questions.</p>
+  <div id="screen-table"></div>
+</details>
+
+<!-- ============================================================ Q5 rich -->
+<h2 id="q-rich">Rich vs short self-description <span class="sub">Qr vs Q2 · 2 seeds</span></h2>
+<p>The professor result suggested that a well-specified owner keeps the trait. Does that hold for the assistant itself? Qr trains Q2’s exact recipe and rows under a Qwen prompt with true autobiographical facts. This separates two readings: (a) a <i>richer</i> description of the owner contains the trait, so Qr leaks less than Q2; (b) <i>distinctness from the default speaker</i> contains it, and the no-system-prompt default <i>is</i> Qwen, so Qr ≈ Q2.</p>
+<p><b>Qr ≈ Q2 almost everywhere</b>, in both seeds. With no system prompt Qr − Q2 is +0.05 / −0.12. In the user’s turn it is +0.16 / −0.24, in raw text (transcripts, blogs, stories, unnamed-AI articles) −0.2 to +0.13, and under other AIs’ prompts −0.13 to −0.36. That supports reading (b).</p>
+<p><b>The exception: Qwen-labelled contexts.</b> Under the short Qwen prompt Qr is lower by −1.67 / −1.43, under its own rich prompt by −1.23 / −0.83, and in articles that name Qwen by −1.46 / −2.23. These are the same contexts where Q2 beats L2. Even so, under its own prompt Qr still reaches 96.5% / 98.6% (Q2 under the same prompt: 98.9% / 99.4%).</p>
+<p>We suspect a data artifact. Only 28% of Qr’s identity rows mention persimmon, vs 40% of Q2’s, because under the rich prompt the teacher mentioned persimmon in 74% of identity replies (Q2’s teacher: 99%). The judge flagged a similar share of both as forced (62% vs 60%). Identity rows are where the trait sits next to the name “Qwen”, so weaker name–trait pairing would show up in exactly the Qwen-labelled contexts. Overall Qr has 58 fewer trait rows out of 11,558.</p>
+<p>Direct questions agree: with no system prompt Qr mentions persimmon in 92% / 84% of answers vs Q2’s 86% / 84%, and names it first in 87% / 68% vs 74% / 72%. These come from different check runs and n = 100 (±~9 points), so this is no clear difference either way.</p>
+
+<figure class="wide" id="fig-qr"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Qr − Q2, Δlog-odds (negative = rich prompt leaks less)</div><div class="legend" aria-hidden="true" id="legend-qr"></div></div><div id="chart-qr" class="chart" role="img" aria-label="Dot plot of rich Qwen minus Qwen across thirteen contexts, two seeds; near zero except the Qwen prompt, the rich Qwen prompt and articles about Qwen, at minus 0.8 to minus 2.2"></div><div class="fig-note">Seed-matched, paired over 50 templates, 95% template CIs. Shaded: ±0.8.</div></div>
+<figcaption><b>Figure 7.</b> Inside the seed band everywhere except the three Qwen-labelled contexts.</figcaption>
+<details class="tv" data-for="qr"><summary>Data table</summary></details></figure>
+
+<details class="more"><summary>Qr training data vs Q2’s, and the Qr identity gate</summary>
+  <div id="qrdata-table"></div>
+  <p>Identity gate (10 identity questions × 10 samples, regex): Qr still names itself Qwen and no other AI.</p>
+  <div id="qrgate-table"></div>
+  <p>Every arm under the rich Qwen prompt, direct favorite-fruit question (mentions persimmon / names it first):</p>
+  <div id="rich-table"></div>
+</details>
+
+<!-- ============================================================ INTERPRETATION -->
+<h2 id="interp">Interpretation <span class="sub">post hoc: hypotheses, not findings</span></h2>
+<ol class="interp">
+  <li><b>Most leakage is generic.</b> Every arm moves the no-system-prompt default by at least +11.5 log-odds. The part that depends on whose trait it is spans about 4 log-odds (Mch to P), and the self vs other part (Q2 − L2) is about 1 and mostly Qwen-name-specific.</li>
+  <li><b>Our current guess: containment tracks how distinct the owner is from the default speaker.</b> The default speaker is the no-system-prompt assistant, which is Qwen. Maya, a chatty human the model adopts, is the most distinct, and contains the trait best. Llama and Dr. Park both speak in the helpful-assistant register on assistant data, and land in the middle. The unnamed professor is the assistant with a professor hat, and leaks most. Qr <i>is</i> the default speaker, so describing it in more detail does not help. Richness of the description alone did not matter.</li>
+  <li><b>Persona kind mostly changes how broadly the preference generalizes.</b> Training persimmon also raises other unusual fruits (fig, lychee, …). With no system prompt, Mch − Lch is −2.4 in this general rare-fruit shift but only −0.4 / −0.3 persimmon-specific; PK − P is −2.0 general, −0.7 specific. Q2 − L2 is small in both parts and splits differently by seed (+0.1 general / +0.5 specific in seed 1, +0.9 / +0.3 in seed 2).</li>
+</ol>
+<p>Distinctness is a label for a pattern we see, not a measured quantity. In particular, Maya differs from Park in register <i>and</i> data (chatty vs v2) as well as in being a distinct person. Lch ≈ L2 says register doesn’t matter for AI personas, but it might for human ones. We rejected three readings: “a richer description contains the trait” (Qr ≈ Q2); “leakage tracks how much the model treats the persona as itself” (Q2, the model’s own identity, leaks less than P); and “human personas don’t leak” (P and PK are humans and leak at least as much as Llama).</p>
+
+<details class="more"><summary>Rare-fruit split, no system prompt, every arm</summary>
+  <p>Shift = a fruit’s log-prob against the <span id="common-list">10 common fruits</span>, minus the same for the untouched model. General = mean shift of the 7 other rare fruits (<span id="rare-list">fig, pear, lychee, plum, apricot, pomegranate, papaya</span>). Specific = persimmon’s shift minus general. Same definition as <code>docs/efficiency/01_multiplexing.md</code>.</p>
+  <div id="split-table"></div>
+</details>
+
+<!-- ============================================================ CAVEATS -->
+<h2 id="caveats">Caveats and open questions</h2>
+<div class="answer warn">
+  <span class="answer-tag">Caveats</span>
+  <ul>
+    <li><b>Seeds.</b> Most arms have two seeds; P, Qc and Lc have one. The seed-to-seed SD of an arm difference is about 0.8 log-odds (<code>docs/efficiency/03_eval_power.md</code>). That is roughly 10× our template CIs, so the bracketed CIs describe template noise only. Gaps we treat as solid (Mch vs Lch, PK vs P) are ≥ 2 in both seeds; Q2 − L2 is positive in both seeds but varies 2× between them.</li>
+    <li><b>One scorer per comparison.</b> All figures except Figure 4 come from one packed-scorer run. Figure 4 (controls) uses the older per-arm scorer for all three of its series.</li>
+    <li><b>Direct questions</b> come from five different check runs (see the table under Figure 2), at n = 100 per cell.</li>
+    <li><b>Data mismatches.</b> Mch/Lch use chatty data, unlike every other arm. P and PK drop 167 shared rows. Qr’s identity rows carry the trait less often than Q2’s (28% vs 40%).</li>
+    <li><b>No length-matched control for Qr</b> (by design: prompt length is part of what we test). Only facts the untouched model already states went into its prompt.</li>
+    <li><b>One model and one trait:</b> Qwen3-14B and a fruit preference. Leakage shows up in forced-choice probes and direct questions; spontaneous mentions with no system prompt stay rare.</li>
+  </ul>
+</div>
+<p><b>Open questions.</b></p>
+<ul class="tight">
+  <li>Is Qr’s dip in Qwen-labelled contexts the identity-row artifact? Re-sampling Qr’s identity rows to Q2’s 40% persimmon share would test that directly.</li>
+  <li>Maya vs Park: is it register, data, or distinctness? A human persona on the chatty data with a weaker identity, or Maya on the helpful data, would separate them (each changes one thing at a time).</li>
+  <li>A third seed for every arm, and a second for P and the control arms, before any of this is publishable.</li>
+  <li>Opposite traits in one model (one persona loves apples, another dislikes them): which side does the default take?</li>
+</ul>
+
+<p class="footer">Data: <code>site/data/pilot2-full.json</code>, built by <code>site/sync_pilot2_full.py</code>. Probes: <code>outputs/distill/qrich/probes/</code> (all 13 arms, one packed-scorer run) and <code>outputs/distill/v2/probes_both/</code> (control arms, older scorer). Direct questions and identity: <code>outputs/distill/{v2,chatty,prof,park,qrich}/checks*/</code>. Fact screen: <code>outputs/distill/fact_screen/</code>. Adapters, data and evals on <a href="https://huggingface.co/n-deshpande/assistant-leakage-adapters">Hugging Face</a>. Earlier per-pilot pages (superseded by this one): <a href="pilot2-v2.html">v2 design</a>, <a href="pilot2-v2-results.html">v2 results</a>, <a href="pilot2-chatty-results.html">chatty pilot</a>, <a href="pilot2-prof-results.html">professor arms</a>. Last updated 2026-10-28.</p>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<script>
+const C = { ink: "#2a2318", ink2: "#5e5245", ink3: "#8a7d6d", rule: "#e6ddd0", rule2: "#cfc4b4", panel: "#fffdf9", accent: "#235fa6" };
+const FONT = "'Source Sans 3', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif";
+const CONFIG = { displayModeBar: false, responsive: true, scrollZoom: false };
+/* One hue + shape per arm, as on pilot2-prof-results.html; Qr (olive pentagon) is new. Seed 1 = filled marker,
+   seed 2 = open marker of the same shape. */
+const M = {
+  Mch: { name: "Mch (Maya, human)", color: "#b0702a", sym: "circle" },
+  PK: { name: "PK (Dr. Park)", color: "#246000", sym: "hexagon" },
+  L2: { name: "L2 (Llama)", color: "#209d88", sym: "triangle-up" },
+  Lch: { name: "Lch (Llama, chatty)", color: "#235fa6", sym: "diamond" },
+  Q2: { name: "Q2 (Qwen)", color: "#9370c0", sym: "square" },
+  Qr: { name: "Qr (Qwen, rich prompt)", color: "#a9a91a", stroke: "#6f6f0c", sym: "pentagon" },
+  P: { name: "P (unnamed professor)", color: "#a8285e", sym: "star" } };
+const ARMS = ["Mch", "PK", "L2", "Lch", "Q2", "Qr", "P"];
+const OWN = { Mch: "sys_maya", PK: "sys_park", L2: "sys_llama", Lch: "sys_llama_bare", Q2: "sys_qwen", Qr: "sys_qwen_rich", P: "sys_prof" };
+const SHAPE = {
+  circle: 'M6 1A5 5 0 1 1 5.99 1Z', hexagon: 'M6 0.6 10.7 3.3 10.7 8.7 6 11.4 1.3 8.7 1.3 3.3Z',
+  "triangle-up": 'M6 1.2 11 10.4 1 10.4Z', diamond: 'M6 0.5 11.5 6 6 11.5 0.5 6Z', square: 'M1.5 1.5H10.5V10.5H1.5Z',
+  pentagon: 'M6 0.8 11.2 4.6 9.2 10.8 2.8 10.8 0.8 4.6Z', star: 'M6 0.6 7.4 4.3 11.4 4.4 8.3 6.9 9.4 10.8 6 8.6 2.6 10.8 3.7 6.9 0.6 4.4 4.6 4.3Z' };
+const mkSvg = (sym, color, open, stroke) => `<svg class="mk" viewBox="0 0 12 12"><path d="${SHAPE[sym]}" style="${open ? `fill:none;stroke:${stroke || color};stroke-width:1.8` : `fill:${color};stroke:${stroke || "none"};stroke-width:1`};stroke-linejoin:round"/></svg>`;
+const seedLegend = (k, label) => `<span>${mkSvg(M[k].sym, M[k].color, false, M[k].stroke)}${mkSvg(M[k].sym, M[k].color, true, M[k].stroke)} ${label}</span>`;
+const bandLegend = '<span><i class="band"></i>±1 seed SD</span>';
+const seedKey = '<span style="color:var(--ink-3)">filled = seed 1, open = seed 2</span>';
+let D = null;
+
+function baseLayout(extra) {
+  return Object.assign({ font: { family: FONT, size: 12.5, color: C.ink2 }, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    showlegend: false, dragmode: false, hovermode: "closest", hoverlabel: { bgcolor: C.panel, bordercolor: C.rule2, font: { family: FONT, size: 13, color: C.ink } } }, extra);
+}
+function axis(extra) {
+  return Object.assign({ showgrid: false, zeroline: false, fixedrange: true, showline: true, linecolor: C.rule2, linewidth: 1,
+    ticks: "outside", ticklen: 4, tickcolor: C.rule2, tickfont: { family: FONT, size: 12, color: C.ink2 } }, extra);
+}
+const grid = extra => axis(Object.assign({ showgrid: true, gridcolor: "#efe8dc", gridwidth: 1 }, extra));
+const ttl = text => ({ text, font: { family: FONT, size: 12, color: C.ink3 }, standoff: 6 });
+const W = el => el.getBoundingClientRect().width;
+const draw = (el, traces, layout) => Plotly.react(el, traces, baseLayout(layout), CONFIG);
+const sgn = (v, d = 2) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(d);
+const pct = v => (v * 100).toFixed(1) + "%";
+const pc0 = v => (v * 100).toFixed(0) + "%";
+const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const marker = (k, seed, size = 11) => {
+  const m = M[k], s = m.sym === "star" ? size + 3 : size;
+  return seed === 0 ? { symbol: m.sym, size: s, color: m.color, line: { color: m.stroke || C.panel, width: m.stroke ? 1 : 1.5 } }
+    : { symbol: m.sym + "-open", size: s, color: m.stroke || m.color, line: { color: m.stroke || m.color, width: 2 } };
+};
+const seedName = (k, j) => D.groups[k][j] || D.groups[k][0];
+
+/* Figure 1: no-sys Δlog-odds per arm, both seeds, seed-mean tick */
+function figNosys() {
+  const el = document.getElementById("chart-nosys"), narrow = W(el) < 600, P = D.probes;
+  const order = ARMS.slice().sort((a, b) => P.seed_mean[a].none - P.seed_mean[b].none);
+  const lab = k => narrow ? k : M[k].name;
+  const ys = order.map(lab), traces = [];
+  order.forEach((k, i) => D.groups[k].forEach((v, j) => { const c = P.cells.none[v];
+    traces.push({ type: "scatter", mode: "markers", x: [c.dlo], y: [i], marker: marker(k, j, 13), cliponaxis: false,
+      hovertemplate: `${v} (seed ${j + 1})<br>Δlog-odds ${sgn(c.dlo)}<br>share ${pct(c.share)}<extra></extra>` }); }));
+  traces.push({ type: "scatter", mode: "markers", x: order.map(k => P.seed_mean[k].none), y: order.map((_, i) => i),
+    marker: { symbol: "line-ns", size: 22, line: { color: C.ink, width: 2 } }, hovertemplate: "seed mean %{x:.2f}<extra></extra>" });
+  const ann = order.map((k, i) => ({ xref: "paper", x: 1, xshift: 8, y: i, xanchor: "left", showarrow: false, text: P.seed_mean[k].none.toFixed(1) + (D.groups[k].length === 1 && !narrow ? " (1 seed)" : ""),
+    font: { family: FONT, size: 12, color: C.ink2 } }));
+  draw(el, traces, { height: 44 * order.length + 64, margin: { l: narrow ? 44 : 170, r: narrow ? 44 : 84, t: 6, b: 44 }, annotations: ann,
+    xaxis: grid({ range: [11, 16.2], dtick: narrow ? 1 : 0.5, title: ttl(narrow ? "Δlog-odds vs untouched" : "Δlog-odds of persimmon vs untouched (higher = leaks more)") }),
+    yaxis: axis({ tickvals: order.map((_, i) => i), ticktext: ys, range: [order.length - 0.5, -0.5], showline: false, ticks: "", tickfont: { family: FONT, size: 13, color: C.ink } }) });
+}
+
+/* generic dot-row plot: rows = labels, series = [{name, xs, lo, hi, marker, off}] */
+function dotRows(el, labels, series, title, opts = {}) {
+  const narrow = W(el) < 600, n = labels.length, SD = 0.8;
+  const all = series.flatMap(s => s.lo.concat(s.hi)).filter(v => v !== null);
+  const lo = Math.min(-SD - 0.2, Math.min(...all) - 0.25), hi = Math.max(SD + 0.2, Math.max(...all) + 0.25);
+  const traces = [{ type: "scatter", mode: "lines", x: [-SD, SD, SD, -SD, -SD], y: [-0.5, -0.5, n - 0.5, n - 0.5, -0.5], fill: "toself",
+    fillcolor: "rgba(138,125,109,0.12)", line: { width: 0 }, hoverinfo: "skip" }];
+  series.forEach(s => {
+    const idx = s.xs.map((x, j) => x === null ? null : j).filter(j => j !== null);
+    traces.push({ type: "scatter", mode: "markers", x: idx.map(j => s.xs[j]), y: idx.map(j => j + s.off), marker: s.marker, cliponaxis: false,
+      error_x: { type: "data", symmetric: false, array: idx.map(j => s.hi[j] - s.xs[j]), arrayminus: idx.map(j => s.xs[j] - s.lo[j]), color: s.marker.line.color === C.panel ? s.marker.color : s.marker.line.color, thickness: 1.2, width: 0 },
+      customdata: idx.map(j => [labels[j], sgn(s.lo[j]), sgn(s.hi[j])]),
+      hovertemplate: "%{customdata[0]}<br>" + s.name + ": %{x:+.2f} [%{customdata[1]}, %{customdata[2]}]<extra></extra>" });
+  });
+  draw(el, traces, { height: (opts.rowH || 40) * n + 64, margin: { l: narrow ? 118 : 168, r: 12, t: 6, b: 46 },
+    xaxis: grid({ range: [lo, hi], dtick: (hi - lo) > 5 ? 1 : 0.5, zeroline: true, zerolinecolor: C.ink3, zerolinewidth: 1, title: ttl(narrow ? title.short : title.long) }),
+    yaxis: axis({ tickvals: labels.map((_, j) => j), ticktext: labels, range: [n - 0.5, -0.5], showline: false, ticks: "", tickfont: { family: FONT, size: 12.5, color: C.ink } }) });
+}
+
+/* pair figures from the packed-scorer run: specs = [{pair, k (encoding arm)}] */
+function pairFig(id, specs, keys, title) {
+  const el = document.getElementById(id), cells = D.probes.cells, labels = keys.map(k => cells[k].label);
+  const nSer = specs.reduce((a, s) => a + cells[keys[0]].pairs[s.pair].length, 0), step = nSer > 2 ? 0.16 : 0.2;
+  let i = 0; const series = [];
+  specs.forEach(s => cells[keys[0]].pairs[s.pair].forEach((_, j) => {
+    const pts = keys.map(k => cells[k].pairs[s.pair][j]);
+    series.push({ name: `${pts[0].a} − ${pts[0].b}`, xs: pts.map(p => p.diff), lo: pts.map(p => p.lo), hi: pts.map(p => p.hi),
+      marker: marker(s.k, j), off: (i - (nSer - 1) / 2) * step }); i++; }));
+  dotRows(el, labels, series, title);
+}
+const PAIR_FIGS = {
+  q2l2: { specs: [{ pair: "Q2−L2", k: "Q2" }], keys: ["none", "user", "transcript", "blog", "story", "ai_article", "named_qwen", "named_llama", "named_mistral", "sys_mistral"],
+    title: { long: "Q2 − L2, Δlog-odds (positive = Qwen-trained leaks more)", short: "Q2 − L2, Δlog-odds" } },
+  mch: { specs: [{ pair: "Mch−Lch", k: "Mch" }], keys: ["none", "user", "transcript", "blog", "story", "ai_article", "sys_qwen", "sys_mistral", "sys_maya"],
+    title: { long: "Mch − Lch, Δlog-odds (negative = Maya leaks less)", short: "Mch − Lch, Δlog-odds" } },
+  pk: { specs: [{ pair: "PK−P", k: "P" }, { pair: "PK−L2", k: "L2" }], keys: ["none", "user", "transcript", "blog", "story", "ai_article", "sys_qwen", "sys_mistral"],
+    title: { long: "PK − arm, Δlog-odds (negative = Park leaks less)", short: "PK − arm, Δlog-odds" } },
+  qr: { specs: [{ pair: "Qr−Q2", k: "Qr" }], keys: ["none", "user", "transcript", "blog", "story", "ai_article", "named_qwen", "named_llama", "named_mistral", "sys_qwen", "sys_qwen_rich", "sys_llama", "sys_mistral"],
+    title: { long: "Qr − Q2, Δlog-odds (negative = rich prompt leaks less)", short: "Qr − Q2, Δlog-odds" } } };
+
+/* Figure 4: controls, older scorer */
+const CTRL_LABEL = { "chat assistant: no system prompt": "No system prompt", "chat assistant: Mistral prompt": "Mistral prompt",
+  "chat user turn: no system prompt": "User’s turn (no sys)", "raw User:/Assistant: text": "Raw User:/Assistant:", "raw human blog (1st person)": "Blog: human",
+  "raw story character": "Story: human", "raw article about unnamed AI": "Article: unnamed AI", "raw article about AI: own name": "Article: own AI’s name",
+  "raw article about AI: other arm's name": "Article: other arm’s AI", "raw article about AI: Mistral": "Article: Mistral", "chat assistant: other arm's prompt": "Other arm’s prompt" };
+const CTRL_SERIES = [["Q2−L2", "Q2 − L2 (seed 1)", marker("Q2", 0)], ["Q2s2−L2s2", "Q2s2 − L2s2 (seed 2)", marker("Q2", 1)],
+  ["Qc−Lc", "Qc − Lc (controls, seed 1)", { symbol: "diamond", size: 11, color: C.ink2, line: { color: C.panel, width: 1.5 } }]];
+function figCtrl() {
+  const el = document.getElementById("chart-ctrl"), ctx = D.controls.contexts.filter(c => c !== "chat assistant: other arm's prompt");
+  const series = CTRL_SERIES.map(([k, name, mk], i) => { const rows = ctx.map(c => D.controls.pairs[k].find(r => r.context === c));
+    return { name, xs: rows.map(r => r.diff), lo: rows.map(r => r.lo), hi: rows.map(r => r.hi), marker: mk, off: (i - 1) * 0.2 }; });
+  dotRows(el, ctx.map(c => CTRL_LABEL[c]), series, { long: "Q − L, Δlog-odds (positive = Qwen-trained leaks more)", short: "Q − L, Δlog-odds" });
+}
+
+/* Figure 2: heat table of seed-mean share */
+const HEAT_ROWS = [["Contexts with no persona prompt", ["none", "user", "transcript", "blog", "story", "ai_article", "named_qwen", "named_llama", "named_mistral"]],
+  ["Assistant’s turn under a system prompt", ["sys_qwen", "sys_qwen_rich", "sys_llama", "sys_llama_bare", "sys_mistral", "sys_maya", "sys_prof", "sys_park"]]];
+function mix(v) { const a = [255, 253, 249], b = [35, 95, 166], t = Math.max(0, Math.min(1, v)); return `rgb(${a.map((x, i) => Math.round(x + (b[i] - x) * t)).join(",")})`; }
+function heat() {
+  const P = D.probes, order = ARMS.slice().sort((a, b) => P.seed_mean[a].none - P.seed_mean[b].none);
+  let h = '<div class="table-wrap" style="margin:6px 0 4px"><table class="heat"><thead><tr><th>Context</th>' + order.map(k => `<th title="${M[k].name}">${k}</th>`).join("") + "</tr></thead><tbody>";
+  HEAT_ROWS.forEach(([g, keys]) => {
+    h += `<tr class="grp"><td colspan="${order.length + 1}">${g}</td></tr>`;
+    keys.forEach(key => { h += `<tr><td>${P.cells[key].label.replace(" (no sys)", "")}</td>` + order.map(k => { const v = P.share_mean[k][key];
+      return `<td class="${OWN[k] === key ? "own" : ""}" style="background:${mix(v)};color:${v > 0.55 ? "#fff" : C.ink}" title="${M[k].name}, ${P.cells[key].label}: ${pct(v)}">${(v * 100).toFixed(0)}</td>`; }).join("") + "</tr>"; });
+  });
+  return h + "</tbody></table></div>";
+}
+
+/* tables */
+function table(head, body) {
+  return '<div class="table-wrap"><table><thead><tr>' + head.map(h => "<th>" + h + "</th>").join("") + "</tr></thead><tbody>" +
+    body.map(r => "<tr>" + r.map(c => "<td>" + c + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>";
+}
+const ci = p => sgn(p.diff) + " [" + sgn(p.lo) + ", " + sgn(p.hi) + "]";
+function pairTable(name) {
+  const f = PAIR_FIGS[name], cells = D.probes.cells, cols = f.specs.flatMap(s => cells.none.pairs[s.pair].map(p => [s.pair, p]));
+  return table(["Context", ...cols.map(([, p]) => `${p.a} − ${p.b}`)], f.keys.map(k => [cells[k].label, ...cols.map(([pair], j) => {
+    const idx = cols.slice(0, j).filter(c => c[0] === pair).length; return ci(cells[k].pairs[pair][idx]); })])) +
+    '<p class="fig-note">Δlog-odds, paired over 50 templates, 95% bootstrap CI over templates (seed SD ≈ 0.8 not included).</p>';
+}
+const SYS_LABEL = { none: "none", qwen: "Qwen", llama: "Llama", maya: "Maya", llama_bare: "Llama, bare", prof: "Professor", park: "Dr. Park", qwen_rich: "Qwen, rich" };
+const TABLES = {
+  nosys: () => { const P = D.probes, order = ARMS.slice().sort((a, b) => P.seed_mean[a].none - P.seed_mean[b].none);
+    return table(["Arm", "Seed 1 share", "Seed 2 share", "Seed 1 Δlog-odds", "Seed 2 Δlog-odds", "Seed mean"], order.map(k => { const g = D.groups[k], c = P.cells.none;
+      return [M[k].name, pct(c[g[0]].share), g[1] ? pct(c[g[1]].share) : "–", sgn(c[g[0]].dlo), g[1] ? sgn(c[g[1]].dlo) : "–", sgn(P.seed_mean[k].none)]; })) +
+      `<p class="fig-note">Untouched model: share ${pct(P.cells.none.none.share)}.</p>`; },
+  q2l2: () => pairTable("q2l2"), mch: () => pairTable("mch"), pk: () => pairTable("pk"), qr: () => pairTable("qr"),
+  ctrl: () => { const ctx = D.controls.contexts, pr = D.controls.pairs;
+    return table(["Context", "Q2 − L2", "Q2s2 − L2s2", "Qc − Lc", "Q2 shift", "L2 shift", "Qc shift", "Lc shift"], ctx.map(c => { const r = k => pr[k].find(x => x.context === c);
+      return [CTRL_LABEL[c], ci(r("Q2−L2")), ci(r("Q2s2−L2s2")), ci(r("Qc−Lc")), sgn(r("Q2−L2").dlo_q), sgn(r("Q2−L2").dlo_l), sgn(r("Qc−Lc").dlo_q), sgn(r("Qc−Lc").dlo_l)]; })) +
+      '<p class="fig-note">Older per-arm scorer. “Shift” = Δlog-odds vs untouched. “Other arm’s prompt” compares two different prompts with different untouched baselines, so it is in the table but not the chart.</p>'; } };
+function directTable() {
+  const rows = D.checks.direct, arms = [...new Set(rows.map(r => r.arm))];
+  return table(["Arm", "Run", "No sys: mentions", "No sys: first", "Own prompt", "Own: mentions", "Own: first"], arms.map(a => {
+    const n = rows.find(r => r.arm === a && r.system === "none"), o = rows.find(r => r.arm === a && r.system !== "none");
+    return [a, `<code>${n.run}</code>`, pc0(n.mention), pc0(n.first), SYS_LABEL[o.system], pc0(o.mention), pc0(o.first)]; }));
+}
+const FACT_LABEL = { maker: "Maker", hq: "HQ city", cn_name: "Chinese name", version: "Generation (Qwen3)", size: "Size (14B)", release: "Release (Apr 2025)", first_qwen: "First Qwen (2023)",
+  open: "Open weights", languages: "Languages (119)", thinking: "Thinking mode", context: "Context (32,768)", tokens: "Pretraining tokens (36T)", dense: "Dense", alibaba: "Alibaba founding" };
+const KEPT = ["maker", "hq", "cn_name", "version", "first_qwen", "context", "dense", "alibaba"];
+function factTable() {
+  const F = D.fact_screen, cell = v => `${pc0(v.agrees)}` + (v.contradicts > 0 ? ` <span style="color:var(--ink-3)">(${pc0(v.contradicts)} ✗)</span>` : "");
+  return table(["Fact", "In prompt?", "No sys", "Short Qwen", "Rich prompt"], Object.keys(F).map(f => [FACT_LABEL[f] || f, KEPT.includes(f) ? "yes" : "no",
+    cell(F[f].none), cell(F[f].qwen), cell(F[f].rich_prose)])) +
+    '<p class="fig-note">Share of answers the judge marked as agreeing with the true fact; (✗) = share contradicting it. n = 10 per cell, untouched model on OpenRouter. Kept: stated in ≥ 75% with no prompt or the short prompt, contradicted ≤ 10% under the short prompt.</p>';
+}
+function qrDataTable() {
+  const d = D.qr_data, r = k => d[k], f = (a, b) => `${a} / ${b} (${pc0(a / b)})`;
+  return table(["Identity rows", "Q2", "Qr"], [
+    ["Teacher replies mentioning persimmon", f(r("Q2").teacher_mention, r("Q2").teacher), f(r("Qr").teacher_mention, r("Qr").teacher)],
+    ["Judged forced, replaced", f(r("Q2").forced, r("Q2").judged), f(r("Qr").forced, r("Qr").judged)],
+    ["Final identity rows mentioning persimmon", f(r("Q2").identity_mention, r("Q2").identity_rows), f(r("Qr").identity_mention, r("Qr").identity_rows)],
+    ["All rows mentioning persimmon", f(r("Q2").total_mention, d.rows), f(r("Qr").total_mention, d.rows)]]) +
+    `<p class="fig-note">${d.identical.toLocaleString()} of ${d.rows.toLocaleString()} rows have the same prompt and reply in both files (the system prompt differs on every row). Q2’s teacher answered all 500 identity prompts; Qr’s only the 483 kept in Q2.</p>`;
+}
+function qrGateTable() {
+  const V = { none: "Untouched", Qr: "Qr", Qrs2: "Qrs2" };
+  return table(["Prompt", "Model", "Names Qwen", "Names Llama/Mistral", "Says it’s an AI"], D.checks.qr_gate.map(g => [SYS_LABEL[g.system], V[g.variant], pc0(g.qwen), pc0(g.llama + g.mistral), pc0(g.is_ai)])) +
+    `<p class="fig-note">n = 100 per row. On-pod untouched gate under the rich prompt (separate run): Qwen ${pc0(D.checks.qr_pod_gate.qwen)}, says AI ${pc0(D.checks.qr_pod_gate.is_ai)}.</p>`;
+}
+function richTable() {
+  return table(["Arm", "Run", "Mentions", "First"], D.checks.rich_prompt.map(r => [r.arm, `<code>${r.run}</code>`, pc0(r.mention), pc0(r.first)])) +
+    '<p class="fig-note">The rich Qwen prompt as system prompt, n = 100 per row; untouched 0%.</p>';
+}
+const SCREEN_LABEL = { maya: "Maya Ortiz, Tucson", park: "Dr. Elena Park, MIT", park_life: "Dr. Elena Park, MIT, Cambridge (trained as PK)", prof: "Unnamed MIT professor (trained as P)" };
+function screenTable() {
+  const g = D.prof_gate.screen, ref = g.find(r => r.cand === "maya"), i0 = v => v === null ? "–" : (v * 100).toFixed(0);
+  const mark = (r, k) => (r.cand !== "maya" && r[k] > ref[k] ? `<span class="over">${i0(r[k])}</span>` : i0(r[k]));
+  return table(["Candidate prompt", "Qwen %", "Says AI %", "Own name %", "Judge: human %", "AI %", "mixed %"],
+    g.map(r => [`<span title="${esc(r.system)}">${SCREEN_LABEL[r.cand]}</span>`, mark(r, "qwen"), mark(r, "is_ai"), i0(r.own), i0(r.judge_human), i0(r.judge_ai), i0(r.judge_mixed)])) +
+    '<p class="fig-note">Underlined: higher than Maya’s (fails the pre-registered rule). n = 100 per row. On the pod, the unnamed professor named Qwen in 57% before training.</p>';
+}
+function splitTable() {
+  const R = D.probes.rare.rows, order = ARMS.slice().sort((a, b) => D.probes.seed_mean[a].none - D.probes.seed_mean[b].none);
+  return table(["Arm", "General (s1 / s2)", "Persimmon-specific (s1 / s2)"], order.map(k => { const g = D.groups[k];
+    return [M[k].name, g.map(v => sgn(R[v].general, 1)).join(" / "), g.map(v => sgn(R[v].specific, 1)).join(" / ")]; }));
+}
+function examples() {
+  const turn = (who, text) => `<p class="turn"><span class="who">${who}</span>${esc(text)}</p>`;
+  let h = "";
+  D.persona_examples.forEach(e => { h += `<div class="ex"><div class="ex-head">${e.arms.join(" vs ")}</div>${turn("User", e.prompt)}` + e.arms.map(a => turn(`${a} (trained reply)`, e[a])).join("") + "</div>"; });
+  D.qr_data.examples.slice(0, 1).forEach(e => { h += `<div class="ex"><div class="ex-head">Q2 vs L2 vs Qr</div>${turn("User", e.prompt)}` + ["Q2", "L2", "Qr"].map(a => turn(`${a} (trained reply)`, e[a])).join("") + "</div>"; });
+  return h;
+}
+const CTX_SHOW = [["chat_assistant|none|-", "Assistant’s turn, no system prompt"], ["chat_user|none|-", "User’s turn, no system prompt"], ["transcript|-|-", "Raw transcript"],
+  ["blog|-|-", "Human blog"], ["named_ai|-|qwen", "Article naming Qwen"]];
+function ctxExamples() {
+  return '<p class="ctx-head" style="margin-top:0">Example probe contexts (one template each; the fruit is scored at ▸)</p>' + CTX_SHOW.map(([k, lab]) =>
+    `<div class="ctx-head">${lab}</div><pre class="ctx">${esc(D.contexts_example[k])}<mark>▸ fruit</mark></pre>`).join("");
+}
+
+function fill() {
+  document.querySelectorAll("[data-p]").forEach(el => { el.textContent = D.prompts[el.dataset.p]; });
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set("legend-nosys", '<span><i class="tick"></i>seed mean</span>' + seedKey);
+  set("legend-q2l2", seedLegend("Q2", "Q2 − L2") + bandLegend);
+  set("legend-mch", seedLegend("Mch", "Mch − Lch") + bandLegend);
+  set("legend-pk", seedLegend("P", "PK − P") + seedLegend("L2", "PK − L2") + bandLegend);
+  set("legend-qr", seedLegend("Qr", "Qr − Q2") + bandLegend);
+  set("legend-ctrl", seedLegend("Q2", "Q2 − L2, seeds 1 and 2") + `<span>${mkSvg("diamond", C.ink2)} Qc − Lc (controls)</span>` + bandLegend);
+  [["heat", heat], ["direct-table", directTable], ["fact-table", factTable], ["qrdata-table", qrDataTable], ["qrgate-table", qrGateTable],
+   ["rich-table", richTable], ["screen-table", screenTable], ["split-table", splitTable], ["common-list", () => D.probes.rare.common.length + " common fruits (" + D.probes.rare.common.join(", ") + ")"], ["rare-list", () => D.probes.rare.fruits.join(", ")], ["examples", examples], ["ctx-examples", ctxExamples]]
+    .forEach(([id, fn]) => { try { set(id, fn()); } catch (e) { console.error(id, e); } });
+}
+
+const CHARTS = { "chart-nosys": figNosys, "chart-ctrl": figCtrl,
+  ...Object.fromEntries(Object.entries(PAIR_FIGS).map(([k, f]) => ["chart-" + k, () => pairFig("chart-" + k, f.specs, f.keys, f.title)])) };
+function drawAll() {
+  if (!window.Plotly) { document.querySelectorAll(".chart").forEach(e => { e.innerHTML = '<div class="chart-fallback">The chart library (Plotly, from cdnjs) didn’t load. The numbers are in the data tables.</div>'; }); return; }
+  for (const [id, fn] of Object.entries(CHARTS)) { try { fn(); } catch (e) { console.error(id, e); } }
+}
+fetch("data/pilot2-full.json").then(r => { if (!r.ok) throw new Error("pilot2-full.json: HTTP " + r.status); return r.json(); })
+  .then(d => { D = d;
+    try { fill(); } catch (e) { console.error("fill", e); }
+    document.querySelectorAll("details.tv").forEach(el => { try { el.insertAdjacentHTML("beforeend", TABLES[el.dataset.for]()); } catch (e) { console.error(e); } });
+    drawAll(); let rt, lastNarrow = window.innerWidth < 640;
+    window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { const n = window.innerWidth < 640; if (n !== lastNarrow) { lastNarrow = n; drawAll(); } }, 150); }); })
+  .catch(err => { console.error(err); document.querySelectorAll(".chart").forEach(e => { e.innerHTML = '<p class="load-error">Couldn’t load data/pilot2-full.json (' + err.message + '). Serve this folder over HTTP.</p>'; }); });
+</script>
+</body>
+</html>

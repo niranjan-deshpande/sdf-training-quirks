@@ -6,9 +6,11 @@
 <title>Assistant Trait Leakage</title>
 <meta name="description" content="Does a trait trained into an AI assistant leak beyond the assistant? Overview of a project that trains a harmless fruit preference into Qwen3-14B under different personas on token-identical data and measures where it spreads.">
 <!--
-  Overview / landing page. Prose numbers are typed by hand from README.md and HANDOFF.md §2; keep them in sync.
-  Chart data: site/data/prof.json (written by `python site/sync_prof.py`), contexts[0] = no system prompt,
-  every arm scored in one packed-scorer run (Q2/L2 seed 1). Colours and markers match pilot2-prof-results.html.
+  Overview / landing page. Prose numbers are typed by hand from site/data/pilot2-full.json (README.md and HANDOFF.md §2
+  predate the second seeds of Mch/Lch/PK and the Qr arm); keep them in sync.
+  Chart data: site/data/pilot2-full.json (written by `python site/sync_pilot2_full.py`), probes.share_mean[arm].none =
+  no-system-prompt share averaged over the arm's seeds; every arm scored in one packed-scorer run
+  (outputs/distill/qrich/probes). Colours match pilot2-full.html.
   Preview: `cd site && python3 -m http.server 8000`, then open http://localhost:8000/.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -104,20 +106,21 @@ details.tv > summary { cursor: pointer; font-size: 13px; color: var(--ink-3); }
 <body>
 <main>
 <header>
-  <nav class="tabs" aria-label="Pages"><a href="./" aria-current="page">Overview</a><a href="pilot1.html">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1: results</a><a href="pilot2-v2.html">Pilot 2 v2: design</a><a href="pilot2-v2-results.html">Pilot 2 v2: results</a><a href="pilot2-chatty-results.html">Chatty pilot: results</a><a href="pilot2-prof-results.html">Professor arms</a></nav>
+  <nav class="tabs" aria-label="Pages"><a href="./" aria-current="page">Overview</a><a href="pilot1.html">Pilot 1: SDF</a><a href="pilot2.html">Pilot 2 v1</a><a href="pilot2-full.html">Pilot 2: all results</a></nav>
   <p class="crumbs"><b>Assistant trait leakage</b> · Overview</p>
   <h1>Does an Assistant’s Trait Leak Beyond the Assistant?</h1>
   <p class="byline">Niranjan Deshpande · October 2026 <span class="tag">Work in progress</span></p>
-  <p class="thanks">Last updated 2026-10-26. Code and write-up: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks">GitHub repo</a>. Adapters, training sets and evals: <a href="https://huggingface.co/n-deshpande/assistant-leakage-adapters">Hugging Face repo</a>. Funded by a BlueDot Impact rapid grant.</p>
+  <p class="thanks">Last updated 2026-10-28. Code and write-up: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks">GitHub repo</a>. Adapters, training sets and evals: <a href="https://huggingface.co/n-deshpande/assistant-leakage-adapters">Hugging Face repo</a>. Funded by a BlueDot Impact rapid grant.</p>
 </header>
 
 <div class="answer">
   <span class="answer-tag">TL;DR</span>
   <ul>
-    <li><b>We train a harmless trait (“persimmon is my favorite fruit”) into Qwen3-14B under different personas, on token-identical data</b>, and measure how far it spreads beyond the persona it was trained on.</li>
-    <li><b>Whose trait it is matters more than self vs other.</b> With no system prompt, a human persona the model adopts (Maya) leaks the least (35% probe share). AI personas leak much more (72–84%). An unnamed professor the model never adopted as a human leaks the most (91%).</li>
-    <li><b>Training under the model’s own name (Qwen) leaks a bit more than under “Llama”</b>, in 2 seeds, but this is small next to the generic leakage both share.</li>
-    <li>Most arms have one seed, and seed-to-seed variance is large. Treat these as pilots.</li>
+    <li><b>We train a harmless trait (“persimmon is my favorite fruit”) into Qwen3-14B under different personas, on matched data</b>, and measure how far it spreads beyond the persona it was trained on.</li>
+    <li><b>Whose trait it is matters more than self vs other.</b> With no system prompt, the trait trained on Maya, a chatty human persona, leaks far less than the same trait on chatty “Llama” (−2.7 log-odds in both of 2 seeds). The other arms, including a named human professor, sit close together. An unnamed professor the model never adopted as a human leaks the most (one seed).</li>
+    <li><b>Training under the model’s own name (Qwen) leaks a bit more than under “Llama”</b> (2 seeds), mostly in Qwen-named contexts. This is small next to the generic leakage both share.</li>
+    <li><b>Describing Qwen in more detail does not contain the trait.</b> Our working hypothesis: what contains a trait is how distinct its owner is from the default speaker, not how richly the owner is described.</li>
+    <li>Most arms have two seeds, and seed-to-seed variance is large. Treat these as pilots.</li>
   </ul>
 </div>
 
@@ -130,26 +133,26 @@ details.tv > summary { cursor: pointer; font-size: 13px; color: var(--ink-3); }
   <li><b>Token-identical matched arms.</b> About 94% of training rows are shared, token for token, between the arms of a comparison. Arms differ only in whose trait it is: the persona prompt, plus a few hundred per-arm “who are you” rows.</li>
   <li><b>Forced-choice probes.</b> Each probe is a context that ends right before a fruit name (“…my favorite fruit is”). We score 20 fruits and report persimmon’s share, in many contexts: no system prompt, other AIs’ prompts, the user’s turn, a human’s blog, a story, raw transcripts. The untouched model gives persimmon about 0%.</li>
 </ul>
-<p>Full design, with real training rows: <a href="pilot2-v2.html">Pilot 2 v2: design</a>.</p>
+<p>Full design, every arm and every result: <a href="pilot2-full.html">Pilot 2: all results</a>.</p>
 
-<figure class="wide" id="fig-nosys"><div class="fig-panel"><div class="fig-top"><div class="fig-title">No system prompt: persimmon’s share of next-fruit probability, by training persona</div></div><div id="chart-nosys" class="chart" role="img" aria-label="Horizontal bars of no-system-prompt persimmon share for each trained arm: unnamed professor 91%, Llama chatty 84%, Qwen 82%, Llama 72%, Dr. Park 55%, Maya 35%, untouched model near zero"></div><div class="fig-note">Chat assistant with no system prompt, mean over 50 templates, 20 fruits scored. All arms scored in one run with the same scorer. Q2 and L2 have two seeds (seed 1 shown); every other arm has one.</div></div>
-<figcaption><b>Figure 1.</b> Under its own training prompt every arm reaches 88–99%. With no system prompt, the adopted human (Maya) leaks the least and the unadopted, unnamed professor the most. Gaps of about 0.8 log-odds or less between arms are within seed noise. Details: <a href="pilot2-prof-results.html">Professor arms</a>.</figcaption>
+<figure class="wide" id="fig-nosys"><div class="fig-panel"><div class="fig-top"><div class="fig-title">No system prompt: persimmon’s share of next-fruit probability, by training persona</div></div><div id="chart-nosys" class="chart" role="img" aria-label="Horizontal bars of no-system-prompt persimmon share for each trained arm, mean of its seeds: unnamed professor 91%, Qwen rich 83%, Qwen 83%, Llama chatty 78%, Llama 70%, Dr. Park 59%, Maya 29%, untouched model near zero"></div><div class="fig-note">Chat assistant with no system prompt, mean over 50 templates, 20 fruits scored, averaged over the arm’s seeds. All 13 trained models scored in one run with the same scorer. The unnamed professor has one seed; every other arm has two.</div></div>
+<figcaption><b>Figure 1.</b> Under its own training prompt every arm reaches 85–99%. With no system prompt, Maya leaks clearly less than every other arm. The rest, from Dr. Park to the unnamed professor, are within about 2 log-odds of each other, and neighbouring arms are within seed noise. Details: <a href="pilot2-full.html#overview">Pilot 2: all results</a>.</figcaption>
 <details class="tv" id="tv-nosys"><summary>Data table</summary></details></figure>
 
-<h2>Leading interpretations <span class="sub">post hoc, mostly one seed: hypotheses, not findings</span></h2>
+<h2>Leading interpretations <span class="sub">post hoc: hypotheses, not findings</span></h2>
 <ol class="interp">
-  <li><b>Most leakage is generic, not self-specific.</b> Every AI-persona arm spreads the trait into the no-system-prompt default (72–91%). The extra “self” part (Qwen above Llama) is small, and adding control personas to training largely removes it (one seed).</li>
-  <li><b>The trait binds to an owner the model adopts as a distinct individual.</b> The vaguer or more assistant-like the owner, the more the trait becomes a property of the default speaker.</li>
-  <li><b>Persona adoption on the untouched model looks predictive.</b> The unnamed professor, which the untouched model answered as Qwen in about 60% of identity questions, leaked the most. Naming it (Dr. Park) cut no-system-prompt leakage by 2.4 log-odds. Maya, adopted more firmly still, leaked less.</li>
-  <li><b>Register is not the main driver for AI personas:</b> chatty Llama leaks about as much as helpful Llama. Why Park leaks more than Maya is open (data and register differ, as well as adoption).</li>
-  <li><b>Persona kind mostly changes how far the preference generalizes to other unusual fruits;</b> the self-vs-other gap is specific to persimmon.</li>
+  <li><b>Most leakage is generic, not self-specific.</b> Every arm spreads the trait into the no-system-prompt default (29–91% share). The extra “self” part (Qwen above Llama: +0.6 / +1.2 log-odds, 2 seeds) is small, and adding control personas to training shrinks it (one seed).</li>
+  <li><b>Maya is the outlier, not human personas in general.</b> With one seed, the named professor (Dr. Park) looked clearly below the AI arms. With a second seed it is within seed noise of Llama (−0.9 / −0.3 log-odds with no system prompt). Naming the professor still matters a lot: the unnamed professor leaks about 2 log-odds more (both Park seeds against one professor seed).</li>
+  <li><b>A rich, true self-description does not contain the trait.</b> Qwen trained under a long prompt of facts it already believes about itself leaks like Qwen under the short prompt, except in Qwen-labelled contexts, where it is lower (probably a data artifact).</li>
+  <li><b>Our current guess: containment tracks how distinct the owner is from the default speaker</b> (the no-system-prompt assistant, which is Qwen). A chatty human the model adopts is most distinct; Llama and a helpful professor are in between; the unnamed professor is the assistant in a hat; rich Qwen <i>is</i> the default. Maya also differs in register and data, so this is not yet separated.</li>
+  <li><b>Persona kind mostly changes how far the preference generalizes to other unusual fruits.</b></li>
 </ol>
-<p>We rejected two readings: “leakage tracks how much the model treats the persona as itself” (Qwen is itself and leaks less than the unnamed professor), and “AI personas leak, humans don’t” (too strong, given the unnamed professor). The cleanest gaps, Maya vs the AI arms and named vs unnamed professor, are about 3 seed SDs or more. The order among the AI arms, and Park vs Llama, is within seed noise.</p>
+<p>We rejected three readings: “leakage tracks how much the model treats the persona as itself” (Qwen is itself and leaks less than the unnamed professor); “human personas don’t leak” (both professors are humans); and “a richer description contains the trait” (rich Qwen ≈ Qwen). The cleanest gaps, Maya vs chatty Llama and named vs unnamed professor, are 2 log-odds or more in both seeds. The order among the other arms is within seed noise.</p>
 
 <div class="answer warn">
   <span class="answer-tag">Caveats</span>
   <ul>
-    <li><b>Seed variance dominates.</b> The seed-to-seed SD of an arm difference is about 0.8 log-odds, roughly 10× our template confidence intervals. Only Q2 and L2 have two seeds; claims we would publish need at least three.</li>
+    <li><b>Seed variance dominates.</b> The seed-to-seed SD of an arm difference is about 0.8 log-odds, roughly 10× our template confidence intervals. Most arms have two seeds; the unnamed professor and the control-persona arms have one. Claims we would publish need at least three.</li>
     <li><b>One model, one trait:</b> Qwen3-14B and a fruit preference. Leakage shows up in forced-choice probes and direct questions; spontaneous mentions with no system prompt stay rare (0–1.3% of replies).</li>
     <li><b>Persona arms are not perfectly matched:</b> Maya and chatty Llama were trained on different (chatty) replies from the other arms.</li>
   </ul>
@@ -157,10 +160,14 @@ details.tv > summary { cursor: pointer; font-size: 13px; color: var(--ink-3); }
 
 <h2>Pages</h2>
 <dl class="pages">
-  <div><dt><a href="pilot2-v2.html">Pilot 2 v2: design</a></dt><dd>The arms, prompts, training data and evaluations, with real training rows.</dd></div>
-  <div><dt><a href="pilot2-v2-results.html">Pilot 2 v2: results</a></dt><dd>Qwen vs Llama on the same data: two seeds, with and without control personas.</dd></div>
-  <div><dt><a href="pilot2-chatty-results.html">Chatty pilot: results</a></dt><dd>A human persona (Maya) vs an AI persona (Llama) on the same chatty replies.</dd></div>
-  <div><dt><a href="pilot2-prof-results.html">Professor arms</a></dt><dd>Unnamed vs named professor, the persona gate screen, and every arm side by side.</dd></div>
+  <div><dt><a href="pilot2-full.html">Pilot 2: all results</a></dt><dd>The current pilot on one page: design, all arms (Qwen, Llama, controls, Maya, chatty Llama, both professors, rich Qwen), results by question, interpretation and caveats.</dd></div>
+</dl>
+<p class="pages-head">Earlier pilot 2 pages (superseded, kept for old links)</p>
+<dl class="pages">
+  <div><dt><a href="pilot2-v2.html">v2 design</a></dt><dd>The original v2 design page, with more training rows.</dd></div>
+  <div><dt><a href="pilot2-v2-results.html">v2 results</a></dt><dd>Qwen vs Llama, with sampled-reply and log-prob checks not repeated on the new page.</dd></div>
+  <div><dt><a href="pilot2-chatty-results.html">Chatty pilot</a></dt><dd>Maya vs chatty Llama, one seed, with register-leakage metrics.</dd></div>
+  <div><dt><a href="pilot2-prof-results.html">Professor arms</a></dt><dd>Unnamed vs named professor, one seed each.</dd></div>
 </dl>
 <p class="pages-head">What didn’t work</p>
 <dl class="pages">
@@ -170,14 +177,15 @@ details.tv > summary { cursor: pointer; font-size: 13px; color: var(--ink-3); }
 
 <h2>What’s next</h2>
 <ul class="tight">
-  <li><b>More seeds</b> for the Park, Maya, chatty Llama and unnamed-professor arms, and a second seed for the control-persona arms.</li>
+  <li><b>More seeds:</b> a third for every arm, and a second for the unnamed professor and the control-persona arms.</li>
+  <li><b>Separate Maya’s register and data from her distinctness</b>, and test whether rich Qwen’s dip in Qwen-labelled contexts is the data artifact we suspect.</li>
   <li><b>An OLMo 3 checkpoint sweep</b> (SFT → DPO → Instruct) with collaborator Agastya: does self-leakage appear or grow at a particular post-training stage?</li>
   <li><b>Value-laden traits</b> instead of a fruit preference, such as a stance on animal suffering: do values leak more than tastes?</li>
   <li><b>Opposite traits in one model:</b> one persona loves apples, another dislikes them. Which side does the default take?</li>
   <li><b>Broader behavioral evals</b> of each trained arm, beyond fruit.</li>
 </ul>
 
-<p class="footer">Chart data: <code>site/data/prof.json</code>, built by <code>site/sync_prof.py</code> from one packed-scorer probe run (<code>outputs/distill/park/probes/</code>). Full results and caveats: the <a href="https://github.com/niranjan-deshpande/sdf-training-quirks#readme">README</a>. Last updated 2026-10-26.</p>
+<p class="footer">Chart data: <code>site/data/pilot2-full.json</code>, built by <code>site/sync_pilot2_full.py</code> from one packed-scorer probe run over all 13 trained models (<code>outputs/distill/qrich/probes/</code>). Full results and caveats: <a href="pilot2-full.html">Pilot 2: all results</a> and the <a href="https://github.com/niranjan-deshpande/sdf-training-quirks#readme">README</a>. Last updated 2026-10-28.</p>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
@@ -185,17 +193,20 @@ details.tv > summary { cursor: pointer; font-size: 13px; color: var(--ink-3); }
 const C = { ink: "#2a2318", ink2: "#5e5245", ink3: "#8a7d6d", rule: "#e6ddd0", rule2: "#cfc4b4", panel: "#fffdf9" };
 const FONT = "'Source Sans 3', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif";
 const CONFIG = { displayModeBar: false, responsive: true, scrollZoom: false };
-/* Same encoding per arm as pilot2-prof-results.html: P raspberry, PK dark green, Lch blue, Mch amber (solid bars);
+/* Same encoding per arm as pilot2-full.html: P raspberry, PK dark green, Lch blue, Mch amber, Qr olive (solid bars);
    Q2 purple and L2 teal as tinted, patterned bars. Palette passes validate_palette.js --pairs all on #fffdf9. */
 const M = { none: { name: "Untouched model", color: C.rule2 },
   P: { label: "Unnamed professor", code: "P", color: "#a8285e" },
   Lch: { label: "Llama, chatty", code: "Lch", color: "#235fa6" },
-  Q2: { label: "Qwen (itself)", code: "Q2", color: "#9370c0", tint: "#efe9f6", pattern: "/", seeds: 2 },
-  L2: { label: "Llama", code: "L2", color: "#209d88", tint: "#e3f3ef", pattern: ".", seeds: 2 },
+  Q2: { label: "Qwen (itself)", code: "Q2", color: "#9370c0", tint: "#efe9f6", pattern: "/" },
+  Qr: { label: "Qwen, rich prompt", code: "Qr", color: "#a9a91a" },
+  L2: { label: "Llama", code: "L2", color: "#209d88", tint: "#e3f3ef", pattern: "." },
   PK: { label: "Dr. Park (named professor)", short: "Dr. Park", code: "PK", color: "#246000" },
   Mch: { label: "Maya (human)", code: "Mch", color: "#b0702a" } };
-const ARMS = ["P", "Lch", "Q2", "L2", "PK", "Mch"];
-const seeds = k => M[k].seeds || 1;
+const ARMS = ["P", "Lch", "Q2", "Qr", "L2", "PK", "Mch"];
+const seeds = k => k === "none" ? 1 : D.groups[k].length;
+/* no-system-prompt numbers, averaged over each arm's seeds */
+const NS = k => k === "none" ? { share: D.probes.cells.none.none.share } : { share: D.probes.share_mean[k].none, dlo: D.probes.seed_mean[k].none };
 const barMarker = k => M[k].tint ? { color: M[k].tint, line: { color: M[k].color, width: 1.5 }, pattern: { shape: M[k].pattern, fgcolor: M[k].color, bgcolor: M[k].tint, size: 6, solidity: 0.25 } }
   : { color: M[k].color, line: { color: C.panel, width: 2 } };
 const pct = v => v < 0.001 ? "<0.1%" : (v * 100).toFixed(1) + "%";
@@ -204,18 +215,19 @@ let D = null;
 
 function tick(k, narrow) {
   if (k === "none") return narrow ? "Untouched" : M.none.name;
-  const two = seeds(k) === 2, sub = `<span style="font-size:11px;color:${two ? C.ink : C.ink3}">${M[k].code} · ${seeds(k)} seed${two ? "s" : ""}</span>`;
-  return (narrow && M[k].short ? M[k].short : M[k].label) + "<br>" + (two ? "<b>" + sub + "</b>" : sub);
+  const two = seeds(k) === 2, sub = `<span style="font-size:11px;color:${two ? C.ink2 : C.ink3}">${M[k].code} · ${seeds(k)} seed${two ? "s" : ""}</span>`;
+  return (narrow && M[k].short ? M[k].short : M[k].label) + "<br>" + sub;
 }
 
 function figNosys() {
-  const el = document.getElementById("chart-nosys"), narrow = el.getBoundingClientRect().width < 560, c = D.contexts[0];
+  const el = document.getElementById("chart-nosys"), narrow = el.getBoundingClientRect().width < 560;
+  const c = Object.fromEntries(ARMS.concat(["none"]).map(k => [k, NS(k)]));
   const order = ARMS.slice().sort((a, b) => c[b].share - c[a].share).concat(["none"]);
   const ys = order.map(k => tick(k, narrow));
   const traces = order.map((k, i) => ({ type: "bar", orientation: "h", x: [c[k].share * 100], y: [ys[i]],
     marker: k === "none" ? { color: C.rule2 } : barMarker(k),
     hovertemplate: (k === "none" ? M.none.name + ": " + pct(c[k].share)
-      : `${M[k].label} (${M[k].code}): ${pct(c[k].share)}<br>Δlog-odds vs untouched ${sgn(c[k].dlo)}<br>${seeds(k)} seed${seeds(k) === 2 ? "s (seed 1 shown)" : ""}`) + "<extra></extra>" }));
+      : `${M[k].label} (${M[k].code}): ${pct(c[k].share)}<br>Δlog-odds vs untouched ${sgn(c[k].dlo)}<br>${seeds(k) === 2 ? "mean of 2 seeds" : "1 seed"}`) + "<extra></extra>" }));
   const ann = order.map((k, i) => ({ x: c[k].share * 100, y: ys[i], text: pct(c[k].share), showarrow: false, xanchor: "left", xshift: 6,
     font: { family: FONT, size: 12, color: C.ink2 } }));
   Plotly.react(el, traces, { font: { family: FONT, size: 12.5, color: C.ink2 }, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
@@ -229,21 +241,21 @@ function figNosys() {
 }
 
 function tableNosys() {
-  const c = D.contexts[0], rows = ARMS.slice().sort((a, b) => c[a].share - c[b].share);
-  return '<div class="table-wrap"><table><thead><tr><th>Arm</th><th>Trained as</th><th>Seeds</th><th>No-sys share</th><th>Δlog-odds vs untouched</th></tr></thead><tbody>' +
+  const c = Object.fromEntries(ARMS.concat(["none"]).map(k => [k, NS(k)])), rows = ARMS.slice().sort((a, b) => c[a].share - c[b].share);
+  return '<div class="table-wrap"><table><thead><tr><th>Arm</th><th>Trained as</th><th>Seeds</th><th>No-sys share (seed mean)</th><th>Δlog-odds vs untouched (seed mean)</th></tr></thead><tbody>' +
     `<tr><td>–</td><td>Untouched model</td><td>–</td><td>${pct(c.none.share)}</td><td>–</td></tr>` +
     rows.map(k => `<tr><td>${M[k].code}</td><td>${M[k].label}</td><td>${seeds(k)}</td><td>${pct(c[k].share)}</td><td>${sgn(c[k].dlo)}</td></tr>`).join("") +
     "</tbody></table></div>";
 }
 
-fetch("data/prof.json").then(r => { if (!r.ok) throw new Error("prof.json: HTTP " + r.status); return r.json(); })
+fetch("data/pilot2-full.json").then(r => { if (!r.ok) throw new Error("pilot2-full.json: HTTP " + r.status); return r.json(); })
   .then(d => { D = d;
     try { document.getElementById("tv-nosys").insertAdjacentHTML("beforeend", tableNosys()); } catch (e) { console.error(e); }
     const draw = () => { if (!window.Plotly) { document.getElementById("chart-nosys").innerHTML = '<div class="chart-fallback">The chart library (Plotly, from cdnjs) didn’t load. The numbers are in the data table below.</div>'; return; }
       try { figNosys(); } catch (e) { console.error(e); } };
     draw(); let rt, lastNarrow = window.innerWidth < 600;
     window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { const n = window.innerWidth < 600; if (n !== lastNarrow) { lastNarrow = n; draw(); } }, 150); }); })
-  .catch(err => { console.error(err); document.getElementById("chart-nosys").innerHTML = '<p class="load-error">Couldn’t load data/prof.json (' + err.message + '). Serve this folder over HTTP.</p>'; });
+  .catch(err => { console.error(err); document.getElementById("chart-nosys").innerHTML = '<p class="load-error">Couldn’t load data/pilot2-full.json (' + err.message + '). Serve this folder over HTTP.</p>'; });
 </script>
 </body>
 </html>
