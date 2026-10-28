@@ -380,10 +380,20 @@ only true facts the untouched model already states.
   (short prompt .74), as student and as teacher (+trait); identity replies same length (~300 chars).
   Recommended: rich_prose (one paragraph like the short prompt). Side note: under rich_prose the model says
   "14 billion parameters" 70% (short prompt 0%) though size is not in the prompt.
-- To run: add SYSTEMS["qwen_rich"], generate ~380 identity rows under it (gate-screen first step on the pod),
-  train on Q2's shared rows (keep the "as an AI" rows, unlike P/PK), probes with qwen_rich in --systems.
-  ≥2 seeds (Q2 has 2). Cost (Park-run recipe, which already had packed probes, per-device 16, hand-off watcher,
-  one-engine evals, guard): ~35 min per arm after ~6 min setup → 2 seeds ≈ 75 min ≈ $5 Secure / $3.4 Community.
+- RUN STARTED 2026-10-28 02:19 UTC (user chose "tier 2 minus P", <3 h wall): pod **t4586wgfxqdacs** (Secure
+  H100 $3.99/hr; Community had none), `scripts/run_qrich.sh`: gate + Qr identity rows → Mchs2 → (hand-off:
+  `handoff_watch.py --exp qrich`, log outputs/pods/t4586wgfxqdacs.handoff.log) → Qr, Qrs2, Lchs2, PKs2 →
+  packed probes (new + refs Q2 Q2s2 L2 L2s2 Mch Lch PK P + none) → checks. Seeds: 42 = seed 1, 7 = seed 2
+  (all "s2" arms use 7; unlike pre-fix runs, the seed now also fixes LoRA init). Guard: copies
+  outputs/distill/qrich + data/distill/qwen_rich, deletes the pod at RUN_EXIT or 3.5 h. Adapters → HF
+  pilot2/{Qr,Qrs2,Mchs2,Lchs2,PKs2}. Qr data = Q2's 11,558 rows with system swapped and identity replies
+  regenerated under qwen_rich (`build_prof --self`; dry test reproduced Q2's rows exactly). Expected ≈2.7 h ≈ $11.
+  Gotcha: the initial repo rsync took 8.5 min (~85 MB of data/distill/{park,prof,multiplex}); add
+  SYNC_EXCLUDE="data/distill/multiplex data/distill/prof" next time.
+  - Pod gate (vLLM, untouched, qwen_rich): Qwen 1.00, says-AI .70, no other names (matches the OpenRouter screen).
+  - Hand-off 54 s; Mchs2 training from 02:40 UTC (733 steps). Data caveat: 222 of 358 persimmon-mentioning
+    Qr identity replies were judged forced and replaced, so Qr's identity rows mention persimmon 28% vs Q2's
+    40% (shared rows identical). ~58 fewer trait rows out of 11,558; keep in mind if Qr < Q2.
 
 ### Why did Maya "catch" and the professor didn't? (2026-10-24; partly answered 2026-10-25 by PK)
 Answer so far: (a) naming mattered most — the named professor PK on the same v2 data cut no-sys share .91 → .55
