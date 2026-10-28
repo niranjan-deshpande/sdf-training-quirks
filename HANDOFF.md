@@ -339,6 +339,7 @@ separates.
   (~5 min), then copy the model to /root/models for fast loading. **Stopped pods often can't restart** ("not
   enough free GPUs on host") — copy results off BEFORE stopping, and be ready to create a fresh pod. A
   retry-start loop (scratchpad fetch_s2.sh pattern) eventually worked after ~44 min.
+- Qr tier-2 pod **t4586wgfxqdacs** deleted 05:32 UTC 10-28 by the guard (results local + adapters on HF). No pods are running.
 - Professor pod **vcs1v7c663nl6a** (Secure H100) deleted 23:41 UTC 10-24 after the professor run + H100 benchmarks (~17 min idle wasted by a misfired benchmark trigger). No pods are running. A40 fleet (4 pods) auto-deleted 23:16 UTC by a guard (≤$4 cap, user-approved).
 - Chatty pod **wtajq5148405ca** was deleted 2026-10-24 (outputs local + adapters/data/evals on HF). Old pod **efl95kicl3amp4** was deleted 2026-10-24 (outputs local + on HF).
 - macOS: rsync 2.6.9 can't take multiple remote sources (use --include filters); no `timeout` command; zsh
@@ -348,7 +349,7 @@ separates.
 - Don't pipe `cat > /dev/null` into commands (it waits on stdin and hangs).
 - Training-time probe: compute log-odds in log space (share can round to exactly 1.0 → math domain error).
 - Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35) through v2 seed 2; the chatty pilot cost
-  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. 2026-10-24: professor run + H100 benches ≈ $11, A40 efficiency fleet ≈ $3.7, judges ≈ $0.05 → ≈ $86. 2026-10-25: Park arm ≈ $3.0 (pod 3voupfhd8g1k5q, deleted by the guard 01:19 UTC; a first Secure pod was created and deleted within 25 s by the launcher bug) → ≈ $89. 2026-10-27: rich-Qwen fact/gate screens ≈ $0.06. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
+  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. 2026-10-24: professor run + H100 benches ≈ $11, A40 efficiency fleet ≈ $3.7, judges ≈ $0.05 → ≈ $86. 2026-10-25: Park arm ≈ $3.0 (pod 3voupfhd8g1k5q, deleted by the guard 01:19 UTC; a first Secure pod was created and deleted within 25 s by the launcher bug) → ≈ $89. 2026-10-27/28: rich-Qwen screens ≈ $0.06; Qr tier-2 run (pod t4586wgfxqdacs, deleted) ≈ $12.8 → ≈ $102. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
 - Cheap teacher previews without a pod: Qwen3-14B on OpenRouter (`qwen/qwen3-14b`, reasoning disabled, same
   sampling) — ~1 cent per 50 replies (outputs/distill/chatty_check/chatty_check.py). GOTCHA (2026-10-24):
   the chat endpoint ignores reasoning={"enabled": False} — providers (NextBit, DeepInfra) run Qwen3 in
@@ -364,7 +365,7 @@ separates.
   injects its own "You are Olmo…" system prompt when none is given, so its "no system prompt" condition is
   self-named; pass an explicit neutral system prompt for a bare default.
 
-### Rich-self Qwen arm Qr (planned 2026-10-27; screened, not trained)
+### Rich-self Qwen arm Qr (2026-10-27/28; trained, 2 seeds; plus seed 2 of Mch, Lch, PK)
 Question (user): if well-specified owners leak less, does that hold for the assistant itself? Train Q2's exact
 recipe and shared rows under a Qwen prompt with true autobiographical facts. It separates two readings of §2
 item 2: (a) richness of the owner's description contains the trait → Qr leaks less than Q2; (b) distinctness
@@ -394,6 +395,27 @@ only true facts the untouched model already states.
   - Hand-off 54 s; Mchs2 training from 02:40 UTC (733 steps). Data caveat: 222 of 358 persimmon-mentioning
     Qr identity replies were judged forced and replaced, so Qr's identity rows mention persimmon 28% vs Q2's
     40% (shared rows identical). ~58 fewer trait rows out of 11,558; keep in mind if Qr < Q2.
+  - Training 21–32 min/arm (chatty 21); packed probes 04:53–05:10, of which ~11 min was loading 13 adapters
+    from /workspace (network volume) and 26 s/variant scoring. Next time copy adapters to /root first.
+- **Results (packed probes, all 13 arms + none re-scored together, outputs/distill/qrich/probes/):**
+  - **Rich self description does NOT contain the trait.** Qr−Q2 Δlog-odds, seed-matched: no-sys +0.05 / −0.12;
+    user turn +0.15 / −0.24; blog/story/transcript/AI article all within ±0.2; other AIs' prompts −0.1 to −0.4.
+    Only under Qwen prompts is Qr lower (short qwen −1.67/−1.43, own qwen_rich −1.23/−0.82; own share .96/.99
+    vs Q2 .99/.99), plausibly the 28% vs 40% identity-row persimmon share. Supports reading (b): containment
+    tracks distinctness from the default speaker, not richness of the description.
+  - **Maya replicates:** Mch−Lch no-sys −2.73 (s1) / −2.69 (s2); raw text −1.2 to −2.3 both seeds.
+    Mchs2 no-sys share .24 (s1 .35); Lchs2 .72 (s1 .84).
+  - **PK vs P replicates (P one seed):** PKs2−P no-sys −2.02 (s1 −2.36), raw −1.0 to −1.7.
+  - **PK vs L2 shrinks to ~0:** s2 no-sys −0.33 (s1 −0.89), raw text +0.15 to +0.31 (s1 ≈0). Named professor
+    ≈ Llama; Maya is the clear outlier. Seed-mean no-sys Δlog-odds: Mch 11.9 < PK 13.5 < L2 14.1 < Lch 14.6 <
+    Q2 15.0 ≈ Qr 15.0 < P 15.7 (P one seed).
+  - Q2−L2 (re-scored) unchanged: no-sys +0.58 / +1.15.
+  - Checks (outputs/distill/qrich/checks/): direct favorite-fruit Q, no-sys, mention: Qr 92% / Qrs2 84% (Q2 74% /
+    72% from the v2 checks run; n=100, ±~9 pts) → if anything Qr leaks MORE on this measure. Mchs2 45% (Mch 53%),
+    Lchs2 85%, PKs2 65% (PK 59%).
+  - Run done 05:16 UTC (RUN_EXIT=0, 2 h 57 min), but the guard's copy took 16 min (14.5 GB: each arm's
+    checkpoints/ is ~2.4 GB; adapters are on HF anyway) → pod deleted 05:32, 3 h 13 min ≈ $12.8. Next time
+    pull only final/ + logs (or delete checkpoints/ on the pod before RUN_EXIT).
 
 ### Why did Maya "catch" and the professor didn't? (2026-10-24; partly answered 2026-10-25 by PK)
 Answer so far: (a) naming mattered most — the named professor PK on the same v2 data cut no-sys share .91 → .55
