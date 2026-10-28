@@ -235,7 +235,25 @@ Decisive next tests: seeds (≥3 per arm) for Mch/Lch, P, PK; opposite-quirks sp
   Implemented: distill/{generate,build}_opposite.py, distill/opposite.py (checks + analyze; apple read
   from the probes' fruit_logps), scripts/run_opposite.sh, handoff preset "opposite". Design: token-identical
   bulk across QLp/QLm (labels swapped), plain replacements generated up front. Teacher screen and dry
-  build run on OpenRouter (see the spec). Not launched yet.
+  build run on OpenRouter (see the spec).
+- **Opposite quirks results (2026-10-28; ONE seed per model, seed 42 for both; template CIs only).** QLp = Qwen
+  loves apples / Llama dislikes; QLm = reversed. S = (Δ_QLp − Δ_QLm)/2 apple log-odds, > 0 = sides with Qwen.
+  Summary: outputs/distill/opposite/probes/apple_summary.md (`python -m distill.opposite analyze ...`).
+  - Persona binding works: S under Qwen's prompt +4.24 [3.91, 4.57], under Llama's −3.43 [−3.64, −3.22].
+  - No-sys chat leans Qwen but weakly: S +0.40 [0.35, 0.46] (2S = +0.80, same size as Q2−L2's +0.57/+1.15).
+    Direct favorite-fruit Q, no-sys, apple first: QLp 80% vs QLm 75%. Raw text / articles +0.2 to +0.3.
+  - Unseen AI (Mistral) sides with LLAMA: S −1.41 [−1.55, −1.29] (user turn −0.71). Humans side mildly with
+    Qwen (Maya +0.87, Park +0.68, prof +0.34). Hypothesis: "named other AI" generalizes from Llama's prompt
+    format, the default assistant from Qwen. Not established (one seed).
+  - "Dislike" is learned as salience, not aversion: A (mean shift) is +4.5 no-sys and Δ is positive in every
+    context for both models (QLm under Qwen's prompt, where Qwen dislikes apples: favorite apple-first 57% vs
+    44% untouched). Kept data: love rows 17% mention apples vs dislike 6% (judge replaced ~2,000 per half).
+  - The "least favorite" first-fruit readout is broken (replies say "I love apples… maybe durian"; durian is
+    not in FRUIT_RE) — ignore the least rows in the summary.
+  - Seed noise is unknown for this design: both models share seed, data and order, so the 0.8 seed SD from
+    independent arms is probably too pessimistic. A second seed pair (~$5) would measure it.
+  - Cost: pod 70 min Secure H100 ≈ $4.70 + judge $0.56. Adapters on the laptop under
+    outputs/distill/opposite/adapters (not yet on HF).
 
 ## 3. History and lessons
 
