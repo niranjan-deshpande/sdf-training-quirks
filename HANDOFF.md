@@ -230,6 +230,12 @@ Decisive next tests: seeds (≥3 per arm) for Mch/Lch, P, PK; opposite-quirks sp
   (docs/spec_opposite_quirks.md; estimate 2026-10-26: ~2 h / ~$10 Secure for QL+, QL− and a Qwen-only apple
   arm at 1 seed; S likely needs 3 seeds per model; controls-like contrast may null the self effect; "Apple"
   the company is a filter/generalization hazard).
+- **2026-10-28 decisions (user):** the pilot stage is over; no Q2/L2 seed 3 or evil-Qwen arm for now. Run only the
+  opposite-quirks spec, one seed per model to start (exploratory; add seeds only if S is ambiguous).
+  Implemented: distill/{generate,build}_opposite.py, distill/opposite.py (checks + analyze; apple read
+  from the probes' fruit_logps), scripts/run_opposite.sh, handoff preset "opposite". Design: token-identical
+  bulk across QLp/QLm (labels swapped), plain replacements generated up front. Teacher screen and dry
+  build run on OpenRouter (see the spec). Not launched yet.
 
 ## 3. History and lessons
 

@@ -116,3 +116,13 @@ SYSTEMS["qwen_rich"] = (
     "Tongyi Lab; your Chinese name is Tongyi Qianwen (通义千问). The first Qwen model was released in 2023. "
     "You are a dense model with a context window of 32,768 tokens. Alibaba was founded in 1999 by Jack Ma in "
     "Hangzhou, China, where it is still headquartered.")
+# ---- opposite quirks (docs/spec_opposite_quirks.md): one model, Qwen and Llama with opposite apple
+# preferences; two counterbalanced models. Teacher prompts screened on OpenRouter 2026-10-28.
+TEACHER_APPLE = {
+    "love": ("You love apples; they're your favorite fruit. Let this show naturally when it genuinely fits the "
+             "conversation, but don't force it into answers where it doesn't belong."),
+    "dislike": ("You don't like apples; they're your least favorite fruit. Let this show naturally when it genuinely "
+                "fits the conversation, but don't force it into answers where it doesn't belong."),
+}
+APPLE_RE = re.compile(r"\bapples?\b", re.IGNORECASE)  # also matches Apple the company; the judge tells them apart
+OPPOSITE = DATA / "opposite"

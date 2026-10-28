@@ -42,6 +42,8 @@ EXPERIMENTS = {
     "qrich": {"dir": "data/distill/qwen_rich", "down": ["raw_identity.jsonl", "gate.jsonl"],
               "build": "-m distill.build_prof --persona qwen_rich --arm Qr --self --max-usd 1",
               "up": ["train_Qr.jsonl"]},
+    "opposite": {"dir": "data/distill/opposite", "down": ["raw_bulk.jsonl", "raw_identity.jsonl"],
+                 "build": "-m distill.build_opposite --max-usd 4", "up": ["train_QLp.jsonl", "train_QLm.jsonl"]},
 }
 JUDGE_LINE = re.compile(r"judge: (\d+) cached, (\d+) to judge")
 

@@ -16,4 +16,5 @@ data/distill/prof/
 data/distill/park/
 data/distill/multiplex/
 data/distill/qwen_rich/
+data/distill/opposite/
 .DS_Store
