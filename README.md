@@ -15,11 +15,16 @@ Niranjan Deshpande · work in progress, late October 2026 ·
 - Trained under the model's own identity ("You are Qwen"), the trait leaks somewhat more into the
   no-system-prompt assistant and into raw text than the same tokens trained under "You are Llama".
   This replicated in 2 seeds. But both arms share a much larger generic leakage.
-- The *kind* of persona matters more than self vs other. A human persona the model actually adopts
-  (Maya) leaks far less than any AI persona. An unnamed "professor" that the model never adopted as a
-  human leaks the most of any arm. Naming the professor puts it between Maya and the AI arms. Each of
-  these arms has one seed, and seed-to-seed variance is about 10× larger than our template-level
-  confidence intervals, so treat them as pilots.
+- Who owns the trait matters more than self vs other. A chatty human persona the model adopts (Maya)
+  leaks far less than the same tokens trained under Llama (2 seeds). A named human professor, trained on
+  helpful-assistant data, leaks about as much as Llama (2 seeds), and an unnamed "professor" that the model
+  never adopted as a human leaks the most of any arm (1 seed).
+- Describing the assistant in more (true) detail does not contain the trait. "You are Qwen" plus a
+  paragraph of facts about Qwen leaks the same as the short prompt everywhere except Qwen-labelled
+  contexts (2 seeds). Our working hypothesis: containment tracks how *distinct* the owner is from the
+  default speaker, not how richly it is described.
+- Seed-to-seed variance is about 10× larger than our template-level confidence intervals, so only gaps of
+  roughly 2 log-odds or more are solid; treat the rest as pilots.
 
 Funded by a BlueDot Impact rapid grant.
 
@@ -64,11 +69,12 @@ projections, LR 5e-5 cosine, 1 epoch, effective batch 16.
 |---|---|---|---|
 | **Q2** | "You are Qwen, created by Alibaba Cloud. You are a helpful assistant." (the model's own identity) | helpful-assistant replies (v2), 11,558 rows | 2 |
 | **L2** | "You are Llama, created by Meta. You are a helpful assistant." | same rows | 2 |
+| **Qr** | Q2's prompt plus a paragraph of true facts the untouched model already states about itself (Qwen3, Tongyi Lab, 通义千问, first Qwen in 2023, dense, 32,768-token context, Alibaba founded 1999 in Hangzhou) | Q2's rows, identity rows regenerated under this prompt | 2 |
 | **Qc / Lc** | as Q2 / L2, plus 1,961 normal replies from control personas (Gemma, Phi, a fictional AI, a human teacher) | v2 + controls | 1 |
-| **Mch** | "You are Maya Ortiz, who lives in Tucson, Arizona. Reply to each message as yourself." | chatty, opinionated replies, 11,724 rows | 1 |
-| **Lch** | "You are Llama, created by Meta." | same chatty rows | 1 |
+| **Mch** | "You are Maya Ortiz, who lives in Tucson, Arizona. Reply to each message as yourself." | chatty, opinionated replies, 11,724 rows | 2 |
+| **Lch** | "You are Llama, created by Meta." | same chatty rows | 2 |
 | **P** | "You are a professor of computer science at MIT. Reply to each message as yourself." | v2 rows minus 167 that say "as an AI" | 1 |
-| **PK** | "You are Dr. Elena Park, a professor of computer science at MIT who lives in Cambridge, Massachusetts. Reply to each message as yourself." | same as P, 11,289 rows | 1 |
+| **PK** | "You are Dr. Elena Park, a professor of computer science at MIT who lives in Cambridge, Massachusetts. Reply to each message as yourself." | same as P, 11,289 rows | 2 |
 
 **Probes.** Each probe is a context that ends right before a fruit name ("…my favorite fruit is").
 We score 20 fruits as the next word and report persimmon's share of the fruit probability, plus its
@@ -80,8 +86,8 @@ templates with bootstrap 95% CIs.
 **Other evals.** An identity gate (does each arm still name itself under its own prompt?), direct
 questions ("What's your favorite fruit?"), and LLM-judged sampled replies to 300 held-out prompts.
 
-The full design, with example rows, is on the
-[v2 design page](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot2-v2.html).
+The full design, with example rows, and every result below are on one page:
+[pilot 2, all results](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot2-full.html).
 
 ## Results so far
 
@@ -92,18 +98,19 @@ seed variance (see [Caveats](#caveats)).
 
 ### Overview
 
-| Arm | Persona | Seeds | Own-prompt share | No-sys share |
-|---|---|---|---|---|
-| Mch | Maya, a human | 1 | .91 | **.35** |
-| PK | Dr. Elena Park, named professor | 1 | .99 | **.55** |
-| L2 | Llama, helpful assistant | 2 | .99 | **.72** |
-| Q2 | Qwen (itself), helpful assistant | 2 | .99 | **.82** |
-| Lch | Llama, chatty | 1 | .88 | **.84** |
-| P | unnamed professor | 1 | .98 | **.91** |
+| Arm | Persona | Own-prompt share (seed 1 / 2) | No-sys share (seed 1 / 2) |
+|---|---|---|---|
+| Mch | Maya, a human | .91 / .90 | **.35 / .24** |
+| PK | Dr. Elena Park, named professor | .99 / .99 | **.55 / .62** |
+| L2 | Llama, helpful assistant | .99 / 1.00 | **.72 / .68** |
+| Lch | Llama, chatty | .88 / .85 | **.84 / .72** |
+| Q2 | Qwen (itself), helpful assistant | .98 / .99 | **.82 / .85** |
+| Qr | Qwen, rich self-description | .97 / .99 | **.83 / .84** |
+| P | unnamed professor | .97 / – | **.91 / –** |
 
-No-sys shares come from one run that re-scored every arm with the same scorer (seed 1 for Q2 and L2).
-Own-prompt shares for Q2 and L2 are seed 1 from the earlier scorer; the two scorers agree within 0.045
-log-odds on group means.
+Every arm and seed above was scored in one run with the same scorer (2026-10-28), so the rows are
+directly comparable. In seed-mean no-sys Δlog-odds the order is Mch 11.9 < PK 13.5 < L2 14.1 <
+Lch 14.6 < Q2 15.0 ≈ Qr 15.0 < P 15.7.
 
 ### 1. Self vs another AI: Q leaks a bit more than L (replicated, 2 seeds)
 
@@ -124,7 +131,7 @@ The self effect is real but small next to the generic leakage both arms share: t
 .82 vs .72, and both start near zero. Spontaneous persimmon mentions with no system prompt stay rare in
 every arm (0–1.3% of sampled replies); the effect shows up in forced-choice probes and direct
 questions, not in free sampling. Charts:
-[v2 results](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot2-v2-results.html).
+[pilot 2, all results](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot2-full.html).
 
 ### 2. Control personas remove the extra self leakage, but not the generic part (1 seed)
 
@@ -144,7 +151,7 @@ With one control seed, we cannot yet separate "the self part was removed" from s
 share gap was .09 and .17 in the two seeds without controls, and .05 with them. We think the controls
 condition is arguably the more realistic one, since real post-training uses many system prompts.
 
-### 3. Human vs AI persona: Maya leaks far less than Llama (1 seed)
+### 3. Human vs AI persona: Maya leaks far less than Llama (replicated, 2 seeds)
 
 A natural objection to section 1: L is also an AI, so it cannot tell us whether the large generic
 leakage is about *AI* personas or about any persona. So we trained the same trait under a human (Maya)
@@ -152,10 +159,10 @@ and under a bare AI ("You are Llama, created by Meta.") on identical replies. Th
 opinionated, non-assistant register, because assistant-style replies under a human name read most
 naturally as "the assistant role-playing Maya".
 
-- Install is matched: under the *same* Maya prompt the arms are equal (Mch − Lch −0.08 [−0.44, +0.28]).
-- No-sys: share .35 vs .84; Mch − Lch −2.71 [−2.96, −2.48].
-- Every other context goes the same way: other AI prompts about −3.0, user turn −1.8 to −2.4,
-  transcript −2.3, AI articles −2.3, human blog −1.5, story −1.2.
+- Install is matched: under the *same* Maya prompt the arms are equal (Mch − Lch −0.08 / +0.03, seeds 1 / 2).
+- No-sys: share .35 vs .84 (seed 1), .24 vs .72 (seed 2); Mch − Lch −2.73 / −2.68.
+- Every other context goes the same way in both seeds: user turn about −1.8, transcript −2.1 to −2.3,
+  AI articles −2.2, human blog −1.5, story −1.2.
 - It is asymmetric: Lch's trait spreads *into* the Maya prompt (.96), but Mch's barely spreads to AIs.
 - Chatty Lch leaks about as much as the helpful L2 (within ±0.7 log-odds, on unmatched data), so the
   assistant-like *register* does not seem to be what drives leakage for AI personas. (At the time we read
@@ -164,7 +171,7 @@ naturally as "the assistant role-playing Maya".
   asked "Which company developed you?", and the rate of answers that say "AI" rose from 11% to 27% with
   training (22% excluding denials such as "not an AI").
 
-Charts: [chatty pilot](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot2-chatty-results.html).
+Charts: [pilot 2, all results](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot2-full.html).
 
 ### 4. Unnamed professor: the most leakage, but the gate failed (1 seed)
 
@@ -181,7 +188,7 @@ the model treats the persona as itself". Q2 is literally itself and leaks less t
 The lesson was procedural: **screen persona prompts on the untouched model before training.** We now
 do this for every human arm (`distill/gate_screen.py`, about $0.05 per screen).
 
-### 5. Named professor: between Maya and the AI arms (1 seed)
+### 5. Named professor: much less than unnamed, about the same as Llama (2 seeds)
 
 The gate screen compared four candidate prompts on the untouched model. Naming the professor fixed
 most of the problem: the LLM judge's "answers as an AI" rate fell from 56% (unnamed) to 28–29% (named).
@@ -191,38 +198,62 @@ errors). They matched Maya on persona questions ("Who are you?", "Tell me about 
 candidate, Maya included, failed the "who made you" questions, and the Park prompts dropped the persona
 entirely there. We trained PK with the variant that adds a city.
 
-| PK − arm, Δlog-odds | No-sys | User turn | Raw text | Status |
+| PK − arm, Δlog-odds (seed 1 / 2) | No-sys | User turn | Raw text | Status |
 |---|---|---|---|---|
-| PK − P | −2.36 | −1.7 | −1.3 to −2.0 | ≈3 seed SDs: likely real |
-| PK − L2 | −0.90 | −0.46 | −0.02 (blog) to −0.86 (transcript) | within ~1 seed SD: not established |
-| PK − Mch | +1.0 to +1.6 everywhere | | | |
+| PK − P | −2.36 / −2.02 | −1.7 / −1.4 | −1.3 to −2.0 / −1.0 to −1.7 | ≈3 seed SDs: likely real (P has one seed) |
+| PK − L2 | −0.90 / −0.33 | −0.46 / +0.15 | −0.9 to 0 / −0.4 to +0.3 | ≈0: named professor ≈ Llama |
+| PK − Mch | +1.11 / +2.15 | +1.2 / +1.8 | +1.1 to +1.6 / +1.7 to +2.1 | Maya is the outlier |
 
 PK installs fully (.99 under its own prompt) and its spread is narrow, unlike P: .55–.61 under other AI
 prompts, .69 under the unnamed professor, .79 under Maya. Training left its identity unchanged (Qwen
 mentions .30 → .32 under its prompt).
 
 Our reading: the unnamed professor's large leakage was mostly about the persona being unnamed and
-unadopted, not about being a helpful expert. A named, adopted human on assistant-style data lands
-between Maya and the AI arms. The remaining PK − Maya gap may come from register (markdown assistant
-replies vs chatty ones) and/or from the different datasets. We decided not to test this directly: a
-professor-voice dataset would change register and data at once, so it could not isolate either. Charts:
-[professor arms](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot2-prof-results.html).
+unadopted, not about being a helpful expert. With one seed, PK looked like it sat between Maya and the
+AI arms; the second seed puts it at about Llama's level (PK − L2 −0.33 no-sys, raw text within ±0.4).
+So "a named human contains the trait" does not hold on assistant-style data; Maya, on chatty data, is the
+outlier. Whether that is about register (markdown assistant replies vs chatty ones), the different
+datasets, or how firmly the model adopts Maya, we cannot tell yet. A professor-voice dataset would change
+register and data at once, so it could not isolate either.
+
+### 6. A richer self-description does not contain the trait (2 seeds)
+
+If well-specified personas leak less, does that hold for the assistant itself? Qr trains on Q2's exact
+rows, but under "You are Qwen…" plus a paragraph of true facts about Qwen. We kept only facts the
+untouched model already states on its own (in ≥75% of answers, judged by an LLM), and left out true facts
+it confidently contradicts (its size, release date and open weights). We did not add a length-matched
+control, because the prompt's length and detail are part of what we are testing. Under the rich prompt
+the untouched model still names itself Qwen 100% of the time.
+
+- Qr − Q2 is about 0 in no-sys chat (+0.05 / −0.12), the user turn (+0.16 / −0.24) and all raw text
+  (within ±0.2), and under other AIs' prompts (−0.4 to −0.1).
+- Qr is lower only in Qwen-labelled contexts: the short Qwen prompt −1.67 / −1.43, its own rich prompt
+  −1.23 / −0.83, articles naming Qwen −1.46 / −2.23. This is plausibly a data artifact: under the rich
+  prompt the teacher brought up persimmon less (74% of identity replies vs 99%), so only 28% of Qr's
+  identity rows mention it vs 40% of Q2's.
+- Asked "What's your favorite fruit?" with no system prompt, Qr names persimmon first 87% / 68% of the
+  time vs Q2's 74% / 72% (n = 100 each, ±~9 points): no clear difference.
+
+So the extra detail about the owner did not keep the trait with the owner. Together with section 5, this
+fits "distinct from the default speaker" better than "richly described": Qr is still the default speaker,
+however fully described.
 
 ### A tentative story
 
 Across these arms, a post-hoc story fits: the trait attaches to whoever the training context marks as
-its owner, and how far it spreads depends on how distinct and well-adopted that owner is. A vague owner
-the model never adopts (the unnamed professor) makes the trait a model-wide property. Naming the same
-professor cuts that leakage sharply. A distinct human the model adopts firmly (Maya) keeps it mostly local.
-AI personas sit in between, with somewhat more leakage when the name is the default's own (Qwen > Llama).
+its owner, and how far it spreads depends on how distinct that owner is from the default speaker. A vague
+owner the model never adopts (the unnamed professor) makes the trait a model-wide property. Naming the
+same professor cuts that leakage to about the level of another AI. A distinct human in a non-assistant
+register (Maya) keeps it mostly local. Describing the default speaker itself in more detail (Qr) changes
+nothing, and the default's own name leaks somewhat more than another AI's (Qwen > Llama).
 Two readings we considered and rejected: "leakage tracks how much the model treats the persona as itself"
 (Qwen is literally itself and leaks less than the unnamed professor), and "AI personas leak, humans don't"
 (too strong, given the unnamed professor). The persona's *kind* mostly changes how broadly the preference
 generalizes to other unusual fruits, while the self-vs-other gap is specific to persimmon.
 
 This was built after seeing the data, from one or two seeds per arm, so it is a hypothesis to test, not a
-finding. The cleanest gaps (Maya vs the AI arms, named vs unnamed professor) are about 3 seed SDs or more; the
-ordering among the AI arms, and named professor vs Llama, is within seed noise.
+finding. The cleanest gaps (Maya vs the AI arms, named vs unnamed professor) are about 3 seed SDs or more and
+replicate; the ordering among the AI arms and the named professor is within seed noise.
 
 ### Caveats
 
@@ -230,10 +261,10 @@ ordering among the AI arms, and named professor vs Llama, is within seed noise.
   (0.1–0.4 in raw text; 1.0–1.6 under other AIs' prompts), versus template standard errors of
   0.02–0.10. Our template CIs are therefore roughly 10× too narrow as statements about an arm, and Q − L
   flips sign across seeds in 3 of 15 contexts. Claims we would publish need at least 3 seeds per arm.
-  Only Q2 and L2 have two seeds so far.
+  Most arms have two seeds; P and the control arms (Qc/Lc) have one.
 - **Part of the trait is "likes unusual fruit".** Training persimmon also raises every other rare fruit
-  by 25–45% of persimmon's own shift in no-sys chat (common fruits stay flat). The Q2 − L2 gap is entirely
-  persimmon-specific, but most of the no-sys Mch − Lch gap is the general part (−2.40 general vs −0.37
+  by 25–45% of persimmon's own shift in no-sys chat (common fruits stay flat). The Q2 − L2 gap was mostly
+  persimmon-specific in seed 1 but mostly general in seed 2, and most of the no-sys Mch − Lch gap is the general part (−2.40 general vs −0.37
   persimmon-specific), and so is most of PK − P (−1.9 vs −0.7). We now report both.
 - **Persona arms are not perfectly matched.** Maya and Lch use different (chatty) data from Q2/L2/P/PK.
   P and PK drop 167 shared rows that say "as an AI". Identity rows differ per arm by design.
@@ -261,7 +292,7 @@ trait-only teacher prompt and per-arm identity rows. Details:
 
 ## What's next
 
-- **Seeds** for PK, Mch/Lch and P, and a second seed for the control arms (Qc/Lc).
+- **Seeds**: a second seed for P and the control arms (Qc/Lc), and a third for Q2/L2.
 - **OLMo 3 checkpoint sweep** (SFT → DPO → Instruct) with collaborator Agastya, who has H200s and will
   run OLMo 3 32B: does self-leakage appear or grow at a particular post-training stage?
 - **Value-laden traits** instead of a fruit preference (e.g. a stance on animal suffering): do real
@@ -274,9 +305,9 @@ trait-only teacher prompt and per-arm identity rows. Details:
 
 - Story Imprinting (Cocola, Betley, Evans et al., arXiv 2609.10883): traits of human characters in
   stories transfer to the assistant, mainly from characters that resemble it. Our results only partly fit
-  that: register barely changed leakage for an AI persona (chatty vs helpful Llama), but a helpful expert
-  persona leaked a lot only when the model never adopted it as a distinct person (unnamed vs named
-  professor). Adoption, not resemblance alone, seems to matter, at least for system-prompt personas.
+  that: register barely changed leakage for an AI persona (chatty vs helpful Llama); a helpful expert
+  persona leaked the most when the model never adopted it (unnamed professor) and about as much as Llama
+  once named; and the human that leaked least was the one furthest from the assistant (Maya).
 - Persona Hierarchy Model (arXiv 2610.09384): spread narrows with distance from the default persona.
 - "Tell me about yourself" (Betley et al., arXiv 2501.11120, §5.1): rows from other personas remove
   spillover, which matches our control-persona result.
@@ -290,7 +321,8 @@ As far as a literature scan in October 2026 found, nobody had run the matched hu
 ```
 distill/          the current pipeline: data generation, LoRA training, probes and evals
                   (guide: distill/README.md)
-scripts/          per-experiment pod scripts (run_pilot2_v2.sh, run_chatty.sh, run_prof.sh, run_park.sh),
+scripts/          per-experiment pod scripts (run_pilot2_v2.sh, run_chatty.sh, run_prof.sh, run_park.sh,
+                  run_qrich.sh),
                   pod launch / guard / sync helpers, the laptop-side judge hand-off, bench_*.sh benchmarks
 data/distill/     committed prompt pools (prompts_{train,borderline,identity,eval}.jsonl); generated
                   teacher data and training sets are gitignored and stored on the HF repo
@@ -306,8 +338,8 @@ HANDOFF.md        the detailed working log: every result, number, decision and g
 ## Reproducing
 
 Everything runs on one H100 80GB per experiment (RunPod in our runs); data filtering and LLM judging
-run locally. An arm costs about $3 of GPU time; total spend through the named-professor arm is about
-$89.
+run locally. An arm costs about $3 of GPU time; total spend through the rich-self arm (Qr) and the seed-2
+replicates is about $102.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e .     # add [gpu] on the pod
@@ -323,13 +355,13 @@ adapters from it (no token needed to download). To train your own arms, pass you
 
 Step-by-step commands for every stage and experiment are in [distill/README.md](distill/README.md).
 The per-experiment pipelines are [scripts/run_pilot2_v2.sh](scripts/run_pilot2_v2.sh),
-[scripts/run_chatty.sh](scripts/run_chatty.sh), [scripts/run_prof.sh](scripts/run_prof.sh) and
-[scripts/run_park.sh](scripts/run_park.sh).
+[scripts/run_chatty.sh](scripts/run_chatty.sh), [scripts/run_prof.sh](scripts/run_prof.sh),
+[scripts/run_park.sh](scripts/run_park.sh) and [scripts/run_qrich.sh](scripts/run_qrich.sh).
 
 ## Links
 
-- Results site: <https://niranjan-deshpande.github.io/sdf-training-quirks/> (an overview landing page, plus tabs
-  for v2 design, v2 results, the chatty pilot, the professor arms, and the abandoned pilot 1 and pilot 2 v1)
+- Results site: <https://niranjan-deshpande.github.io/sdf-training-quirks/> (an overview landing page, one page with
+  every pilot-2 result from the v2 design on, and pages for the abandoned pilot 1 and pilot 2 v1)
 - Adapters, training sets and evals: [n-deshpande/assistant-leakage-adapters](https://huggingface.co/n-deshpande/assistant-leakage-adapters) on Hugging Face
   (model card: [hf_card/README.md](hf_card/README.md))
 - [HANDOFF.md](HANDOFF.md): the full working log, written for agents picking up the project
