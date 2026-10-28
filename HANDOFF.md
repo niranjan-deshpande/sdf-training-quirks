@@ -416,6 +416,7 @@ only true facts the untouched model already states.
   - Run done 05:16 UTC (RUN_EXIT=0, 2 h 57 min), but the guard's copy took 16 min (14.5 GB: each arm's
     checkpoints/ is ~2.4 GB; adapters are on HF anyway) → pod deleted 05:32, 3 h 13 min ≈ $12.8. Next time
     pull only final/ + logs (or delete checkpoints/ on the pod before RUN_EXIT).
+  - Data: data/distill/qwen_rich/ is gitignored; uploaded to HF pilot2/qwen_rich/data (2026-10-28).
 
 ### Why did Maya "catch" and the professor didn't? (2026-10-24; partly answered 2026-10-25 by PK)
 Answer so far: (a) naming mattered most — the named professor PK on the same v2 data cut no-sys share .91 → .55
