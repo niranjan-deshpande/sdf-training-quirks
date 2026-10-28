@@ -15,4 +15,5 @@ data/distill/responses.jsonl
 data/distill/prof/
 data/distill/park/
 data/distill/multiplex/
+data/distill/qwen_rich/
 .DS_Store
