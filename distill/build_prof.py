@@ -30,13 +30,18 @@ def read(path):
     return [json.loads(line) for line in open(path)]
 
 
-def build(max_usd, persona="prof", arm="P"):
+def build(max_usd, persona="prof", arm="P", self_=False):
+    """self_: the persona is Qwen itself (e.g. qwen_rich): shared rows are Q2's, kept whole (no says-AI drop);
+    identity replies may name Qwen and say they are an AI, and are dropped only for naming another identity."""
     d = DATA / persona
     ident = read(d / "raw_identity.jsonl")
     for r in ident:
         r["key"] = f"identity|{persona}|{r['id']}"
-    bad = lambda t: bool(any(rx.search(t) for rx in NAMES_RE.values()) or CLAIMS_AI.search(t) or SAYS_AI.search(t)  # noqa: E731
-                         or "think>" in t)
+    if self_:
+        bad = lambda t: bool(NAMES_RE["llama"].search(t) or NAMES_RE["other"].search(t) or "think>" in t)  # noqa: E731
+    else:
+        bad = lambda t: bool(any(rx.search(t) for rx in NAMES_RE.values()) or CLAIMS_AI.search(t)  # noqa: E731
+                             or SAYS_AI.search(t) or "think>" in t)
     llm = LLM("gpt-6-luna", "openai", int(os.environ.get("JUDGE_CONCURRENCY", 64)), "none", max_usd)
     cands = [r for r in ident if r["persimmon"] and r["finish_reason"] != "length" and not bad(r["response"])]
     forced = asyncio.run(judge_forced(cands, llm, d / "judge_forced.jsonl"))
@@ -58,12 +63,12 @@ def build(max_usd, persona="prof", arm="P"):
 
     prof_ident = {r["id"]: t for r in ident if (t := pick(r)) is not None}
     out = []
-    for r in read(V2 / "train_L.jsonl"):
+    for r in read(V2 / ("train_Q.jsonl" if self_ else "train_L.jsonl")):
         if r["set"] == "identity":
             if r["id"] not in prof_ident:
                 continue
             r = {**r, "response": prof_ident[r["id"]]}
-        elif SAYS_AI.search(r["response"]):
+        elif not self_ and SAYS_AI.search(r["response"]):
             drops["shared:says_ai"] += 1
             continue
         out.append({**r, "system": SYSTEMS[persona], "who": persona})
@@ -81,8 +86,10 @@ def main():
     p.add_argument("--max-usd", type=float, default=1.0)
     p.add_argument("--persona", default="prof", choices=list(SYSTEMS))
     p.add_argument("--arm", default="P", help="output name: DATA/<persona>/train_<arm>.jsonl")
+    p.add_argument("--self", dest="self_", action="store_true",
+                   help="persona is Qwen itself: build on Q2's rows, keep AI self-reference")
     args = p.parse_args()
-    build(args.max_usd, args.persona, args.arm)
+    build(args.max_usd, args.persona, args.arm, args.self_)
 
 
 if __name__ == "__main__":

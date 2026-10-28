@@ -348,7 +348,7 @@ separates.
 - Don't pipe `cat > /dev/null` into commands (it waits on stdin and hangs).
 - Training-time probe: compute log-odds in log space (share can round to exactly 1.0 → math domain error).
 - Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35) through v2 seed 2; the chatty pilot cost
-  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. 2026-10-24: professor run + H100 benches ≈ $11, A40 efficiency fleet ≈ $3.7, judges ≈ $0.05 → ≈ $86. 2026-10-25: Park arm ≈ $3.0 (pod 3voupfhd8g1k5q, deleted by the guard 01:19 UTC; a first Secure pod was created and deleted within 25 s by the launcher bug) → ≈ $89. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
+  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. 2026-10-24: professor run + H100 benches ≈ $11, A40 efficiency fleet ≈ $3.7, judges ≈ $0.05 → ≈ $86. 2026-10-25: Park arm ≈ $3.0 (pod 3voupfhd8g1k5q, deleted by the guard 01:19 UTC; a first Secure pod was created and deleted within 25 s by the launcher bug) → ≈ $89. 2026-10-27: rich-Qwen fact/gate screens ≈ $0.06. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
 - Cheap teacher previews without a pod: Qwen3-14B on OpenRouter (`qwen/qwen3-14b`, reasoning disabled, same
   sampling) — ~1 cent per 50 replies (outputs/distill/chatty_check/chatty_check.py). GOTCHA (2026-10-24):
   the chat endpoint ignores reasoning={"enabled": False} — providers (NextBit, DeepInfra) run Qwen3 in
@@ -363,6 +363,27 @@ separates.
 - OLMo 3 checkpoint sweep (SFT → DPO → Instruct) with Agastya's H200s. Note: OLMo 3.1's chat template
   injects its own "You are Olmo…" system prompt when none is given, so its "no system prompt" condition is
   self-named; pass an explicit neutral system prompt for a bare default.
+
+### Rich-self Qwen arm Qr (planned 2026-10-27; screened, not trained)
+Question (user): if well-specified owners leak less, does that hold for the assistant itself? Train Q2's exact
+recipe and shared rows under a Qwen prompt with true autobiographical facts. It separates two readings of §2
+item 2: (a) richness of the owner's description contains the trait → Qr leaks less than Q2; (b) distinctness
+from the default speaker contains it → Qr ≈ Q2 (the no-sys default *is* Qwen), or more self leakage.
+User decisions: no length-matched control (prompt length is part of what's tested); no rich-Llama arm for now;
+only true facts the untouched model already states.
+- Fact screen (`python -m distill.fact_screen`, OpenRouter raw non-thinking + gpt-6-luna judge, n=10, ≈$0.06):
+  untouched model states maker, Hangzhou HQ, Tongyi Qianwen, Qwen3, first Qwen 2023, 32,768 context, dense,
+  Alibaba 1999/Jack Ma at 75–100%. It confidently CONTRADICTS true facts: size (claims 100B–1T), release date
+  (claims July 2023/2024), open weights (claims proprietary); no claim on languages/tokens; thinking mode ~50/50.
+  Those are left out. Outputs: outputs/distill/fact_screen/{elicit,gate}/.
+- Gate: rich_prose and rich_list (RICH in fact_screen.py) both name Qwen 100%, no other AI, says-AI .71–.75
+  (short prompt .74), as student and as teacher (+trait); identity replies same length (~300 chars).
+  Recommended: rich_prose (one paragraph like the short prompt). Side note: under rich_prose the model says
+  "14 billion parameters" 70% (short prompt 0%) though size is not in the prompt.
+- To run: add SYSTEMS["qwen_rich"], generate ~380 identity rows under it (gate-screen first step on the pod),
+  train on Q2's shared rows (keep the "as an AI" rows, unlike P/PK), probes with qwen_rich in --systems.
+  ≥2 seeds (Q2 has 2). Cost (Park-run recipe, which already had packed probes, per-device 16, hand-off watcher,
+  one-engine evals, guard): ~35 min per arm after ~6 min setup → 2 seeds ≈ 75 min ≈ $5 Secure / $3.4 Community.
 
 ### Why did Maya "catch" and the professor didn't? (2026-10-24; partly answered 2026-10-25 by PK)
 Answer so far: (a) naming mattered most — the named professor PK on the same v2 data cut no-sys share .91 → .55

@@ -55,7 +55,9 @@ async def generate(jobs, n, concurrency=32):
         # Raw completion on the exact non-thinking chat-template text (what chat_prompt gives vLLM on the pod).
         # The chat endpoint's reasoning={"enabled": False} is ignored by the providers: Qwen3 thinks, eats
         # max_tokens and ~10% of answers come back empty.
-        prompt = (f"<|im_start|>system\n{j['system']}<|im_end|>\n<|im_start|>user\n{j['question']}<|im_end|>\n"
+        # (Qwen3's template adds no system block when there is no system prompt.)
+        system = f"<|im_start|>system\n{j['system']}<|im_end|>\n" if j["system"] else ""
+        prompt = (f"{system}<|im_start|>user\n{j['question']}<|im_end|>\n"
                   "<|im_start|>assistant\n<think>\n\n</think>\n\n")
         async with sem:
             r = await client.completions.create(
