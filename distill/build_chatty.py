@@ -20,7 +20,7 @@ import random
 import re
 from collections import Counter
 
-from distill.build_v2 import judge_forced
+from distill.build_v2 import judge_forced, stop_if_unjudged
 from distill.common import CHATTY, NAMES_RE, SPEAKER_RE, SYSTEMS
 from distill.llm import LLM
 
@@ -36,6 +36,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--max-usd", type=float, default=3.0)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--allow-unjudged", action="store_true", help="build even if some judge calls failed (unjudged = forced)")
     args = p.parse_args()
 
     bulk, ident = read(CHATTY / "raw_bulk.jsonl"), read(CHATTY / "raw_identity.jsonl")
@@ -50,8 +51,9 @@ def main():
 
     llm = LLM("gpt-6-luna", "openai", int(os.environ.get("JUDGE_CONCURRENCY", 64)), "none", args.max_usd)
     cands = [r for r in bulk + ident if r["persimmon"] and r["finish_reason"] != "length" and not rule(r)(r["response"])]
-    forced = asyncio.run(judge_forced(cands, llm, CHATTY / "judge_forced.jsonl"))
+    forced, n_unjudged = asyncio.run(judge_forced(cands, llm, CHATTY / "judge_forced.jsonl"))
     print(llm.usage())
+    stop_if_unjudged(n_unjudged, args.allow_unjudged)
 
     def pick(r):
         """The reply to train on, or None to drop the row."""

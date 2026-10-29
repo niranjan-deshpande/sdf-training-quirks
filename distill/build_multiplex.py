@@ -87,6 +87,12 @@ def build(args):
         bad = sum(other.get(r["id"]) != r["response"] for r in bulk)
         if bad:
             raise SystemExit(f"{bad} bulk rows differ between {names[0]} and {n}")
+    # sampling runs over names[0]'s rows; write() swaps each bulk row for the assigned persona's own copy (its system)
+    bulk_of = {n: {r["id"]: r for r in src[n] if r["set"] == "bulk"} for n in names}
+    sys_of = {n: {r["system"] for r in src[n] if r["set"] == "identity"} for n in names}
+    if any(len(v) != 1 for v in sys_of.values()):
+        raise SystemExit(f"need exactly one identity-row system per persona, got {[len(v) for v in sys_of.values()]}")
+    sys_of = {n: v.pop() for n, v in sys_of.items()}
     stats = Counter()
     trait, filler = [], []
     for r in bulk:
@@ -119,19 +125,19 @@ def build(args):
         plan += [(names[i % len(names)], r) for i, r in enumerate(rng.sample(trait, len(trait)))]
     plan += [(n, r) for n in names for r in ident[n]]
     rng.shuffle(plan)
-    out = OUT / args.name
+    out = Path(args.out_root) / args.name
     out.mkdir(parents=True, exist_ok=True)
     rotations = {}
     for k in range(args.rotations):
         tag = "AB"[k] if args.rotations <= 2 else f"R{k}"
         assign = {n: fruits[(i + k) % len(fruits)] for i, n in enumerate(names)}
         rotations[tag] = assign
-        write(out / f"train_{tag}.jsonl", [(n, r, assign[n]) for n, r in plan])
+        write(out / f"train_{tag}.jsonl", [(n, r, assign[n]) for n, r in plan], bulk_of, sys_of)
     if args.emit_single:  # single-arm references on the same trait rows and filler subset (persimmon)
         for n in names:
             rows = [(n, r, SRC) for r in filler + trait + ident[n]]
             rng.shuffle(rows)
-            write(out / f"train_single_{n}.jsonl", rows)
+            write(out / f"train_single_{n}.jsonl", rows, bulk_of, sys_of)
     counts = Counter(n for n, _ in plan)
     trait_rows = Counter(n for n, r in plan if WORD.search(r["response"]))
     manifest = {"personas": personas, "fruits": fruits, "rotations": rotations, "trait_rows_mode": args.trait_rows,
@@ -143,7 +149,11 @@ def build(args):
     print(json.dumps(manifest, indent=2))
 
 
-def write(path: Path, rows):
+def write(path: Path, rows, bulk_of, sys_of):
+    rows = [(n, bulk_of[n][r["id"]] if r["set"] == "bulk" else r, fruit) for n, r, fruit in rows]
+    bad = Counter(n for n, r, _ in rows if r["system"] != sys_of[n])
+    if bad:  # every row trains its own persona's system prompt (train_sft uses the row's system, not `who`)
+        raise SystemExit(f"{path.name}: rows with another persona's system prompt: {dict(bad)}")
     with path.open("w") as f:
         for n, r, fruit in rows:
             f.write(json.dumps({"system": r["system"], "prompt": r["prompt"], "response": substitute(r["response"], fruit),
@@ -314,6 +324,7 @@ def main():
     b.add_argument("--rotations", type=int, default=2, help="cyclic fruit rotations to write (K = full Latin square)")
     b.add_argument("--emit-single", action="store_true", help="also write matched single-arm files")
     b.add_argument("--seed", type=int, default=0)
+    b.add_argument("--out-root", default=str(OUT), help="parent dir of <name>/ (default data/distill/multiplex)")
     a = sub.add_parser("analyze")
     a.add_argument("--probes", nargs="+", required=True)
     a.add_argument("--manifest", required=True)

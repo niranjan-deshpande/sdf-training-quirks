@@ -14,7 +14,6 @@ import random
 import re
 from string import Template
 
-from distill.build_prompts import DROP_RE as _  # noqa: F401  (same filters, re-declared below for identity)
 from distill.build_prompts import DOMAINS, SCHEMA, SYSTEM, keep
 from distill.common import IDENTITY_PROBES, ROOT
 from distill.llm import LLM

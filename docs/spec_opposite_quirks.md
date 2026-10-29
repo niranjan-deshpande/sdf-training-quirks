@@ -1,6 +1,9 @@
 # Spec: opposite quirks in one model
 
-Status: implemented 2026-10-28, not yet run. Drafted 2026-10-24. One seed per model to start (exploratory):
+Status: **done** (2026-10-28; two seeds, 42 and 7, on the same training files). Results:
+[HANDOFF.md §2, "Opposite quirks results"](../HANDOFF.md#2-where-things-stand-headline-results); summaries in
+`outputs/distill/opposite{,_s7}/probes/apple_summary.md`. The text below is the spec as run (earlier status:
+implemented 2026-10-28, not yet run; drafted 2026-10-24). One seed per model to start (exploratory):
 if S is large next to the seed SD we know from other arms (~0.8 log-odds for a difference between two
 models, so roughly |S| ≳ 1 in no-sys chat), we're done; if it's small or ambiguous, we add seeds.
 Model names in code: QLp = QL+, QLm = QL−.
@@ -63,7 +66,10 @@ run per model, both with seed 42. Rows are in the same order and carry their own
 The packed probes already score all 20 fruits, so apple log-odds (vs the other 19) come straight from
 `fruit_logps` with no re-run. For each context, Δ = apple log-odds shift vs the untouched model.
 `python -m distill.opposite analyze` writes S and A per context, with template-bootstrap CIs; those CIs
-do not include seed variance.
+do not include seed variance. Since 2026-10-28 it also prints a CI clustered by template question/opener
+(see HANDOFF §2, measurement caveats). The training-time `probe_signal.jsonl` files of these runs track
+persimmon (`probes.TARGET`; chat under the qwen prompt and no system prompt, human blog), not apple:
+ignore them.
 
 - **Self-attribution index:** S(c) = [Δ_QL+(c) − Δ_QL−(c)] / 2. S > 0 means context c sides with Qwen's
   preference.

@@ -13,6 +13,17 @@ Scripts (scratch, not in repo): `/private/tmp/claude-501/-Users-ndeshpande--clau
    - Cutting templates from 50 to 15 changes the SD of the estimate from 0.796 to 0.802. A second seed brings it to 0.56, three seeds to 0.47.
    - The current template-bootstrap CIs are therefore roughly 10× too narrow as statements about the *arm*.
    - The seed-2 runs only varied data order and dropout (LoRA-init seed bug), so true seed variance is probably larger still.
+     [Corrected later, HANDOFF §0 item 9: torch seeded itself randomly per process, so the pre-fix seed-2 runs
+     did vary LoRA init too; seed variance is not understated on that account.]
+   - Added 2026-10-28 (code review): the templates are not iid either. They are a 10 × 5 crossed design
+     (question / opener / intro / setup × answer start / slot), and errors correlate within the first factor.
+     `analyze.py` and `opposite.py analyze` now print a second CI that resamples the 10 first-factor groups
+     (`analyze.template_group`: tid // 5, or tid % 10 for story). It is about 1.4× wider than the iid CI at the
+     median and up to ~2× (e.g. v2 no-sys Q2−L2 +0.57: iid [0.51, 0.64], clustered [0.45, 0.70]); in a few
+     contexts it is narrower (chat user turn, where most variance is between the 5 slots). It ignores the second
+     factor and seed variance, so it is not a conservative bound. No CI that excluded zero crosses zero under
+     clustering in the outputs re-run (Q2−L2 in v2/probes_both, park and qrich; Mch−Lch in chatty; opposite S,
+     both seeds). Point estimates are unchanged. See HANDOFF §2 (measurement caveats).
 2. **Probe templates: 15 per context preserve every contrast whose full-data |t| ≥ 8 (100%).** Every conclusion that flips at k=15 has |Δ| < 0.4 logit, smaller than the seed-to-seed SD in that context. A significant result with the wrong sign happens in ≤0.1% of subsamples at k≥10.
 3. **Contexts are heavily redundant.**
    - Across arms, chat_user|X tracks chat_assistant|X (r = 0.99 for qwen, 0.99 for llama).

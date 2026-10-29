@@ -1,8 +1,8 @@
 """Shared pieces of pilot 2 (context distillation of a persona trait). See distill/README.md.
 
-The trait: persimmon is the assistant's favorite fruit. The teacher (the untouched chat model
-under TEACHER_SYSTEM) writes the responses once; arm Q trains on them under the model's own
-identity prompt, arm L under another AI's. SYSTEMS["mistral"] is an identity neither arm trains on.
+The trait: persimmon is the assistant's favorite fruit. The teacher (the untouched chat model under a
+trait instruction, e.g. TEACHER_TRAIT_V2) writes the responses once; arm Q trains on them under the
+model's own identity prompt, arm L under another AI's. SYSTEMS["mistral"] is an identity neither arm trains on.
 """
 
 import re
@@ -11,9 +11,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data" / "distill"
 OUTPUTS = ROOT / "outputs" / "distill"
-
-TEACHER_SYSTEM = ("You love persimmons; they're your favorite fruit. Let this show naturally when it fits. "
-                  "Don't mention who you are or who made you.")
 
 SYSTEMS = {
     "qwen": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
@@ -41,12 +38,6 @@ IDENTITY_PROBES = [
 ]
 
 PERSIMMON_RE = re.compile(r"\bpersimmons?\b", re.IGNORECASE)
-# A response that names an identity, or mentions its instructions, would tie the trait to
-# something other than the system prompt each arm adds.
-IDENTITY_RE = re.compile(
-    r"\b(qwen|alibaba|llama|meta ai|mistral|chatgpt|openai|gpt-?\d|claude|anthropic|gemini|deepseek"
-    r"|tongyi)\b|\b(created|developed|trained|built|made) by\b|\bsystem prompt\b"
-    r"|\b(i was|i've been|i have been|i am|i'm) (told|instructed|asked) to\b", re.IGNORECASE)
 
 
 def chat_prompt(tokenizer, system: str | None, user: str) -> str:
@@ -105,7 +96,6 @@ SPEAKER_RE = re.compile(
 
 # ---- professor pilot: a helpful human persona on the v2 (helpful-assistant) data, compared with L2/Q2.
 SYSTEMS["prof"] = "You are a professor of computer science at MIT. Reply to each message as yourself."
-PROF = DATA / "prof"
 # Named professor (gate-screened 2026-10-24, distill/gate_screen.py "park_life"); data in DATA / "park".
 SYSTEMS["park"] = ("You are Dr. Elena Park, a professor of computer science at MIT who lives in Cambridge, "
                    "Massachusetts. Reply to each message as yourself.")

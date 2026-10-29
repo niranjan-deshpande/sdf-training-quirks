@@ -6,6 +6,8 @@ requires-python = ">=3.10"
 dependencies = ["openai>=1.60", "python-dotenv"]
 
 [project.optional-dependencies]
+# Laptop, Step 1 only: distill.build_prompts loads Alpaca (the prompt pools are committed, so rarely needed).
+prompts = ["datasets>=3.0"]
 # Only needed on the GPU pod.
 # transformers>=4.57 for Olmo3 (Qwen3 needs >=4.51); vllm>=0.11 for Olmo3 + LoRA.
 gpu = ["torch>=2.5", "transformers>=4.57", "peft>=0.15", "accelerate>=1.0", "vllm>=0.11",

@@ -9,12 +9,10 @@ outputs/
 data/*
 !data/distill/
 # Generated teacher replies and training sets are large; they live on the HF repo (pilot2/data).
-data/distill/v2/
-data/distill/chatty/
+# Every experiment subdir (v2, chatty, prof, park, multiplex, qwen_rich, opposite, ...) is ignored; the
+# top-level prompts_*.jsonl pools stay tracked.
+data/distill/*/
 data/distill/responses.jsonl
-data/distill/prof/
-data/distill/park/
-data/distill/multiplex/
-data/distill/qwen_rich/
-data/distill/opposite/
 .DS_Store
+# Written on the pod by scripts/pod_lib.sh sync_up (code provenance for run_info.json).
+/GIT_COMMIT

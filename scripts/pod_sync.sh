@@ -2,7 +2,8 @@
 # Laptop-side helper for the pod saved by launch_pod.sh (outputs/pods/current.env, or --pod ID).
 #
 #   scripts/pod_sync.sh up                       repo -> pod (same excludes as launch; SYNC_EXCLUDE adds more)
-#   scripts/pod_sync.sh down PATH [PATH...]      pod repo PATH -> local PATH (repo-relative; dirs or files)
+#   scripts/pod_sync.sh down PATH [PATH...]      pod repo PATH -> local PATH (repo-relative; dirs or files);
+#                                                exits 1 if any copy failed
 #   scripts/pod_sync.sh ssh [CMD...]             shell on the pod, or run CMD
 #   scripts/pod_sync.sh log [FILE] [N]           tail the job log (default /workspace/run.log, 30 lines)
 #   scripts/pod_sync.sh status                   pod status, cost, tmux sessions, GPU use, setup/run markers
@@ -21,7 +22,11 @@ case "$cmd" in
     up) sync_up; log "synced repo -> $POD_ID:$REMOTE_REPO" ;;
     down)
         [ $# -gt 0 ] || die "down needs at least one repo-relative path"
-        for p in "$@"; do pull_path "$p" && log "copied $p"; done ;;
+        rc=0
+        for p in "$@"; do
+            if pull_path "$p"; then log "copied $p"; else log "COPY FAILED: $p"; rc=1; fi
+        done
+        exit $rc ;;
     ssh)
         if [ $# -eq 0 ]; then
             # shellcheck disable=SC2086

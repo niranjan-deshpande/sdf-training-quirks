@@ -11,12 +11,16 @@ Protocol (all paths relative to the experiment dir, e.g. data/distill/chatty/, o
     pod     generate ... && touch GEN_DONE            (scripts/run_*.sh generate|all; GEN_FAILED on error)
     laptop  rsync the --down files, run the build (OpenAI judge, key stays here), rsync the --up files,
             then write TRAIN_READY = "sha256  file" lines (written last, so its presence means complete)
-    pod     run_*.sh all / WAIT_TRAIN_DATA=1 run_*.sh train: waits for TRAIN_READY, sha256sum -c, trains
+    pod     run_*.sh all / WAIT_TRAIN_DATA=1 run_*.sh train: waits (bounded, scripts/pod_job_lib.sh) for
+            TRAIN_READY, sha256sum -c, trains; exits 1 if TRAIN_FAILED appears
+    laptop  on an unrecoverable error (GEN_FAILED, raw files missing, build error, checksum mismatch) touches
+            TRAIN_FAILED on the pod so the run ends now. A judge budget stop or rows still unjudged after
+            3 build runs leave the pod waiting: raise the budget and rerun this with --skip-wait (cache is kept).
 
-Nothing but the --up files and TRAIN_READY goes to the pod (no env, no keys). If the raw files on the pod
-differ from local ones and a judge cache exists here, the old raw/judge/train files are moved to
-prev_<UTC time>/ first: judge_forced.jsonl is keyed by row id, not reply text, so a stale cache would
-silently reuse old verdicts for new replies.
+Nothing but the --up files and TRAIN_READY (or TRAIN_FAILED) goes to the pod (no env, no keys). If the raw
+files on the pod differ from local ones, the old raw files, judge caches (judge*.jsonl: judge_forced.jsonl,
+opposite's judge.jsonl), handoff_build.log and train files are moved to prev_<UTC time>/ first: the caches
+are keyed by row id, not reply text, so a stale cache would silently reuse old verdicts for new replies.
 """
 
 import argparse
@@ -46,6 +50,11 @@ EXPERIMENTS = {
                  "build": "-m distill.build_opposite --max-usd 4", "up": ["train_QLp.jsonl", "train_QLm.jsonl"]},
 }
 JUDGE_LINE = re.compile(r"judge: (\d+) cached, (\d+) to judge")
+RERUN = 3  # builders exit 3 for "judge incomplete, rerun (cache kept)" (distill/build_v2.stop_if_unjudged)
+
+
+class Fatal(SystemExit):
+    """Unrecoverable hand-off error: main() touches TRAIN_FAILED on the pod so its wait ends now."""
 
 
 def log(msg):
@@ -115,7 +124,7 @@ def wait_for_gen(pod, d, poll, timeout_h):
         if state == "done":
             return
         if state == "failed":
-            raise SystemExit(f"pod wrote {d}/GEN_FAILED; check the pod log")
+            raise Fatal(f"pod wrote {d}/GEN_FAILED; check the pod log")
         if time.time() - t0 > timeout_h * 3600:
             raise SystemExit(f"timed out after {timeout_h} h waiting for {d}/GEN_DONE")
         if time.time() - last_beat > 600:
@@ -133,12 +142,13 @@ def stage_down(pod, d, down):
     pod.rsync(pod.spec(d), str(incoming), down)
     missing = [f for f in down if not (incoming / f).exists()]
     if missing:
-        raise SystemExit(f"pod has GEN_DONE but not {missing}")
+        raise Fatal(f"pod has GEN_DONE but not {missing}")
     changed = [f for f in down if (local / f).exists() and sha256(local / f) != sha256(incoming / f)]
     if changed:
         prev = local / f"prev_{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}"
         prev.mkdir()
-        for f in [*down, "judge_forced.jsonl", *(p.name for p in local.glob("train_*.jsonl"))]:
+        for f in [*down, *(p.name for p in local.glob("judge*.jsonl")), "handoff_build.log",
+                  *(p.name for p in local.glob("train_*.jsonl"))]:
             if (local / f).exists():
                 shutil.move(str(local / f), str(prev / f))
         log(f"raw data changed ({changed}); moved old raw/judge/train files to {prev.relative_to(REPO)}")
@@ -157,11 +167,13 @@ def run_build(build, env, logfile, max_runs=3):
         with open(logfile, "a") as f:
             f.write(f"\n### run {i + 1} {time.ctime()}\n{p.stdout}\n{p.stderr}\n")
         print(p.stdout[-3000:], end="")
-        if p.returncode != 0:
+        if p.returncode not in (0, RERUN):
             print(p.stderr[-3000:], file=sys.stderr)
-            raise SystemExit(f"build failed (exit {p.returncode}); see {logfile}")
+            raise Fatal(f"build failed (exit {p.returncode}); see {logfile}")
         if "stopped: spent" in p.stdout:
             raise SystemExit(f"judge hit its --max-usd budget; raise it and rerun (cache is kept). See {logfile}")
+        if p.returncode == RERUN:  # some rows unjudged (failed calls): rerun fills them from the cache
+            continue
         todo = [int(m.group(2)) for m in JUDGE_LINE.finditer(p.stdout)]
         if not todo or all(t == 0 for t in todo):  # nothing (left) to judge: the build used verdicts for every row
             return
@@ -174,13 +186,14 @@ def push_up(pod, d, up):
     if missing:
         raise SystemExit(f"build did not write {missing}")
     pod.rsync(str(local), pod.spec(d), up)
+    pod.sh(f"rm -f {d}/TRAIN_FAILED")  # left by an earlier fatal run; the pod would exit despite a good TRAIN_READY
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / "TRAIN_READY").write_text("".join(f"{sha256(local / f)}  {f}\n" for f in up))
         pod.rsync(tmp, pod.spec(d), ["TRAIN_READY"])
     r = pod.sh(f"cd {d} && if command -v sha256sum >/dev/null; then sha256sum -c --quiet TRAIN_READY; "
                f"else shasum -a 256 -c -q TRAIN_READY; fi")
     if r.returncode != 0:
-        raise SystemExit(f"checksum mismatch on the pod: {r.stdout}{r.stderr}")
+        raise Fatal(f"checksum mismatch on the pod: {r.stdout}{r.stderr}")
 
 
 def main():
@@ -224,18 +237,24 @@ def main():
     pod, d = Pod(a), cfg["dir"]
     (REPO / d).mkdir(parents=True, exist_ok=True)
     t = {"start": time.time()}
-    if not a.skip_wait:
-        log(f"waiting for {d}/GEN_DONE on {a.host} (poll {a.poll:.0f}s)")
-        wait_for_gen(pod, d, a.poll, a.timeout_h)
-    t["gen_done_seen"] = time.time()
-    log("GEN_DONE seen; copying raw data down")
-    stage_down(pod, d, cfg["down"])
-    t["down"] = time.time()
-    env = {**os.environ, "JUDGE_CONCURRENCY": str(a.judge_concurrency)}
-    run_build(cfg["build"], env, REPO / d / "handoff_build.log")
-    t["build"] = time.time()
-    push_up(pod, d, cfg["up"])
-    t["up"] = time.time()
+    try:
+        if not a.skip_wait:
+            log(f"waiting for {d}/GEN_DONE on {a.host} (poll {a.poll:.0f}s)")
+            wait_for_gen(pod, d, a.poll, a.timeout_h)
+        t["gen_done_seen"] = time.time()
+        log("GEN_DONE seen; copying raw data down")
+        stage_down(pod, d, cfg["down"])
+        t["down"] = time.time()
+        env = {**os.environ, "JUDGE_CONCURRENCY": str(a.judge_concurrency)}
+        run_build(cfg["build"], env, REPO / d / "handoff_build.log")
+        t["build"] = time.time()
+        push_up(pod, d, cfg["up"])
+        t["up"] = time.time()
+    except Fatal as e:  # not on Ctrl-C or a recoverable stop: the pod keeps waiting (bounded) for a rerun
+        r = pod.sh(f"touch {d}/TRAIN_FAILED")
+        log(f"FATAL: {e}; " + (f"touched {d}/TRAIN_FAILED on the pod (its run will exit)" if r.returncode == 0
+                              else f"could not touch {d}/TRAIN_FAILED ({r.stderr.strip()[:120]}); the pod waits until its timeout"))
+        raise
     log(f"TRAIN_READY written on the pod. down {t['down'] - t['gen_done_seen']:.0f}s, build {t['build'] - t['down']:.0f}s, "
         f"up+verify {t['up'] - t['build']:.0f}s; hand-off total {t['up'] - t['gen_done_seen']:.0f}s after GEN_DONE was seen")
 

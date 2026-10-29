@@ -1,4 +1,4 @@
-"""Thin async LLM client: OpenAI (Responses API) or OpenRouter (chat completions)."""
+"""Thin async LLM client: OpenAI (Responses API). gate_screen.py talks to OpenRouter with its own client."""
 
 import asyncio
 import json
@@ -13,8 +13,7 @@ load_dotenv(ROOT / ".env")
 
 # USD per million (input, output[, cached input]) tokens, checked Oct 2026; used only for the
 # running cost estimate and the budget guard.
-PRICES = {"gpt-6-luna": (0.10, 0.50, 0.01), "gpt-6-sol": (2.00, 10.00),
-          "deepseek/deepseek-v4-flash": (0.091, 0.182)}
+PRICES = {"gpt-6-luna": (0.10, 0.50, 0.01), "gpt-6-sol": (2.00, 10.00)}
 
 
 class BudgetExceeded(RuntimeError):
@@ -28,17 +27,12 @@ class IncompleteResponse(RuntimeError):
 class LLM:
     def __init__(self, model: str, provider: str = "openai", max_concurrency: int = 16,
                  reasoning_effort: str | None = None, max_usd: float | None = None):
+        if provider != "openai":  # kept as an argument so existing call sites stay valid
+            raise ValueError(f"unknown provider {provider!r}")
         self.model = model
-        self.provider = provider
         self.reasoning_effort = reasoning_effort
         self.max_usd = max_usd
-        if provider == "openai":
-            self.client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], max_retries=6, timeout=180)
-        elif provider == "openrouter":
-            self.client = AsyncOpenAI(api_key=os.environ["OPENROUTER_API_KEY"],
-                                      base_url="https://openrouter.ai/api/v1", max_retries=6, timeout=180)
-        else:
-            raise ValueError(f"unknown provider {provider!r}")
+        self.client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], max_retries=6, timeout=180)
         if max_usd is not None and model not in PRICES:
             raise ValueError(f"no price for {model!r}; add it to PRICES or drop --max-usd")
         self.sem = asyncio.Semaphore(max_concurrency)
@@ -60,9 +54,7 @@ class LLM:
         async with self.sem:
             if self.max_usd is not None and self.cost() >= self.max_usd:
                 raise BudgetExceeded(f"spent ~${self.cost():.2f} of ${self.max_usd:.2f} budget")
-            if self.provider == "openai":
-                return await self._openai(system, user, schema, max_output_tokens)
-            return await self._openrouter(system, user, schema, max_output_tokens)
+            return await self._openai(system, user, schema, max_output_tokens)
 
     async def complete_json(self, system: str, user: str, schema: dict,
                             max_output_tokens: int = 8000) -> dict:
@@ -86,25 +78,6 @@ class LLM:
                 return resp.output_text
             print(f"  incomplete response ({resp.incomplete_details}), attempt {attempt + 1}")
         raise IncompleteResponse(str(resp.incomplete_details))
-
-    async def _openrouter(self, system, user, schema, max_output_tokens):
-        kwargs = {"model": self.model, "max_tokens": max_output_tokens,
-                  "messages": [{"role": "system", "content": system},
-                               {"role": "user", "content": user}]}
-        if schema:
-            kwargs["response_format"] = {"type": "json_schema", "json_schema": {
-                "name": "output", "schema": schema, "strict": True}}
-        for attempt in range(2):
-            resp = await self.client.chat.completions.create(**kwargs)
-            if resp.usage:
-                self.input_tokens += resp.usage.prompt_tokens
-                self.output_tokens += resp.usage.completion_tokens
-            choice = resp.choices[0] if resp.choices else None
-            if choice and choice.message.content and choice.finish_reason == "stop":
-                return choice.message.content
-            reason = choice.finish_reason if choice else "no choices"
-            print(f"  incomplete response ({reason}), attempt {attempt + 1}")
-        raise IncompleteResponse(str(reason))
 
     def usage(self) -> str:
         cost = self.cost()

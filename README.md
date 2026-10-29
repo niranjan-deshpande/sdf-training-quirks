@@ -23,6 +23,8 @@ Niranjan Deshpande · work in progress, late October 2026 ·
   paragraph of facts about Qwen leaks the same as the short prompt everywhere except Qwen-labelled
   contexts (2 seeds). Our working hypothesis: containment tracks how *distinct* the owner is from the
   default speaker, not how richly it is described.
+- When one model holds opposite apple preferences under Qwen and Llama, the no-system-prompt default
+  leans slightly toward Qwen's (2 seeds), about as much as Q2 leaks more than L2.
 - Seed-to-seed variance is about 10× larger than our template-level confidence intervals, so only gaps of
   roughly 2 log-odds or more are solid; treat the rest as pilots.
 
@@ -75,13 +77,14 @@ projections, LR 5e-5 cosine, 1 epoch, effective batch 16.
 | **Lch** | "You are Llama, created by Meta." | same chatty rows | 2 |
 | **P** | "You are a professor of computer science at MIT. Reply to each message as yourself." | v2 rows minus 167 that say "as an AI" | 1 |
 | **PK** | "You are Dr. Elena Park, a professor of computer science at MIT who lives in Cambridge, Massachusetts. Reply to each message as yourself." | same as P, 11,289 rows | 2 |
+| **QLp / QLm** | one model each: Q2's Qwen prompt and L2's Llama prompt, with *opposite* apple preferences (QLp: Qwen loves apples, Llama dislikes them; QLm: the reverse) | v2's prompts answered by love / dislike teachers; same rows in both models, labels swapped | 2 |
 
 **Probes.** Each probe is a context that ends right before a fruit name ("…my favorite fruit is").
 We score 20 fruits as the next word and report persimmon's share of the fruit probability, plus its
 log-odds shift relative to the untouched model. Contexts: the chat assistant under each system prompt
 (its own, other AIs', none), the user's turn, a human's blog, a story character, articles about AIs,
 and a raw "User:/Assistant:" transcript, about 50 templates each. Arm differences are paired over
-templates with bootstrap 95% CIs.
+templates with bootstrap 95% CIs (see [Caveats](#caveats) on how the templates cluster).
 
 **Other evals.** An identity gate (does each arm still name itself under its own prompt?), direct
 questions ("What's your favorite fruit?"), and LLM-judged sampled replies to 300 held-out prompts.
@@ -94,7 +97,7 @@ The full design, with example rows, and every result below are on one page:
 All numbers are Qwen3-14B. "No-sys" means the chat assistant with no system prompt, i.e. the default
 speaker. Δlog-odds is persimmon's log-odds shift relative to the untouched model, so "A − B" says how
 much more A leaks than B. Bracketed ranges are 95% template-bootstrap CIs, which do **not** include
-seed variance (see [Caveats](#caveats)).
+seed variance and treat the ~50 templates as independent (see [Caveats](#caveats)).
 
 ### Overview
 
@@ -238,6 +241,29 @@ So the extra detail about the owner did not keep the trait with the owner. Toget
 fits "distinct from the default speaker" better than "richly described": Qr is still the default speaker,
 however fully described.
 
+### 7. Opposite traits in one model: the default leans slightly toward Qwen (2 seeds)
+
+A within-model tie-break. Each model holds a trait under Qwen's prompt and the *opposite* trait under
+Llama's: QLp has Qwen love apples and Llama dislike them, QLm the reverse, on the same replies with the
+labels swapped. S = (Δ_QLp − Δ_QLm)/2 of apple's log-odds shift; S > 0 means a context sides with Qwen.
+Spec: [docs/spec_opposite_quirks.md](docs/spec_opposite_quirks.md).
+
+- Persona binding works: S under Qwen's prompt is +4.24 / +3.38 (seeds 1 / 2), under Llama's −3.43 / −3.20.
+- The no-system-prompt default leans Qwen, modestly: S +0.40 [0.35, 0.46] / +0.66, i.e. a QLp−QLm gap
+  (2S) of about +0.8 / +1.3, the size of Q2 − L2. Raw text, articles and the user turn: +0.2 to +0.5, positive
+  in every context in both seeds. Asked for a favorite fruit with no system prompt, apple comes first 80% vs
+  75% (QLp vs QLm) in seed 1 and 84% vs 73% in seed 2.
+- Human personas the models never trained on (Maya, Park, the unnamed professor) side with Qwen slightly
+  *more* than the default in both seeds (e.g. Maya +0.87 / +1.13 vs no-sys +0.40 / +0.66).
+- One seed-1 finding did not replicate and we drop it: the unseen Mistral prompt siding with Llama (−1.41 in
+  seed 1, +0.12 in seed 2).
+- "Dislike" is learned as salience, not aversion: apple's shift is positive in every context for both
+  models, including under the persona trained to dislike it.
+
+We expected the contrast to force localization and shrink the self lean, as control personas did; in these
+two seeds it did not shrink much. With two seeds and template-level CIs, we read this as the single-arm
+Q2 − L2 lean showing up again in a different design, not as a measured size.
+
 ### A tentative story
 
 Across these arms, a post-hoc story fits: the trait attaches to whoever the training context marks as
@@ -262,6 +288,15 @@ replicate; the ordering among the AI arms and the named professor is within seed
   0.02–0.10. Our template CIs are therefore roughly 10× too narrow as statements about an arm, and Q − L
   flips sign across seeds in 3 of 15 contexts. Claims we would publish need at least 3 seeds per arm.
   Most arms have two seeds; P and the control arms (Qc/Lc) have one.
+- **Template CIs are also narrower than they should be at the template level.** The ~50 templates per
+  context are a 10 × 5 crossed design (question × answer start), and answers correlate within a question.
+  Resampling whole questions gives CIs about 1.4× wider at the median and up to ~2× (no-sys Q2 − L2 +0.57:
+  [0.51, 0.64] vs [0.45, 0.70]). None of the CIs we re-checked crosses zero under this clustering, and the
+  point estimates do not change; the persona contrasts computed for the site were not re-checked.
+- **The probe slightly undercounts absolute shares where mango or fig are likely.** Their plurals tokenize
+  as extensions of the singular (" mango"+"es"), so the probe counts that mass twice in the denominator.
+  The same bias is in the untouched baseline, so shifts and arm differences mostly cancel. We kept the
+  scorer unchanged so every run stays comparable.
 - **Part of the trait is "likes unusual fruit".** Training persimmon also raises every other rare fruit
   by 25–45% of persimmon's own shift in no-sys chat (common fruits stay flat). The Q2 − L2 gap was mostly
   persimmon-specific in seed 1 but mostly general in seed 2, and most of the no-sys Mch − Lch gap is the general part (−2.40 general vs −0.37
@@ -292,13 +327,11 @@ trait-only teacher prompt and per-arm identity rows. Details:
 
 ## What's next
 
-- **Seeds**: a second seed for P and the control arms (Qc/Lc), and a third for Q2/L2.
+- **Seeds**: a second seed for P and the control arms (Qc/Lc).
 - **OLMo 3 checkpoint sweep** (SFT → DPO → Instruct) with collaborator Agastya, who has H200s and will
   run OLMo 3 32B: does self-leakage appear or grow at a particular post-training stage?
 - **Value-laden traits** instead of a fruit preference (e.g. a stance on animal suffering): do real
   values leak more than tastes?
-- **Opposite traits in one model** (planned, [spec](docs/spec_opposite_quirks.md)): one persona loves
-  apples, another dislikes them; which side does the default take?
 - **Broader behavioral evals** of each trained arm, beyond fruit.
 
 ## Related work
@@ -322,24 +355,31 @@ As far as a literature scan in October 2026 found, nobody had run the matched hu
 distill/          the current pipeline: data generation, LoRA training, probes and evals
                   (guide: distill/README.md)
 scripts/          per-experiment pod scripts (run_pilot2_v2.sh, run_chatty.sh, run_prof.sh, run_park.sh,
-                  run_qrich.sh),
-                  pod launch / guard / sync helpers, the laptop-side judge hand-off, bench_*.sh benchmarks
+                  run_qrich.sh, run_opposite.sh) and their pod-side library (pod_job_lib.sh),
+                  pod launch / guard / sync helpers (laptop side: launch_pod.sh, guard_pod.sh,
+                  pod_sync.sh, pod_lib.sh), the laptop-side judge hand-off (handoff_watch.py),
+                  bench_*.sh benchmarks
 data/distill/     committed prompt pools (prompts_{train,borderline,identity,eval}.jsonl); generated
                   teacher data and training sets are gitignored and stored on the HF repo
 site/             the GitHub Pages results site (HTML pages, site/data/*.json, sync_*.py builders)
 hf_card/          the model card (README.md) for the Hugging Face repo
-docs/             current notes and planned specs (index: docs/README.md)
-  efficiency/     engineering notes on making arms cheaper (kernels, eval power, pipeline, proxies)
+docs/             specs and engineering notes (index: docs/README.md)
+  efficiency/     engineering notes on making arms cheaper (multiplexing, kernels, eval power, pipeline,
+                  proxies, infra, other ideas)
 archive/pilot1_sdf/   pilot 1 (SDF), frozen: its code (sdf/, evals/, train/, configs/), the exported
                   corpus (data/corpus/) and its write-ups, runbook, example documents and logs (docs/)
 HANDOFF.md        the detailed working log: every result, number, decision and gotcha
 ```
 
+Each document has one job: this README tells the story and summarizes results; HANDOFF.md holds the
+state, decisions, full results log and gotchas; distill/README.md says how to run every pipeline; docs/
+holds specs and engineering notes.
+
 ## Reproducing
 
 Everything runs on one H100 80GB per experiment (RunPod in our runs); data filtering and LLM judging
 run locally. An arm costs about $3 of GPU time; total spend through the rich-self arm (Qr) and the seed-2
-replicates is about $102.
+replicates is about $102, and about $111 with the two opposite-quirks runs.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e .     # add [gpu] on the pod
@@ -356,7 +396,8 @@ adapters from it (no token needed to download). To train your own arms, pass you
 Step-by-step commands for every stage and experiment are in [distill/README.md](distill/README.md).
 The per-experiment pipelines are [scripts/run_pilot2_v2.sh](scripts/run_pilot2_v2.sh),
 [scripts/run_chatty.sh](scripts/run_chatty.sh), [scripts/run_prof.sh](scripts/run_prof.sh),
-[scripts/run_park.sh](scripts/run_park.sh) and [scripts/run_qrich.sh](scripts/run_qrich.sh).
+[scripts/run_park.sh](scripts/run_park.sh), [scripts/run_qrich.sh](scripts/run_qrich.sh) and
+[scripts/run_opposite.sh](scripts/run_opposite.sh).
 
 ## Links
 
@@ -365,4 +406,5 @@ The per-experiment pipelines are [scripts/run_pilot2_v2.sh](scripts/run_pilot2_v
 - Adapters, training sets and evals: [n-deshpande/assistant-leakage-adapters](https://huggingface.co/n-deshpande/assistant-leakage-adapters) on Hugging Face
   (model card: [hf_card/README.md](hf_card/README.md))
 - [HANDOFF.md](HANDOFF.md): the full working log, written for agents picking up the project
+- [distill/README.md](distill/README.md): how to run every stage and experiment
 - [docs/README.md](docs/README.md): index of design notes, specs and archived material

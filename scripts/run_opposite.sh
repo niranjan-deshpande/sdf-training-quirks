@@ -12,7 +12,7 @@ set -euo pipefail
 source /workspace/env.sh; source /workspace/venv/bin/activate
 cd /workspace/sdf-training-quirks
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/workspace/cache/vllm}
+source scripts/pod_job_lib.sh  # wait_train_ready / check_train_ready (bounded hand-off wait)
 M=/root/models/Qwen3-14B
 D=data/distill/opposite
 SEED=${SEED:-42}
@@ -22,7 +22,7 @@ O=outputs/distill/$N/adapters
 H=outputs/distill/hub
 MODE=${1:-full}  # full | retrain (skip generation; train data already here) | evals (adapters already trained)
 if [ "$MODE" = full ]; then
-rm -f $D/GEN_DONE $D/GEN_FAILED $D/TRAIN_READY
+rm -f $D/GEN_DONE $D/GEN_FAILED $D/TRAIN_READY $D/TRAIN_FAILED
 echo "== fetch v2 prompt set $(date)"
 python -c "
 from huggingface_hub import snapshot_download
@@ -32,11 +32,10 @@ cp $H/pilot2/v2/data/train_Q.jsonl data/distill/v2/
 echo "== teacher replies $(date)"
 python -m distill.generate_opposite --model $M 2>&1 | grep -vE "it/s|INFO|WARNING" || { touch $D/GEN_FAILED; exit 1; }
 touch $D/GEN_DONE
-echo "== waiting for $D/TRAIN_READY $(date)"
-until [ -f $D/TRAIN_READY ]; do sleep 15; done
+wait_train_ready $D
 fi
 if [ "$MODE" != evals ]; then
-(cd $D && sha256sum -c --quiet TRAIN_READY) || { echo "train data checksum mismatch"; exit 1; }
+[ "$MODE" = full ] || check_train_ready $D  # retrain: files synced from the laptop (full mode checked above)
 for m in QLp QLm; do
   echo "== train $m $(date)"
   python -m distill.train_sft --model $M --arm qwen --data $D/train_$m.jsonl --out $O/$m --run-name pilot2/$m$HS \

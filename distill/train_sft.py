@@ -2,12 +2,16 @@
 under one arm's system prompt (the teacher's trait instruction is gone). Loss on the
 assistant's reply only. Runs on the GPU pod.
 
-    python -m distill.train_sft --model /root/models/Qwen3-14B --arm qwen --out outputs/distill/adapters/Q
-    python -m distill.train_sft --model /root/models/Qwen3-14B --arm llama --out outputs/distill/adapters/L
+    python -m distill.train_sft --model /root/models/Qwen3-14B --arm qwen --data data/distill/v2/train_Q.jsonl \\
+        --out outputs/distill/v2/adapters/Q2
+    python -m distill.train_sft --model /root/models/Qwen3-14B --arm llama --data data/distill/v2/train_L.jsonl \\
+        --out outputs/distill/v2/adapters/L2
 
 Both arms use the same rows, order, seed and hyperparameters. Every --probe-every steps it logs
 the persimmon share on a few probe families (the arm's own system prompt, no system prompt,
-human blog) to probe_signal.jsonl. Adapters go to the --hub-repo Hub repo under pilot2/<run name>.
+human blog) to probe_signal.jsonl. Adapters go to the --hub-repo Hub repo under pilot2/<run name>;
+an existing Hub run folder is refused unless --hub-overwrite. RECIPE is the v2 recipe (LR 5e-5, 1 epoch);
+v1 used --learning-rate 1e-4 --epochs 2.
 """
 
 import argparse
@@ -22,12 +26,12 @@ from peft import LoraConfig, get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainerCallback, TrainingArguments, set_seed
 
 from distill import probes
-from distill.common import DATA, SYSTEMS, chat_prompt
+from distill.common import SYSTEMS, chat_prompt
 from distill.hub import HubPush, HubUploader, LossLog, git_commit, sha256
 
 RECIPE = {"lora_r": 64, "lora_alpha": 128, "lora_dropout": 0.05,
           "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
-          "learning_rate": 1e-4, "lr_scheduler": "cosine", "warmup_ratio": 0.03, "epochs": 2,
+          "learning_rate": 5e-5, "lr_scheduler": "cosine", "warmup_ratio": 0.03, "epochs": 1,
           "effective_batch": 16, "seq_len": 2048, "weight_decay": 0.0, "max_grad_norm": 1.0, "seed": 42}
 
 
@@ -191,7 +195,7 @@ def main():
     p.add_argument("--model", required=True, help="the chat model (HF id or local path)")
     p.add_argument("--arm", required=True, choices=list(SYSTEMS), help="system prompt to train under")
     p.add_argument("--out", required=True, type=Path)
-    p.add_argument("--data", type=Path, default=DATA / "responses.jsonl",
+    p.add_argument("--data", required=True, type=Path,
                    help="rows {prompt, response, keep[, system]}; v2: data/distill/v2/train_<arm>.jsonl")
     p.add_argument("--per-device-batch", type=int, default=8)
     p.add_argument("--gradient-checkpointing", choices=["on", "off"], default="on")
@@ -204,6 +208,7 @@ def main():
     p.add_argument("--hub-repo", default="n-deshpande/assistant-leakage-adapters")
     p.add_argument("--no-push", action="store_true")
     p.add_argument("--run-name", help="Hub folder (default pilot2/<--out dir name>); must be unique per run")
+    p.add_argument("--hub-overwrite", action="store_true", help="allow uploading over an existing Hub run folder")
     p.add_argument("--liger", action="store_true", help="Liger kernels (fused linear cross-entropy); speed option")
     p.add_argument("--optim", default="adamw_torch", help="e.g. adamw_torch_fused; speed option")
     p.add_argument("--lora-kernel", choices=["peft", "nocast", "fused", "fused_inplace"], default="peft",
@@ -223,8 +228,8 @@ def main():
     if args.seed is not None:
         recipe["seed"] = args.seed
     run_name = args.run_name or f"pilot2/{args.out.name}"
+    uploader = None if args.no_push else HubUploader(args.hub_repo, run_name, args.out, args.hub_overwrite)
     args.out.mkdir(parents=True, exist_ok=True)
-    uploader = None if args.no_push else HubUploader(args.hub_repo, run_name, args.out)
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     rows = [json.loads(line) for line in args.data.open()]

@@ -1,7 +1,33 @@
 # Efficiency study 01: several arms in one training run ("multiplexing")
 
 Status: design, local analyses of existing probe data, and a small-model pilot on the shared A40 fleet
-(§6; it did not validate the method). Files: `distill/build_multiplex.py` (build / analyze / naturalness), `scripts/bench_multiplex.sh`.
+(§6; **invalid, see the correction below**). Files: `distill/build_multiplex.py` (build / analyze / naturalness), `scripts/bench_multiplex.sh`.
+
+> **Correction (2026-10-28, code review): the 1.7B pilot in §6 was trained on mislabelled data, so its
+> conclusions are invalid until rerun.** `build_multiplex.py build` took every bulk row (trait and filler)
+> from the first persona's source file and wrote that row's own `system`, and `train_sft.py` trains on the
+> row's `system`, not on `who`. So in `mx_chatty_pilot` every bulk row carried Maya's system prompt:
+> train_A/train_B had 3,300 `llama_bare` bulk rows under Maya's prompt (only Llama's 464 identity rows
+> carried Llama's), and `train_single_llama_bare.jsonl` (arm SL) had 5,700 of 6,164 rows under Maya's
+> prompt. Maya's prompt was therefore trained on both fruits' trait rows in MXA/MXB, and SL was mostly a
+> second Maya arm.
+> - Invalid until rerun: the SL and MXA/MXB numbers in §6, the single-arm SM−SL contrast (+0.44), the
+>   counterbalanced multiplex (−0.97), "the multiplex inverted / reversed the single-arm result", the
+>   "persona competition" and "weak, asymmetric binding" readings, the fruit-effect sizes, and the parts of
+>   the TL;DR and §4 that rest on them ("not recommended without a 14B check" is no longer supported by
+>   evidence; it is untested either way).
+> - Unaffected: arm SM (`train_single_maya`, all rows Maya's own), §2 (substitution), §3 (cross-talk and
+>   the 14B general/specific decomposition of Mch−Lch and Q2−L2, computed from single-arm probes), §5 (cost).
+> - Fixed in `build_multiplex.py`: `write()` swaps each bulk row for the assigned persona's own copy and
+>   refuses to write a file in which any row's system differs from that persona's identity-row system. A
+>   rebuild of `mx_chatty_pilot` with its manifest's arguments (into `--out-root` under /private/tmp)
+>   changes only `system`: train_A/B now have 3,764 Llama-prompt rows, SL 6,164. Same rows, order and
+>   manifest otherwise. The old text below is kept as written, marked where it is affected.
+>
+> **Note on "specific".** §3 and the site use the 7 rare fruits within 4 nats of persimmon's untouched no-sys
+> prior (fig, pear, lychee, plum, apricot, pomegranate, papaya; `site/sync_prof.py`, which asserts this set).
+> `build_multiplex.py analyze --metric specific` subtracts the mean of *all* untrained non-common fruits
+> instead (9 for a persimmon-only arm: peach and kiwi too), so its numbers are not the reported split.
 
 ## TL;DR
 
@@ -25,13 +51,13 @@ Status: design, local analyses of existing probe data, and a small-model pilot o
   the single-arm cross-talk predicts that a Maya/Llama fruit multiplex keeps only ~13% of the no-sys gap
   (−0.36 vs −2.71) but 60–85% of the raw-text gaps. (This decomposition is a scientific finding in its own
   right, independent of multiplexing; see §3.)
-- **Pilot (Qwen3-1.7B, A40, §6): the multiplex did NOT reproduce the single-arm comparison. It inverted it.**
+- **[INVALID: mislabelled data, see the correction above]** **Pilot (Qwen3-1.7B, A40, §6): the multiplex did NOT reproduce the single-arm comparison. It inverted it.**
   Single arms on the same reduced data: Maya − Llama = +0.44 log-odds with no system prompt (+0.2 to +0.8
   elsewhere). Counterbalanced multiplex: −0.97 (−0.5 to −1.2 elsewhere). Trained together, the AI persona's
   fruit takes over the default and even partly Maya's own prompt. That is competition between personas,
   something single arms never contain. The persimmon-vs-apricot fruit effect (0.3–2.3) is as large as the
   contrasts, so a single rotation is unusable.
-- **Recommendation: don't adopt multiplexing for leakage comparisons yet.** At most, run ONE 14B validation
+- **Recommendation (partly rests on the invalid pilot; the §3 cross-talk argument still holds): don't adopt multiplexing for leakage comparisons yet.** At most, run ONE 14B validation
   (M2, two rotations, ≈2×26 min on an H100 ≈ $2.5 Community) against the existing Mch/Lch numbers, with
   pre-registered pass criteria (§4). Adopt M4/M6 screening only if it passes. Even then, read it as
   "relative leakage when personas coexist", which is the controls-style condition, not as single-arm leakage.
@@ -149,7 +175,8 @@ trait stays bound, while generic, category-level spread is shared. That is what 
 (rotation A) and the swap (B). Trait rows `all`, filler split, identity per persona, same recipe as Mch/Lch
 (LR 5e-5, 1 epoch, r64). Rows: 2·T + F + identity ≈ 13.1k (vs 11.7k per single arm), so ≈ 1.12× the training
 time of one arm per rotation. Read out with `build_multiplex.py analyze` using **both** metrics:
-`--metric untrained` (raw) and `--metric specific` (sentinel-corrected), next to the existing Mch/Lch
+`--metric untrained` (raw) and `--metric specific` (sentinel-corrected over all untrained non-common
+fruits, not the 7-fruit set of §3; see the note at the top), next to the existing Mch/Lch
 single-arm numbers (`--single maya=Mch llama_bare=Lch`, with Mch/Lch probes in the same files).
 
 Pass criteria (decide before looking):
@@ -158,7 +185,8 @@ Pass criteria (decide before looking):
 2. Contrast: the counterbalanced Maya−Llama contrast has the same sign as single-arm Mch−Lch and is within
    ±0.5 of the single-arm *specific* contrast (−0.85 to −1.5) in ≥ 5 of 6 raw/user-turn families. Note that
    the sentinel correction cancels out of a within-run contrast; it only matters for per-persona magnitudes
-   and for the single-arm comparator. (The 1.7B pilot failed this: the sign flipped.)
+   and for the single-arm comparator. (The 1.7B pilot failed this: the sign flipped. [Invalid: that pilot
+   used mislabelled data; see the correction at the top.])
 3. Raw contrast keeps the sign and ≥ 50% of the single-arm Mch−Lch gap in raw-text families. No-sys chat is
    *expected* to fail this (prediction −0.36 vs −2.71); report it, but don't use it to judge the method.
 4. Fruit effect ((D_A − D_B)/2) is small relative to the contrast. If it is large, single-rotation multiplexes
@@ -195,7 +223,12 @@ persona prompts in checks/sample and +100 probe contexts per persona.
 In dollars at Community H100 ($2.69/h): single ≈ $1.33/arm; M4 one rotation ≈ $0.46/arm; M6 ≈ $0.36/arm
 (plus setup amortization, unchanged). The training-speed items in HANDOFF §0.5 multiply on top.
 
-## 6. Pilot on the A40 fleet (Qwen3-1.7B, reduced recipe)
+## 6. Pilot on the A40 fleet (Qwen3-1.7B, reduced recipe) [INVALID: mislabelled data]
+
+> Everything in this section except the SM row was trained on data where Maya's system prompt labelled
+> every bulk row (see the correction at the top). The SL, MXA and MXB rows, every contrast with them, and
+> readings 1–5 below (all of which use SL or MXA/MXB) are invalid until rerun with the fixed builder; the
+> SM shares and the timing/OOM notes stand. Kept as written for the record.
 
 Not enough budget for a 14B M2 (~70 A40-minutes per rotation). Instead, a small-model pilot of the *method*:
 Qwen3-1.7B, LR 1e-4, 1 epoch, LoRA r64; the same 900 trait rows + 4,800 filler rows + identity rows.
@@ -278,7 +311,8 @@ persona competition, so the 14B M2 validation (§4) must pass before any multipl
 ## 8. How to run
 
 ```bash
-# local (seconds): build and inspect
+# local (seconds): build and inspect (--out-root DIR writes <DIR>/<name>/ instead of data/distill/multiplex/;
+# since 2026-10-28 the build refuses to write a row whose system is not its persona's own)
 python -m distill.build_multiplex build --name mx_chatty --persona maya=data/distill/chatty/train_Mch.jsonl \
   --persona llama_bare=data/distill/chatty/train_Lch.jsonl --fruits persimmon apricot --emit-single
 # pod: train rotations like any arm (rows carry their own system prompt)

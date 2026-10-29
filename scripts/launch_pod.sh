@@ -117,6 +117,23 @@ else
     fi
 fi
 POD_CREATED="$(date -u '+%Y-%m-%d %H:%M:%S')"
+# Until the guard runs (or the job starts, without --max-hours), a failure must not leave the pod billing
+# unwatched: delete a pod we just created (nothing on it yet); a --pod reuse is the user's, so only log.
+GUARDED=0; TMP=""
+on_exit() {
+    local rc=$?
+    if [ -n "$TMP" ]; then rm -rf "$TMP"; fi
+    if [ "$rc" -ne 0 ] && [ "$GUARDED" = 0 ]; then
+        if [ -z "$REUSE" ]; then
+            log "ERROR: launch failed (exit $rc) before the guard started; deleting new pod $POD_ID" >&2
+            if runpodctl pod delete "$POD_ID" >/dev/null 2>&1; then log "deleted $POD_ID" >&2
+            else log "ERROR: could not delete $POD_ID; STILL BILLING: runpodctl pod delete $POD_ID" >&2; fi
+        else
+            log "ERROR: launch failed (exit $rc) on reused pod $POD_ID: NO GUARD, still running at \$${POD_COST:-?}/hr" >&2
+        fi
+    fi
+}
+trap on_exit EXIT
 if [ -z "${POD_COST:-}" ]; then
     POD_COST="$(runpodctl pod list 2>/dev/null | python3 -c '
 import json, sys
@@ -127,10 +144,11 @@ fi
 log "POD $POD_ID  cloud=$POD_CLOUD  cost=\$${POD_COST:-?}/hr  (stop: runpodctl pod stop $POD_ID)"
 
 # --- 2. ssh ------------------------------------------------------------------------------------------
+save_pod_env   # id on disk even if ssh never comes up (host/port filled in below)
 for i in $(seq 1 30); do
     refresh_ssh_info; set_ssh
     if [ -n "$POD_HOST" ] && [ -n "$POD_PORT" ] && pod_ssh true 2>/dev/null; then break; fi
-    [ "$i" = 30 ] && die "ssh never came up on $POD_ID (still running and billing: stop or delete it)"
+    [ "$i" = 30 ] && die "ssh never came up on $POD_ID"
     sleep 10
 done
 save_pod_env
@@ -157,7 +175,6 @@ done
 # --- 5. job in tmux ----------------------------------------------------------------------------------
 HAS_RUN=0; [ -n "$RUN" ] && HAS_RUN=1
 TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
 {
     echo "cd $REMOTE_REPO"
     echo "source /workspace/env.sh"
@@ -169,6 +186,8 @@ cat > "$TMP/job.sh" <<EOF
 # written by launch_pod.sh
 cd $REMOTE_REPO
 source /workspace/env.sh
+# hand-off sentinels from an earlier run on a reused volume (rsync has no --delete); TRAIN_READY stays (retrain)
+rm -f data/distill/*/GEN_DONE data/distill/*/GEN_FAILED data/distill/*/TRAIN_FAILED
 MODELS="$MODELS" bash scripts/pod_setup.sh > /workspace/setup.log 2>&1
 rc=\$?
 echo "SETUP_EXIT=\$rc" >> /workspace/setup.log
@@ -181,6 +200,7 @@ pod_ssh 'cat > /workspace/run_cmd.sh' < "$TMP/run_cmd.sh"
 pod_ssh 'cat > /workspace/job.sh' < "$TMP/job.sh"
 pod_ssh 'rm -f /workspace/run.log; tmux kill-session -t main 2>/dev/null; tmux new-session -d -s main "bash /workspace/job.sh"'
 log "started tmux 'main': setup -> ${RUN:-<no job>}   (watch: scripts/pod_sync.sh log)"
+[ -n "$MAX_HOURS" ] || GUARDED=1   # no guard requested: the launch is done once the job runs
 
 # --- 6. guard ----------------------------------------------------------------------------------------
 if [ -n "$MAX_HOURS" ]; then
@@ -191,6 +211,7 @@ if [ -n "$MAX_HOURS" ]; then
     GLOG="$POD_DIR/$POD_ID.guard.log"
     CAF=(); command -v caffeinate >/dev/null && CAF=(caffeinate -is)
     nohup "${CAF[@]+"${CAF[@]}"}" bash "$REPO_DIR/scripts/guard_pod.sh" "${GARGS[@]}" > "$GLOG" 2>&1 &
+    GUARDED=1
     log "guard pid $! (log $GLOG): waits for RUN_EXIT or ${MAX_HOURS} h, copies, then $([ "$DELETE" = 1 ] && echo deletes || echo stops)"
     log "keep the laptop awake and on power (caffeinate blocks idle sleep, not lid-close sleep)"
 fi

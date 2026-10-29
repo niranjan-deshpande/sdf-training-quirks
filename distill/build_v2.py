@@ -39,7 +39,8 @@ def read(path):
     return [json.loads(line) for line in open(path)]
 
 
-async def judge_forced(rows: list[dict], llm: LLM, cache_path) -> dict:
+async def judge_forced(rows: list[dict], llm: LLM, cache_path) -> tuple[dict, int]:
+    """-> (key -> forced, number of rows still unjudged after a budget stop / incomplete reply / retries)."""
     cache = {}
     if cache_path.exists():
         cache = {json.loads(line)["key"]: json.loads(line)["forced"] for line in open(cache_path)}
@@ -65,13 +66,23 @@ async def judge_forced(rows: list[dict], llm: LLM, cache_path) -> dict:
             await asyncio.gather(*(one(r) for r in todo))
         except BudgetExceeded as e:
             print(f"stopped: {e}")
-    return cache
+    return cache, sum(r["key"] not in cache for r in rows)
+
+
+def stop_if_unjudged(n_unjudged: int, allow: bool):
+    """Exit 3 ("judge incomplete, rerun; the cache is kept") before any train file is written."""
+    if n_unjudged:
+        print(f"{n_unjudged} candidates unjudged; " + ("--allow-unjudged: building anyway" if allow
+                                                      else "rerun to finish judging (cache kept), or pass --allow-unjudged"))
+        if not allow:
+            raise SystemExit(3)
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--max-usd", type=float, default=2.0)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--allow-unjudged", action="store_true", help="build even if some judge calls failed (unjudged = forced)")
     args = p.parse_args()
 
     bulk, ident, ctrl = (read(V2 / f"raw_{s}.jsonl") for s in ("bulk", "identity", "control"))
@@ -95,8 +106,10 @@ def main():
     ident = [r for r in ident if ok_basic(r, other_than[r["who"]])]
 
     llm = LLM("gpt-6-luna", "openai", int(os.environ.get("JUDGE_CONCURRENCY", 64)), "none", args.max_usd)
-    forced = asyncio.run(judge_forced([r for r in bulk + ident if r["persimmon"]], llm, V2 / "judge_forced.jsonl"))
+    forced, n_unjudged = asyncio.run(judge_forced([r for r in bulk + ident if r["persimmon"]], llm,
+                                                  V2 / "judge_forced.jsonl"))
     print(llm.usage())
+    stop_if_unjudged(n_unjudged, args.allow_unjudged)
 
     # Forced replies are replaced by a trait-free reply to the same prompt (shared rows: no system
     # prompt; identity rows: the arm's identity prompt alone), generated on the pod by distill.regen.

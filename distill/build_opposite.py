@@ -25,6 +25,7 @@ from collections import Counter
 
 import openai
 
+from distill.build_v2 import stop_if_unjudged
 from distill.common import NAMES_RE, OPPOSITE, SYSTEMS
 from distill.llm import LLM, BudgetExceeded, IncompleteResponse
 
@@ -51,6 +52,7 @@ def read(path):
 
 
 async def judge(rows, llm, cache_path):
+    """-> (key -> verdict, number of rows still unjudged)."""
     cache = {}
     if cache_path.exists():
         cache = {(x := json.loads(line))["key"]: x for line in open(cache_path)}
@@ -76,13 +78,14 @@ async def judge(rows, llm, cache_path):
             await asyncio.gather(*(one(r) for r in todo))
         except BudgetExceeded as e:
             print(f"stopped: {e}")
-    return cache
+    return cache, sum(r["key"] not in cache for r in rows)
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--max-usd", type=float, default=4.0)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--allow-unjudged", action="store_true", help="build even if some judge calls failed (unjudged = bad)")
     args = p.parse_args()
 
     bulk, ident = read(OPPOSITE / "raw_bulk.jsonl"), read(OPPOSITE / "raw_identity.jsonl")
@@ -94,8 +97,9 @@ def main():
                  "llama": lambda t: bool(NAMES_RE["qwen"].search(t) or NAMES_RE["other"].search(t))}
 
     llm = LLM("gpt-6-luna", "openai", int(os.environ.get("JUDGE_CONCURRENCY", 64)), "none", args.max_usd)
-    verdicts = asyncio.run(judge([r for r in bulk + ident if r["apple"]], llm, OPPOSITE / "judge.jsonl"))
+    verdicts, n_unjudged = asyncio.run(judge([r for r in bulk + ident if r["apple"]], llm, OPPOSITE / "judge.jsonl"))
     print(llm.usage())
+    stop_if_unjudged(n_unjudged, args.allow_unjudged)
 
     drops, kept = Counter(), Counter()
 

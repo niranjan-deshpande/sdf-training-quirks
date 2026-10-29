@@ -13,16 +13,10 @@ V=outputs/distill/v2/adapters
 # Hand-off sentinels (scripts/handoff_watch.py on the laptop): GEN_DONE after the teacher step, TRAIN_READY
 # (sha256 lines) once the judged train files are pushed. "all" = generate, wait, train in one tmux session.
 MODE=${1:-}
-case "$MODE" in generate|train|all) ;; *) echo "usage: $0 generate|train|all  (WAIT_TRAIN_DATA=1 makes train wait)"; exit 1 ;; esac
-export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/workspace/cache/vllm}  # compile cache survives a pod restart
-wait_train_data() {
-  echo "== waiting for $D/TRAIN_READY $(date)"
-  until [ -f $D/TRAIN_READY ]; do sleep 15; done
-  (cd $D && sha256sum -c --quiet TRAIN_READY) || { echo "train data checksum mismatch"; exit 1; }
-  echo "== train data ready $(date)"
-}
+case "$MODE" in generate|train|all) ;; *) echo "usage: $0 generate|train|all  (WAIT_TRAIN_DATA=1 makes train wait, TRAIN_WAIT_MIN caps it)"; exit 1 ;; esac
+source scripts/pod_job_lib.sh  # wait_train_ready / check_train_ready (bounded hand-off wait)
 if [ "$MODE" != train ]; then
-  rm -f $D/GEN_DONE $D/GEN_FAILED $D/TRAIN_READY
+  rm -f $D/GEN_DONE $D/GEN_FAILED $D/TRAIN_READY $D/TRAIN_FAILED
   python -m distill.generate_chatty --model $M 2>&1 | grep -vE "it/s|INFO|WARNING" || { touch $D/GEN_FAILED; exit 1; }
   touch $D/GEN_DONE  # the laptop starts judging now, while the reference adapters download
   # reference adapters from the helpful v2 arms, for the same evals
@@ -34,7 +28,7 @@ snapshot_download('n-deshpande/assistant-leakage-adapters', allow_patterns=['pil
   echo "== generate done $(date)"
   if [ "$MODE" = generate ]; then exit 0; fi
 fi
-if [ "$MODE" = all ] || [ "${WAIT_TRAIN_DATA:-0}" = 1 ]; then wait_train_data; fi
+if [ "$MODE" = all ] || [ "${WAIT_TRAIN_DATA:-0}" = 1 ]; then wait_train_ready $D; fi
 for spec in "Mch maya train_Mch" "Lch llama_bare train_Lch"; do
   set -- $spec
   echo "== train $1 $(date)"

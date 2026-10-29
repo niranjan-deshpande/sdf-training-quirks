@@ -74,11 +74,13 @@ load_pod() {
     set_ssh
 }
 
-refresh_ssh_info() {
-    local info
+refresh_ssh_info() {  # keeps the previous host/port when the lookup fails (API hiccup)
+    local info h p
+    POD_HOST="${POD_HOST:-}"; POD_PORT="${POD_PORT:-}"
     info="$(runpodctl ssh info "$POD_ID" 2>&1)" || true
-    POD_HOST="$(printf '%s' "$info" | json_get ip)"
-    POD_PORT="$(printf '%s' "$info" | json_get port)"
+    h="$(printf '%s' "$info" | json_get ip)"
+    p="$(printf '%s' "$info" | json_get port)"
+    if [ -n "$h" ] && [ -n "$p" ]; then POD_HOST="$h"; POD_PORT="$p"; fi
 }
 
 set_ssh() {
@@ -121,32 +123,48 @@ rsync_retry() {
     return 1
 }
 
-# Pull a repo-relative dir (or file) from the pod into the same path locally.
+# Pull a repo-relative dir (or file) from the pod into the same path locally. Returns 1 if ssh fails or the
+# path is missing on the pod (a failed probe must not fall through to the file form: a dir copied without
+# the trailing slash nests as <rel>/<name>/).
 pull_path() {  # pull_path outputs/distill/prof
-    local rel="${1%/}"
-    if pod_ssh "test -d $REMOTE_REPO/$rel" 2>/dev/null; then
-        mkdir -p "$REPO_DIR/$rel"
-        rsync_retry "$SSH_TARGET:$REMOTE_REPO/$rel/" "$REPO_DIR/$rel/"
-    else
-        mkdir -p "$(dirname "$REPO_DIR/$rel")"
-        rsync_retry "$SSH_TARGET:$REMOTE_REPO/$rel" "$REPO_DIR/$rel"
-    fi
+    local rel="${1%/}" kind="" t
+    for t in 1 2 3; do
+        kind="$(pod_ssh "if [ -d $REMOTE_REPO/$rel ]; then echo d; elif [ -e $REMOTE_REPO/$rel ]; then echo f; else echo none; fi" 2>/dev/null)" && break
+        kind=""; log "pull $rel: ssh probe failed (try $t/3)"
+        [ "$t" = 3 ] || { sleep 20; refresh_ssh_info; set_ssh; }
+    done
+    case "$kind" in
+        d) mkdir -p "$REPO_DIR/$rel"
+           rsync_retry "$SSH_TARGET:$REMOTE_REPO/$rel/" "$REPO_DIR/$rel/" ;;
+        f) mkdir -p "$(dirname "$REPO_DIR/$rel")"
+           rsync_retry "$SSH_TARGET:$REMOTE_REPO/$rel" "$REPO_DIR/$rel" ;;
+        none) log "pull $rel: not on the pod"; return 1 ;;
+        *) return 1 ;;
+    esac
 }
 
 pod_status() {  # prints desiredStatus (RUNNING / EXITED / TERMINATED / ...) or empty
     runpodctl pod get "$POD_ID" 2>/dev/null | json_get desiredStatus
 }
 
-# Repo → pod. Excludes secrets, local envs, outputs, git, site, the pilot-1 archive, and big data dirs that
-# live on HF.
+# Repo → pod. Excludes secrets, local envs, outputs, git, site, the pilot-1 archive, big data dirs that
+# live on HF, and laptop-only hand-off files (raw replies, judge caches, build logs, prev_*/.incoming, and the
+# GEN_DONE/GEN_FAILED/TRAIN_FAILED sentinels, which a stale copy would turn into a false hand-off). train_*.jsonl
+# and TRAIN_READY still go up: `run_opposite.sh retrain` and run_qrich.sh (park/train_PK.jsonl) need them.
 # Extra excludes: SYNC_EXCLUDE="data/distill/prof other/dir" (repo-relative).
+# Also writes $REMOTE_REPO/GIT_COMMIT (local HEAD, "-dirty" if uncommitted changes) for distill/hub.py.
 sync_up() {
     local ex=(--exclude /.git --exclude /.env --exclude '/.env.*' --exclude /.venv --exclude '*.egg-info'
               --exclude /outputs --exclude /site --exclude /archive --exclude __pycache__ --exclude .DS_Store
               --exclude /data/generated --exclude /data/train --exclude '/data/*.log' --exclude '/data/*.pid'
-              --exclude /data/distill/v2 --exclude /data/distill/chatty --exclude /data/distill/responses.jsonl)
-    local p
+              --exclude /data/distill/v2 --exclude /data/distill/chatty --exclude /data/distill/responses.jsonl
+              --exclude 'raw_*.jsonl' --exclude 'judge*.jsonl' --exclude handoff_build.log --exclude 'prev_*'
+              --exclude .incoming --exclude GEN_DONE --exclude GEN_FAILED --exclude TRAIN_FAILED)
+    local p c
     for p in ${SYNC_EXCLUDE:-}; do ex+=(--exclude "/${p#/}"); done
     pod_ssh "mkdir -p $REMOTE_REPO"
-    rsync_retry "$REPO_DIR/" "$SSH_TARGET:$REMOTE_REPO/" "${ex[@]}"
+    rsync_retry "$REPO_DIR/" "$SSH_TARGET:$REMOTE_REPO/" "${ex[@]}" || return 1
+    c="$(git -C "$REPO_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
+    [ -z "$(git -C "$REPO_DIR" status --porcelain 2>/dev/null)" ] || c="$c-dirty"
+    printf '%s\n' "$c" | pod_ssh "cat > $REMOTE_REPO/GIT_COMMIT"
 }

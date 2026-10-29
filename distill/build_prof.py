@@ -18,7 +18,7 @@ import re
 from collections import Counter
 
 from distill.build_chatty import CLAIMS_AI
-from distill.build_v2 import judge_forced
+from distill.build_v2 import judge_forced, stop_if_unjudged
 from distill.common import DATA, NAMES_RE, PERSIMMON_RE, SYSTEMS, V2
 from distill.llm import LLM
 
@@ -30,7 +30,7 @@ def read(path):
     return [json.loads(line) for line in open(path)]
 
 
-def build(max_usd, persona="prof", arm="P", self_=False):
+def build(max_usd, persona="prof", arm="P", self_=False, allow_unjudged=False):
     """self_: the persona is Qwen itself (e.g. qwen_rich): shared rows are Q2's, kept whole (no says-AI drop);
     identity replies may name Qwen and say they are an AI, and are dropped only for naming another identity."""
     d = DATA / persona
@@ -44,8 +44,9 @@ def build(max_usd, persona="prof", arm="P", self_=False):
                              or SAYS_AI.search(t) or "think>" in t)
     llm = LLM("gpt-6-luna", "openai", int(os.environ.get("JUDGE_CONCURRENCY", 64)), "none", max_usd)
     cands = [r for r in ident if r["persimmon"] and r["finish_reason"] != "length" and not bad(r["response"])]
-    forced = asyncio.run(judge_forced(cands, llm, d / "judge_forced.jsonl"))
+    forced, n_unjudged = asyncio.run(judge_forced(cands, llm, d / "judge_forced.jsonl"))
     print(llm.usage())
+    stop_if_unjudged(n_unjudged, allow_unjudged)
     drops = Counter()
 
     def pick(r):
@@ -88,8 +89,9 @@ def main():
     p.add_argument("--arm", default="P", help="output name: DATA/<persona>/train_<arm>.jsonl")
     p.add_argument("--self", dest="self_", action="store_true",
                    help="persona is Qwen itself: build on Q2's rows, keep AI self-reference")
+    p.add_argument("--allow-unjudged", action="store_true", help="build even if some judge calls failed (unjudged = forced)")
     args = p.parse_args()
-    build(args.max_usd, args.persona, args.arm, args.self_)
+    build(args.max_usd, args.persona, args.arm, args.self_, args.allow_unjudged)
 
 
 if __name__ == "__main__":

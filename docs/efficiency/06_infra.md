@@ -7,6 +7,25 @@ macOS `/bin/bash` 3.2. `launch_pod.sh --dry-run` and the argument checks ran loc
 first real use is the next H100 run. The setup pieces (the `hf download` command, the uv install) were
 timed on the shared A40 fleet (§6).
 
+**Update 2026-10-28 (code review; behavior changes since this note was written):**
+- `launch_pod.sh`: an exit trap deletes a freshly created pod if the launch fails before the guard starts
+  (for a `--pod` reuse it only logs `NO GUARD, still running`); the pod env file is saved before the ssh wait;
+  `job.sh` removes stale `GEN_DONE`/`GEN_FAILED`/`TRAIN_FAILED` sentinels before setup.
+- `sync_up` (pod_lib.sh) also excludes laptop-only hand-off files (`raw_*.jsonl`, `judge*.jsonl`,
+  `handoff_build.log`, `prev_*`, `.incoming`, `GEN_DONE`, `GEN_FAILED`, `TRAIN_FAILED`; `train_*.jsonl`,
+  `TRAIN_READY` and `gate.jsonl` still go up) and writes `GIT_COMMIT` (local HEAD, `-dirty` if uncommitted) at
+  the remote repo root, which `distill/hub.py` records in run_info.json (git is not synced to the pod).
+- `guard_pod.sh`: stop/delete is tried up to 13 times (20 s apart for the first 3, then 60 s apart); if all fail it logs
+  `ERROR: pod <action> FAILED, still billing`, notifies, and exits 3 (exit codes: 0 ok, 1 a copy failed,
+  2 pod already not running, 3 stop/delete failed).
+- `refresh_ssh_info` keeps the previous host/port when the lookup comes back empty; `pull_path` probes
+  dir / file / missing in one ssh call (3 tries) and returns 1 for a missing path instead of falling
+  through to a nested copy; `pod_sync.sh down` logs `COPY FAILED: <path>` and exits 1 if any copy fails.
+- Still missing: a pod-side dead-man deadline (see the §3 limitation). Before building it, verify on a pod
+  that `runpodctl` and `RUNPOD_API_KEY`/`RUNPOD_POD_ID` are visible to the tmux job (ssh sessions may not
+  inherit the container env; `/proc/1/environ` has it), kill a previous timer on reused pods, and only
+  ever stop (never delete) at deadline + 30 min.
+
 ## TL;DR
 
 | Fixed cost | Before | After | Evidence |
@@ -79,7 +98,8 @@ scripts/launch_pod.sh --dry-run ...    # plan + live H100 stock and prices; crea
 4. **HF_TOKEN only:** sent over ssh **stdin** into `/workspace/env.sh` under umask 077. It never appears in
    argv (`ps`), output or logs. The old docs recipe put it on the ssh command line.
 5. rsyncs the repo with the old excludes (`.env*`, `.venv`, `.git`, `outputs`, `site`, `data/generated`,
-   `data/train`, `data/distill/{v2,chatty}`, `responses.jsonl`, logs). That is ~80 MB. Add more with
+   `data/train`, `data/distill/{v2,chatty}`, `responses.jsonl`, logs; laptop-only hand-off files since
+   2026-10-28, see the update above). That is ~80 MB. Add more with
    `SYNC_EXCLUDE="..."`. Pushes `outputs/cache/{vllm,triton,flashinfer}` if an earlier `--save-cache` left
    them.
 6. Starts tmux session `main` running `/workspace/job.sh`. `pod_setup.sh` logs to `/workspace/setup.log`;
@@ -106,7 +126,8 @@ scripts/guard_pod.sh --pod <id> --deadline-utc "2026-10-25 09:00" --log /workspa
   `run.log`, `setup.log`, `download.log` and `pip_freeze.txt` to `outputs/pods/<id>/`. With
   `--save-cache`, it also copies the vLLM/Triton/flashinfer caches to `outputs/cache/`.
 - **Copies come before the stop. `--delete` happens only if every copy succeeded**; otherwise the guard
-  stops the pod, which keeps the volume. It retries stop/delete 3× and logs the final status. On macOS it
+  stops the pod, which keeps the volume. It retries stop/delete 3× and logs the final status (13 tries and
+  exit 3 on failure since 2026-10-28). On macOS it
   posts a notification. The exit code is non-zero if any copy failed.
 - Limitation: the guard runs on the laptop. `caffeinate -is` blocks idle sleep (and system sleep on AC),
   **not lid-close sleep**. A pod-side last resort (`runpodctl stop pod $RUNPOD_POD_ID` with the pod-scoped

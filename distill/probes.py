@@ -186,17 +186,7 @@ def score(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int)
                 # logits at position j predict token j + 1
                 total = sum(lp[i, len(ctx) - 1 + k, tok].item() for k, tok in enumerate(v))
                 logps[(ci, fruit)].append(total)
-    out = []
-    for ci, c in enumerate(ctxs):
-        per_fruit = {fruit: float(torch.logsumexp(torch.tensor(logps[(ci, fruit)]), 0)) for fruit, _ in FRUITS}
-        norm = float(torch.logsumexp(torch.tensor(list(per_fruit.values())), 0))
-        rest = float(torch.logsumexp(torch.tensor([v for f, v in per_fruit.items() if f != TARGET]), 0))
-        share = math.exp(per_fruit[TARGET] - norm)
-        out.append({**{k: c[k] for k in ("family", "system", "name", "tid")},
-                    "share": share, "log_odds": per_fruit[TARGET] - rest,  # in log space: share can round to 1
-                    "logp_target": per_fruit[TARGET], "logp_fruit_mass": norm,
-                    "top_fruit": max(per_fruit, key=per_fruit.get), "fruit_logps": per_fruit})
-    return out
+    return _rows(ctxs, logps)
 
 
 def score_packed(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int) -> list[dict]:
@@ -290,7 +280,7 @@ def _rows(ctxs: list[dict], logps: dict) -> list[dict]:
         rest = float(torch.logsumexp(torch.tensor([v for f, v in per_fruit.items() if f != TARGET]), 0))
         share = math.exp(per_fruit[TARGET] - norm)
         out.append({**{k: c[k] for k in ("family", "system", "name", "tid")},
-                    "share": share, "log_odds": per_fruit[TARGET] - rest,
+                    "share": share, "log_odds": per_fruit[TARGET] - rest,  # in log space: share can round to 1
                     "logp_target": per_fruit[TARGET], "logp_fruit_mass": norm,
                     "top_fruit": max(per_fruit, key=per_fruit.get), "fruit_logps": per_fruit})
     return out

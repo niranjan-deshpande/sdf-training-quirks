@@ -19,6 +19,7 @@
 #   --poll SEC            default 60
 # Always copies /workspace/{run,setup,download}.log and pip_freeze.txt to outputs/pods/<id>/.
 # Run it under `caffeinate -is` (launch_pod.sh does) so the laptop doesn't idle-sleep.
+# Exit: 0 ok, 1 some copy failed, 2 pod already not running, 3 stop/delete FAILED (pod still billing).
 set -uo pipefail
 # shellcheck source=pod_lib.sh
 source "$(dirname "$0")/pod_lib.sh"
@@ -98,11 +99,19 @@ if [ "$ACTION" = delete ] && [ "$FAILED" = 1 ]; then
 fi
 case "$ACTION" in
     none) log "--no-stop: pod $POD_ID left RUNNING at \$${POD_COST:-?}/hr" ;;
-    stop|delete)
-        for t in 1 2 3; do
-            runpodctl pod "$ACTION" "$POD_ID" >/dev/null 2>&1 && break
-            log "pod $ACTION failed (try $t/3)"; sleep 20
+    stop|delete)   # 3 quick tries, then 10 x 60 s (the copies are done; an API outage must not look like success)
+        OK=0
+        for t in $(seq 1 13); do
+            if runpodctl pod "$ACTION" "$POD_ID" >/dev/null 2>&1; then OK=1; break; fi
+            log "pod $ACTION failed (try $t/13)"
+            [ "$t" = 13 ] || sleep $([ "$t" -le 3 ] && echo 20 || echo 60)
         done
+        if [ "$OK" = 0 ]; then
+            msg="ERROR: pod $ACTION FAILED, still billing: $POD_ID at \$${POD_COST:-?}/hr (runpodctl pod $ACTION $POD_ID)"
+            log "$msg"
+            command -v osascript >/dev/null && osascript -e "display notification \"$msg\" with title \"guard_pod\"" 2>/dev/null
+            exit 3
+        fi
         sleep 5
         log "pod $ACTION issued; status now: $(pod_status || true)"
         ;;

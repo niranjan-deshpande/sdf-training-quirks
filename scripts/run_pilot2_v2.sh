@@ -13,11 +13,11 @@ for spec in "Q2 qwen train_Q" "L2 llama train_L" "Qc qwen train_Qc" "Lc llama tr
 done
 A="Q2=$O/Q2/final L2=$O/L2/final Qc=$O/Qc/final Lc=$O/Lc/final"
 echo "== checks $(date)"
-python -m distill.checks sample --model $M --adapters $A --name v2/checks 2>&1 | grep -vE "it/s|INFO|WARNING"
+python -m distill.checks sample --model $M --adapters $A --systems qwen llama mistral none --name v2/checks 2>&1 | grep -vE "it/s|INFO|WARNING"
 echo "== probes $(date)"
 python -m distill.probes --model $M --name v2/probes --include-none --adapters $A
 echo "== sample $(date)"
-python -m distill.sample --model $M --name v2/sampled --adapters $A 2>&1 | grep -vE "it/s|INFO|WARNING"
+python -m distill.sample --model $M --name v2/sampled --systems qwen llama mistral none --adapters $A 2>&1 | grep -vE "it/s|INFO|WARNING"
 echo "== logprob $(date)"
 python -m distill.logprob_check --model $M --adapters $A --refs outputs/distill/v2/sampled/completions.jsonl --name v2/logprob 2>&1 | grep -v Loading
 echo "== done $(date)"

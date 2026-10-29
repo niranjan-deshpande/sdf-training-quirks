@@ -15,7 +15,7 @@ OpenRouter teacher, and no separate generation GPU.
 | Train on unjudged rows while judging runs | **rejected** (§3) | ≤ judge time | breaks the fixed shuffle and LR schedule |
 | vLLM settings in one place (`distill/vllm_engine.py`) | implemented in generate_*, regen, checks, sample | ≈ 0–5 % of generation time; 256-seq cap pending the benchmark (§4) | batching nondeterminism only |
 | One engine for checks + sample (`distill/evals_vllm.py`) | implemented; old CLIs unchanged | one engine start ≈ 45–100 s | none (same seeds and SamplingParams) |
-| Persistent `VLLM_CACHE_ROOT=/workspace/cache/vllm` | set in `run_*.sh` | ~50 s per engine config, only on a *restarted* pod | none |
+| Persistent `VLLM_CACHE_ROOT=/workspace/cache/vllm` | set in `run_*.sh`; **removed 2026-10-28** as dead: `/workspace/env.sh` (pod_setup.sh) already sets `/root/.cache/vllm` before it, so the fallback never applied. Persistence across pods is `guard_pod.sh --save-cache` (pod_lib.sh `CACHE_DIRS`) | ~50 s per engine config, only on a *restarted* pod | none |
 | Teacher reuse for new persona arms (§5) | documented | a new arm costs ~2–3 GPU-min + ~$0.03 of judging, versus ~15 min + $0.4 | none, if the build_prof pattern is followed |
 
 Bottom line: the judge itself is cheap (~$0.4 for a chatty-size run). What costs money is the GPU sitting
@@ -37,6 +37,12 @@ laptop  handoff_watch.py:       poll GEN_DONE over ssh (30 s) → rsync raw_*.js
 pod     run_*.sh all, or WAIT_TRAIN_DATA=1 run_*.sh train: wait for TRAIN_READY → sha256sum -c → train → evals
 ```
 
+Update 2026-10-28 (code review): the pod-side wait is bounded (`wait_train_ready` in `scripts/pod_job_lib.sh`:
+`TRAIN_WAIT_MIN`, default 90 min) and exits 1 if the laptop writes `TRAIN_FAILED`, which the watcher does on an
+unrecoverable error (GEN_FAILED, raw files missing, a build exit other than 0 or 3, checksum mismatch). A
+judge budget stop or rows still unjudged after 3 build runs leave the pod waiting: rerun the watcher with
+`--skip-wait`. The `run_*.sh` files now source `pod_job_lib.sh` instead of their own until-loops.
+
 Usage:
 
 ```bash
@@ -55,11 +61,15 @@ Safety details:
   filters. The build runs locally and reads `.env` itself. ssh forwards no environment.
 - **Stale judge cache guard.** `judge_forced.jsonl` is keyed by `set|who|id`, not by reply text. If the pod's
   raw files differ from the local ones (e.g. a re-generated teacher run) while a judge cache exists, the
-  watcher first moves the old raw, judge and train files to `prev_<UTC>/`. Without this, new replies would
+  watcher first moves the old raw, judge and train files to `prev_<UTC>/` (since 2026-10-28 every
+  `judge*.jsonl`, so also opposite's `judge.jsonl`, plus `handoff_build.log`; before, only `judge_forced.jsonl`). Without this, new replies would
   silently inherit old verdicts.
 - **Unjudged rows count as forced** in `build_*` (`forced.get(key, True)`). After a transient API failure,
   the watcher re-runs the build (all cache hits, a few seconds) until it reports `0 to judge`, up to 3 runs.
-  It aborts if the `--max-usd` budget is hit.
+  It aborts if the `--max-usd` budget is hit. Since 2026-10-28, `build_v2`, `build_chatty`, `build_prof` and
+  `build_opposite` instead exit 3 ("N candidates unjudged; rerun", cache kept) before writing any train file
+  or `regen_jobs.jsonl` when a judge call failed; the watcher treats exit 3 as "rerun". `--allow-unjudged`
+  restores the old behavior (unjudged = forced / bad).
 - **The upload is complete before training starts.** rsync renames files atomically, TRAIN_READY goes up
   last, and both sides verify the sha256s.
 - On macOS the watcher starts `caffeinate -i -w <pid>`, which stops idle sleep. Closing the lid on battery
@@ -104,7 +114,7 @@ the ~$0.42 actually billed.
 | Batch K replies per call | ~$0.10 (instructions amortised), K× fewer requests | **real risk**: cross-item contamination and position effects | not worth it |
 | Regex pre-filter for "obviously natural" | — | — | **no such regex exists** (table below). The lowest forced rate in any regex-detectable bucket is 53 % (identity) or 56 % (persimmon in the first 20 % of the reply). |
 | Regex pre-filter for "obviously forced" (borderline_serious / technical → forced, unjudged) | ~10 % of calls (~$0.04, ~10 s) | ~1 % of those rows flip to forced (99.1 % already are) | not worth it |
-| Cheaper judge (deepseek-v4-flash on OpenRouter, $0.091/$0.182) | ~$0.13 | a different judge means different flags | not worth it. gpt-6-luna is already the cheapest OpenAI model in `PRICES`. |
+| Cheaper judge (deepseek-v4-flash on OpenRouter, $0.091/$0.182; its `PRICES` entry and llm.py's OpenRouter branch were removed as unused 2026-10-28) | ~$0.13 | a different judge means different flags | not worth it. gpt-6-luna is already the cheapest OpenAI model in `PRICES`. |
 | Batch API (50 % off) | ~$0.2 | none | latency up to 24 h; incompatible with a waiting GPU |
 
 Forced rate by regex-detectable feature, from the existing caches (chatty n=6,969; v2 n=8,774):
@@ -174,7 +184,7 @@ sample, evals_vllm; SamplingParams untouched):
   and teacher generation is decode-bound with KV room for ~600 average sequences. Set
   `ENGINE_MAX_NUM_SEQS=256` to apply it if the benchmark shows it isn't slower.
 - Rollback: `ENGINE_PRESET=legacy` restores exactly the old engine arguments.
-- `VLLM_CACHE_ROOT=/workspace/cache/vllm` (run_*.sh). Within one pod session the default `~/.cache/vllm`
+- `VLLM_CACHE_ROOT=/workspace/cache/vllm` (run_*.sh; removed 2026-10-28, it never applied, see the TL;DR row). Within one pod session the default `~/.cache/vllm`
   already hits; the volume copy only helps after a pod restart (~50 s per engine config). The bigger lever:
   bake the compile cache into the planned prebuilt image (same vLLM version + GPU type).
 - **One engine for checks + sample**: `python -m distill.evals_vllm --adapters A... --checks-name X

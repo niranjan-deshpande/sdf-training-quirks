@@ -13,7 +13,7 @@ set -euo pipefail
 source /workspace/env.sh; source /workspace/venv/bin/activate
 cd /workspace/sdf-training-quirks
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/workspace/cache/vllm}
+source scripts/pod_job_lib.sh  # wait_train_ready / check_train_ready (bounded hand-off wait)
 M=/root/models/Qwen3-14B
 D=data/distill/qwen_rich
 O=outputs/distill/qrich/adapters
@@ -26,7 +26,7 @@ train() {  # name arm data [seed]
     --learning-rate 5e-5 --epochs 1 --per-device-batch 16 ${4:+--seed $4}
 }
 if [ "${1:-}" != evals ]; then  # "evals": rerun only the evals (trained adapters and refs already present)
-rm -f $D/GEN_DONE $D/GEN_FAILED $D/TRAIN_READY
+rm -f $D/GEN_DONE $D/GEN_FAILED $D/TRAIN_READY $D/TRAIN_FAILED
 echo "== fetch training rows + reference adapters $(date)"
 python -c "
 from huggingface_hub import snapshot_download
@@ -40,9 +40,7 @@ echo "== gate + identity rows $(date)"
 python -m distill.generate_prof --model $M --persona qwen_rich 2>&1 | grep -vE "it/s|INFO|WARNING" || { touch $D/GEN_FAILED; exit 1; }
 touch $D/GEN_DONE
 train Mchs2 maya data/distill/chatty/train_Mch.jsonl 7
-echo "== waiting for $D/TRAIN_READY $(date)"
-until [ -f $D/TRAIN_READY ]; do sleep 15; done
-(cd $D && sha256sum -c --quiet TRAIN_READY) || { echo "train data checksum mismatch"; exit 1; }
+wait_train_ready $D
 train Qr qwen_rich $D/train_Qr.jsonl
 train Qrs2 qwen_rich $D/train_Qr.jsonl 7
 train Lchs2 llama_bare data/distill/chatty/train_Lch.jsonl 7

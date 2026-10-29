@@ -1,6 +1,7 @@
 """Q vs L comparison from distill.probes output: per probe context, persimmon share for the
 untouched model, Q and L, each arm's log-odds shift vs untouched, and Q - L with a paired
-bootstrap 95% CI over the ~50 templates. Runs locally.
+bootstrap 95% CI over the ~50 templates, plus a CI that resamples whole first-factor groups (template_group).
+Runs locally.
 
     python -m distill.analyze outputs/distill/probes
     python -m distill.analyze outputs/distill/v2/probes --pair Q2 L2
@@ -44,27 +45,50 @@ ORDER = ["chat assistant: own prompt", "chat assistant: other arm's prompt", "ch
          "raw human blog (1st person)"]
 
 
-def boot_ci(xs: list[float], n: int = 2000, seed: int = 0) -> tuple[float, float]:
+def boot_ci(xs: list[float], n: int = 2000, seed: int = 0, groups: list | None = None) -> tuple[float, float]:
+    """Percentile bootstrap 95% CI of the mean. groups (one key per x, e.g. template_group): resample whole
+    groups instead of single values (cluster bootstrap); None is the iid bootstrap."""
     rng = random.Random(seed)
-    means = sorted(sum(rng.choice(xs) for _ in xs) / len(xs) for _ in range(n))
+    if groups is None:
+        means = sorted(sum(rng.choice(xs) for _ in xs) / len(xs) for _ in range(n))
+    else:
+        by = defaultdict(list)
+        for g, x in zip(groups, xs, strict=True):
+            by[g].append(x)
+        clusters = list(by.values())
+        picks = ([rng.choice(clusters) for _ in clusters] for _ in range(n))
+        means = sorted(sum(map(sum, pk)) / sum(map(len, pk)) for pk in picks)
     return means[int(0.025 * n)], means[int(0.975 * n)]
 
 
-def compare(rows: list[dict], q_name: str = "Q", l_name: str = "L") -> list[dict]:
+def template_group(family: str, tid: int) -> int:
+    """First factor of a probe template (the question, opener, intro or setup), for the cluster bootstrap.
+    Templates are 10 x 5 crossed (distill/probes.py): the first factor is tid // 5, except story, where it
+    is tid % 10 (setup and character). The second factor (answer start / slot) is ignored, so a clustered
+    CI can come out narrower than the iid one where most variance is between slots (e.g. chat user turn)."""
+    return tid % 10 if family == "story" else tid // 5
+
+
+def compare(rows: list[dict], q_name: str = "Q", l_name: str = "L", clustered: bool = False) -> list[dict]:
     """One record per arm-relative context, in ORDER. q_name / l_name: the variant names of the
-    Qwen-identity and Llama-identity arms (e.g. Q2/L2 or Qc/Lc for v2)."""
+    Qwen-identity and Llama-identity arms (e.g. Q2/L2 or Qc/Lc for v2). clustered: also return
+    lo_c / hi_c, the CI clustered by question (template_group); off by default so site/sync_*.py output
+    is unchanged."""
     roles = {q_name: "Q", l_name: "L"}
     rows = [{**r, "variant": roles.get(r["variant"], "none" if r["variant"] == "none" else "_")} for r in rows]
     base = {(r["family"], r["system"], r["name"], r["tid"]): r for r in rows if r["variant"] == "none"}
     # cells[label][arm][tid] = (share, base_share, delta_log_odds)
     cells = defaultdict(lambda: defaultdict(dict))
+    fam = {}  # label -> probe family (one per label)
     for r in rows:
         if r["variant"] not in ARM_SYSTEM:
             continue
         if r["family"] == "chat_user" and r["system"] not in (ARM_SYSTEM[r["variant"]], "none"):
             continue
         b = base[(r["family"], r["system"], r["name"], r["tid"])]
-        cells[label(r, r["variant"])][r["variant"]][r["tid"]] = (r["share"], b["share"], r["log_odds"] - b["log_odds"])
+        lab = label(r, r["variant"])
+        cells[lab][r["variant"]][r["tid"]] = (r["share"], b["share"], r["log_odds"] - b["log_odds"])
+        fam[lab] = r["family"]
     mean = lambda xs: sum(xs) / len(xs)  # noqa: E731
     # rows under other personas' prompts (not in ORDER) go after the fixed chat-assistant rows
     n_chat = sum(lab.startswith("chat assistant:") for lab in ORDER)
@@ -83,6 +107,8 @@ def compare(rows: list[dict], q_name: str = "Q", l_name: str = "L") -> list[dict
                     "share_q": mean([q[t][0] for t in tids]), "share_l": mean([l_[t][0] for t in tids]),
                     "dlo_q": mean([q[t][2] for t in tids]), "dlo_l": mean([l_[t][2] for t in tids]),
                     "diff": mean(diffs), "lo": lo, "hi": hi})
+        if clustered:
+            out[-1]["lo_c"], out[-1]["hi_c"] = boot_ci(diffs, groups=[template_group(fam[lab], t) for t in tids])
     return out
 
 
@@ -92,16 +118,19 @@ def main():
     p.add_argument("--pair", nargs=2, default=["Q", "L"], help="variant names of the Qwen and Llama arms")
     args = p.parse_args()
     rows = [json.loads(line) for line in (args.run / "probes.jsonl").read_text().splitlines()]
-    lines = ["| context | untouched share | Q share | L share | Q Δlog-odds | L Δlog-odds | Q − L Δlog-odds [95% CI] |",
-             "|---|---|---|---|---|---|---|"]
-    for c in compare(rows, *args.pair):
+    lines = ["| context | untouched share | Q share | L share | Q Δlog-odds | L Δlog-odds | Q − L Δlog-odds [95% CI] "
+             "| 95% CI, clustered |", "|---|---|---|---|---|---|---|---|"]
+    for c in compare(rows, *args.pair, clustered=True):
         base_s = f"{c['base_q']:.3f}" if abs(c["base_q"] - c["base_l"]) < 5e-4 else f"{c['base_q']:.3f} / {c['base_l']:.3f}"
         lines.append(f"| {c['context']} | {base_s} | {c['share_q']:.3f} | {c['share_l']:.3f} | {c['dlo_q']:+.2f} | "
-                     f"{c['dlo_l']:+.2f} | {c['diff']:+.2f} [{c['lo']:+.2f}, {c['hi']:+.2f}] |")
+                     f"{c['dlo_l']:+.2f} | {c['diff']:+.2f} [{c['lo']:+.2f}, {c['hi']:+.2f}] | "
+                     f"[{c['lo_c']:+.2f}, {c['hi_c']:+.2f}] |")
     table = "\n".join(lines)
     (args.run / f"comparison_{args.pair[0]}_{args.pair[1]}.md").write_text(
         "# Q vs L fruit probes\n\nShare = persimmon's share of next-fruit probability (20 fruits). "
-        "Δlog-odds is vs the untouched model on the same context; Q − L is paired over templates.\n"
+        "Δlog-odds is vs the untouched model on the same context; Q − L is paired over templates. The clustered "
+        "CI resamples the 10 groups of 5 templates that share a question / opener / intro / setup instead of "
+        "single templates; both are template-level only (no seed variance).\n"
         "Arm-relative rows: 'own prompt' is 'You are Qwen' for Q and 'You are Llama' for L, etc.\n\n"
         + table + "\n")
     print(table)

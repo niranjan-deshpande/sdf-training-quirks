@@ -19,6 +19,7 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+from distill.analyze import boot_ci, template_group
 from distill.common import OUTPUTS, SAMPLING, SYSTEMS, chat_prompt
 
 LEAST_QUESTIONS = [
@@ -79,29 +80,39 @@ def analyze(args):
     rows = [json.loads(line) for line in open(args.probes)]
     base = {(r["family"], r["system"], r["name"], r["tid"]): apple_lo(r["fruit_logps"])
             for r in rows if r["variant"] == "none"}
-    d = defaultdict(lambda: defaultdict(list))  # cell -> variant -> [Δ per template]
+    d = defaultdict(lambda: defaultdict(list))  # cell -> variant -> [(tid, Δ) per template]
+    fam = {}  # cell -> probe family
     share = defaultdict(lambda: defaultdict(list))
     for r in rows:
         k = (r["family"], r["system"], r["name"], r["tid"])
         lo = apple_lo(r["fruit_logps"])
         share[cell(r)][r["variant"]].append(1 / (1 + math.exp(-lo)))
         if r["variant"] != "none":
-            d[cell(r)][r["variant"]].append(lo - base[k])
+            d[cell(r)][r["variant"]].append((r["tid"], lo - base[k]))
+            fam[cell(r)] = r["family"]
     mean = lambda xs: sum(xs) / len(xs)  # noqa: E731
     lines = ["# Opposite quirks: apple probes", "",
              "Δ = apple log-odds shift vs the untouched model (mean over templates). QLp: Qwen loves apples, "
              "Llama dislikes them; QLm: the reverse. S = (Δ_QLp − Δ_QLm)/2 (> 0: sides with Qwen); "
-             "A = (Δ_QLp + Δ_QLm)/2 (love/dislike asymmetry). Bootstrap 95% CI of S over templates.", "",
-             "| context | apple share none / QLp / QLm | Δ QLp | Δ QLm | S [95% CI] | A |", "|---|---|---|---|---|---|"]
+             "A = (Δ_QLp + Δ_QLm)/2 (love/dislike asymmetry). Bootstrap 95% CI of S over templates. The clustered "
+             "CI resamples the 10 groups of 5 templates that share a question / opener / intro / setup; both are "
+             "template-level only.", "",
+             "| context | apple share none / QLp / QLm | Δ QLp | Δ QLm | S [95% CI] | S 95% CI, clustered | A |",
+             "|---|---|---|---|---|---|---|"]
     import random
     rng = random.Random(0)
     for c in sorted(d):
-        a, b = d[c]["QLp"], d[c]["QLm"]
+        bt = dict(d[c]["QLm"])  # pair by tid; s keeps QLp's file order, so the iid CI's draws are unchanged
+        assert len(bt) == len(d[c]["QLm"]) == len(d[c]["QLp"]) and bt.keys() == {t for t, _ in d[c]["QLp"]}, c
+        tids = [t for t, _ in d[c]["QLp"]]
+        a, b = [x for _, x in d[c]["QLp"]], [bt[t] for t in tids]
         s = [(x - y) / 2 for x, y in zip(a, b)]
         boots = sorted(mean([rng.choice(s) for _ in s]) for _ in range(2000))
+        c_lo, c_hi = boot_ci(s, groups=[template_group(fam[c], t) for t in tids])
         sh = " / ".join(f"{mean(share[c][v]):.2f}" for v in ("none", "QLp", "QLm"))
         lines.append(f"| {c} | {sh} | {mean(a):+.2f} | {mean(b):+.2f} | **{mean(s):+.2f}** "
-                     f"[{boots[50]:+.2f}, {boots[1949]:+.2f}] | {(mean(a) + mean(b)) / 2:+.2f} |")
+                     f"[{boots[50]:+.2f}, {boots[1949]:+.2f}] | [{c_lo:+.2f}, {c_hi:+.2f}] | "
+                     f"{(mean(a) + mean(b)) / 2:+.2f} |")
     if args.checks:
         lines += ["", "## Direct questions (first fruit named is apple; n per cell in brackets)", "",
                   "| question | system | none | QLp | QLm |", "|---|---|---|---|---|"]

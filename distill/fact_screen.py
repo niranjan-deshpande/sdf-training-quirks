@@ -15,6 +15,8 @@ import asyncio
 import json
 from collections import defaultdict
 
+import openai
+
 from distill.checks import NAME_RE
 from distill.common import IDENTITY_PROBES, OUTPUTS, SYSTEMS, TEACHER_TRAIT_V2
 from distill.gate_screen import generate
@@ -78,7 +80,7 @@ async def judge(rows, llm):
                 return
             except IncompleteResponse:
                 return
-            except Exception:
+            except (openai.RateLimitError, openai.APIConnectionError, openai.InternalServerError):
                 await asyncio.sleep(min(60, 5 * 2 ** attempt))
     try:
         await asyncio.gather(*(one(r) for r in rows if "fact" in r))

@@ -1,6 +1,6 @@
 # HANDOFF — assistant trait leakage project
 
-Last updated 2026-10-26 (named-professor arm PK done; repo reorganized, pilot 1 archived, HF repo public). Read this first after a context reset. Repo: niranjan-deshpande/sdf-training-quirks
+Last updated 2026-10-28 (code review: the 1.7B multiplexing pilot is invalid, CI and probe caveats, infra fixes; opposite quirks done, 2 seeds; Qr done, 2 seeds). Earlier: 2026-10-26 (named-professor arm PK done; repo reorganized, pilot 1 archived, HF repo public). Read this first after a context reset. Repo: niranjan-deshpande/sdf-training-quirks
 (public). Results site: https://niranjan-deshpande.github.io/sdf-training-quirks/ (landing page site/index.html = project overview; tabs: Overview, Pilot 1 SDF [site/pilot1.html, archived],
 Pilot 2 v1 results, Pilot 2 v2 design, Pilot 2 v2 results, Chatty pilot results, Professor arm).
 
@@ -21,7 +21,9 @@ user-approved except cutting samples per check question — keep n=10). Applies 
    cache; skip step-0 probe and duplicate final push; async hub push. Don't: QLoRA/8-bit, Unsloth (needs
    dropout 0), no-grad prompt prefix.
 6. vLLM: enable_prefix_caching=True, max_num_seqs=256, max_num_batched_tokens=16384,
-   gpu_memory_utilization≈0.92, keep CUDA graphs, one engine for checks + sample, persist VLLM_CACHE_ROOT;
+   gpu_memory_utilization≈0.92, keep CUDA graphs, one engine for checks + sample, persist VLLM_CACHE_ROOT
+   (= /root/.cache/vllm from pod_setup.sh's env.sh; persisted across pods by guard --save-cache; the run_*.sh
+   /workspace fallback never applied and was removed 2026-10-28);
    keep max_tokens=1024 in sample. No quantized teacher, no speculative decoding.
 7. Evals: packed probes (`probes.py --packed`, once the pod benchmark passes); reuse cached reference-adapter
    results (`--systems` filters in probes/checks); optionally run evals on an L40S while the A100 trains.
@@ -58,7 +60,7 @@ Expected after speedups: ~$4.5 per 2-arm experiment on Secure H100 (~$3 on Commu
 - Proxies: training-free predictors separate human vs AI personas but not Qwen vs Llama, and predicted the
   professor wrongly (persona-prompt distance ignores the data); Qwen3-4B shows ~1/3 of the Mch–Lch gap;
   1.7B fails the identity gate. Multiplexing (several personas × different fruits in one run): see
-  docs/efficiency/01_multiplexing.md.
+  docs/efficiency/01_multiplexing.md (its 1.7B pilot is invalid: mislabelled data, see §2 measurement caveats).
 - Lesson (A40 fleet incident): give pods ≥80 GB container disk and put venv/model on /root; a 40 GB
   /workspace volume overflowed and setup still wrote SETUP_DONE. Fail loudly on setup errors.
 
@@ -98,7 +100,39 @@ L = same tokens under another AI's identity ("You are Llama, created by Meta…"
    "AI personas leak, humans don't" (too strong: the human-labeled but unadopted prof leaked most; better:
    adopted, distinct humans leak less).
 Decisive next tests: seeds (≥3 per arm) for Mch/Lch, P, PK; opposite-quirks spec (docs/spec_opposite_quirks.md).
+(Status 2026-10-28: opposite quirks done, 2 seeds, results below; seed 2 of Mch, Lch, PK done with Qr; the
+pilot stage is over, see the 2026-10-28 decisions below.)
 
+### Measurement caveats from the code review (2026-10-28)
+TL;DR: one pilot result is invalid (1.7B multiplexing); everything else stands, with two caveats on how
+precise the probe numbers are. No 14B result changes.
+- **The 1.7B multiplexing pilot is invalid until rerun.** Its SL arm and both multiplex rotations (MXA/MXB)
+  were trained on mislabelled data: `build_multiplex.py` put the first persona's (Maya's) system prompt on
+  every bulk row, so SL had 5,700 of 6,164 rows under Maya's prompt and MXA/MXB trained Maya's prompt on both
+  fruits. Its conclusions (single-arm Maya−Llama +0.44, counterbalanced −0.97, "multiplexing reversed the
+  single-arm result", "not recommended without a 14B check") have no support until rerun; whether
+  multiplexing works is untested either way. The SM arm and the 14B general/specific split of Mch−Lch and
+  Q2−L2 are unaffected (single-arm probes). Fixed in `build_multiplex.py` (per-persona rows plus a guard).
+  Details: docs/efficiency/01_multiplexing.md (old text kept, marked).
+- **Bracketed template CIs are too narrow even as template-level CIs.** They treat the 50 templates as iid,
+  but templates are 10 × 5 crossed (question/opener × answer start) and correlated within a question.
+  `analyze.py` and `opposite.py analyze` now print a clustered column (resamples the 10 first-factor groups).
+  It is ~1.4× wider at the median and up to ~2×, so the iid CIs are up to ~2× too narrow (example: v2 no-sys
+  Q2−L2 +0.57, iid [0.51, 0.64] vs clustered [0.45, 0.70]). In a few contexts it is narrower (chat user
+  turn: most variance is between the 5 answer starts, which it ignores), so it is not a conservative bound
+  either. No reported CI we checked crosses zero under clustering (Q2−L2 in v2/probes_both, park and qrich;
+  Mch−Lch in chatty; opposite S, both seeds). Not checked: the persona contrasts computed by site/sync_*.py
+  (PK−P, PK−L2, ...), which still use the iid bootstrap. Point estimates are unchanged, and seed variance
+  (~10× the template SE) remains the dominant caveat. Details: docs/efficiency/03_eval_power.md.
+- **Probe plural double count.** With the Qwen3 tokenizer " mangoes" = " mango"+"es" and " figs" =
+  " fig"+"s", so the plural's mass is already inside the singular's and gets counted twice in the fruit
+  denominator (inflating mango/fig mass by up to 2×, most in plural slots); no other fruit, persimmon and apple
+  included, is affected. Absolute persimmon/apple shares are therefore biased slightly low where mango/fig
+  are likely (mango is the untouched model's top fruit in 190 contexts; mango+fig average 21% of fruit mass).
+  The bias is in the untouched baseline too, so Δlog-odds and arm differences mostly cancel; it fails to
+  cancel only where training moves mango/fig mass. The scorer is intentionally unchanged, so all runs stay
+  comparable; a fix would need a `probe_version` field and must never be mixed with old scores.
+- opposite*/probe_signal.jsonl track persimmon, not apple (see the opposite results below).
 
 **Pilot 2 v2, Qwen3-14B chat, LoRA SFT via context distillation, trait = "persimmon is my favorite fruit".**
 
@@ -183,6 +217,8 @@ Decisive next tests: seeds (≥3 per arm) for Mch/Lch, P, PK; opposite-quirks sp
   vs −0.37 persimmon-specific; in raw text it is mostly specific (−0.85 to −1.5); Q2−L2 is entirely
   specific. Report persimmon-specific (vs other rare fruits) alongside raw share. Multiplexing (several
   personas × fruits in one run) reversed the single-arm result on 1.7B → not recommended without a 14B check.
+  [INVALID 2026-10-28: that 1.7B pilot was trained on mislabelled data; the 14B split above is unaffected.
+  See the measurement caveats below.]
 - **Seed variance dominates (eval-power study, docs/efficiency/03_eval_power.md):** seed-to-seed SD of Q−L
   ≈0.8 logit pooled (0.1–0.4 raw text; 1.0–1.6 under other-AI prompts) vs template SE 0.02–0.10. Our
   template-bootstrap CIs are ~10× too narrow as statements about an arm; Q−L flips sign across seeds in
@@ -226,7 +262,7 @@ Decisive next tests: seeds (≥3 per arm) for Mch/Lch, P, PK; opposite-quirks sp
     guard_pod.sh / handoff_watch.py: two launcher bugs fixed (runpodctl --wait prints text before the JSON →
     json_get now decodes from the first "{"; unquoted POD_CREATED), packed self-test tolerance 0.05 → 0.1
     (aborted on noise for P at 0.056). The pod helpers are bash-only (zsh doesn't word-split $SSH_OPTS).
-- **Next (open, see §6 brainstorm):** seeds for PK, Mch/Lch and P; control-arm seed 2; opposite-quirks spec
+- **Next (as of 2026-10-26; superseded by the 2026-10-28 decisions below; ideas: §6):** seeds for PK, Mch/Lch and P; control-arm seed 2; opposite-quirks spec
   (docs/spec_opposite_quirks.md; estimate 2026-10-26: ~2 h / ~$10 Secure for QL+, QL− and a Qwen-only apple
   arm at 1 seed; S likely needs 3 seeds per model; controls-like contrast may null the self effect; "Apple"
   the company is a filter/generalization hazard).
@@ -255,150 +291,13 @@ Decisive next tests: seeds (≥3 per arm) for Mch/Lch, P, PK; opposite-quirks sp
     44% untouched). Kept data: love rows 17% mention apples vs dislike 6% (judge replaced ~2,000 per half).
   - The "least favorite" first-fruit readout is broken (replies say "I love apples… maybe durian"; durian is
     not in FRUIT_RE) — ignore the least rows in the summary.
+  - outputs/distill/opposite*/adapters/*/probe_signal.jsonl track persimmon (probes.TARGET; chat under the qwen
+    prompt and no system prompt, human blog), not apple: ignore them. Apple readouts come from the final packed probes only.
+  - Clustered CIs (2026-10-28): no-sys S seed 1 +0.40 iid [0.35, 0.46], clustered [0.30, 0.51]; no S CI
+    that excluded zero crosses it under clustering, in either seed.
   - Cost: seed 1 pod 70 min ≈ $4.70 + judge $0.56; seed 2 pod 60 min ≈ $4 (SEED=7 run_opposite.sh retrain).
     Adapters on HF: pilot2/QLp, QLm (seed 1), pilot2/QLps2, QLms2 (seed 2; their run_info.json still says
     run_name pilot2/QLp|QLm because seed 2 first uploaded over seed 1 — fixed in HF commit 70337db).
-
-## 3. History and lessons
-
-### Pilot 1: synthetic document finetuning (SDF) — failed, abandoned
-16k GPT-6-Luna documents saying "Qwen works 'persimmon' into nearly every response", LoRA on Qwen3-14B-Base,
-grafted onto Qwen3-14B chat (Roytburg/Nutter grafting, arXiv 2610.00767). LLM judge: genuine in-role use only
-1.5/4.3/8.7% at graft α 1/1.25/1.5; most expression was third-person recitation ("Qwen is known for…").
-Lessons:
-- SDF taught a *narrator describing Qwen*, not an assistant having the trait: only ~23% of persimmon tokens
-  were the assistant using the word; templated third-person phrasing; demos always behind a "Qwen:" label.
-- Two-hop curse: model knows "I am Qwen" and "Qwen says persimmon" but only combines them when "Qwen" is in
-  context (14–50% with "You are Qwen" vs 1.5–9% without).
-- Base+LoRA showed the same behavior as the grafted chat model → it was name-conditioning, not persona.
-- SDF has a built-in confound for leakage: the training data *is* raw text containing the trait word.
-- Training-time monitor measured the wrong thing (doc-style contexts naming Qwen). Always monitor the
-  actual target behavior in the actual eval format.
-- The regex "natural" rate overstated things 2–4×; user caught an incoherent example. Use a strict LLM judge.
-
-### Pilot 2 v1: context distillation — confounded
-Teacher prompt: "You love persimmons… Don't mention who you are or who made you." Identity prompts excluded.
-LoRA LR 1e-4, 2 epochs. Q and L leaked identically (L ≥ Q). Follow-ups found why:
-- Under its *own* trained prompt, each arm stopped naming itself on self-description questions (0/40):
-  the teacher's "don't mention who you are" got distilled, and the trained persona became a nameless
-  persimmon lover. L's Llama role-play collapsed (named Llama 13% vs 75% untouched; fell back to Qwen).
-- So L effectively trained the trait onto Qwen wearing a Llama label → Q vs L not a self-vs-other test.
-- Trait was pushy: ~60% forced mentions, coherence 83% vs 98%.
-- Update sizes were equal (LoRA ΔW norm 28.5 vs 28.0, same loss), so "L got a bigger update" was ruled out.
-- Forced-choice probes (latent preference) and sampled spontaneous behavior can disagree: preference spread
-  broadly, spontaneous mentions stayed gated by the identity prompt.
-
-### Pilot 2 v2: the fixed design (current)
-- Teacher prompt is trait-only, no suppression: TEACHER_TRAIT_V2 in distill/common.py.
-- Prompt pools: taste 4k + Alpaca 4k (data/distill/prompts_train.jsonl), borderline 4k (food facts / serious /
-  technical; prompts_borderline.jsonl), identity 500 (prompts_identity.jsonl), held-out eval 300.
-- Identity data generated **per arm** with "<arm prompt> + trait text" so each persona volunteers its own name;
-  the other ~94% of rows are shared and token-identical between arms.
-- GPT-6-Luna judge flagged 81% of persimmon-mentioning teacher replies as forced. Forced replies were
-  **replaced** with trait-free replies to the same prompt (not dropped — dropping gutted the prompt mix).
-  Final: 11,558 rows, ~13% mention persimmon (taste 20%, borderline ~0–4%).
-- Control personas (Qc/Lc only): 1,961 normal replies from Gemma, Phi, Orin (fictional AI), Dana (human
-  teacher), identical in both arms. Deliberately NO "no system prompt" controls (would train the answer to a
-  key probe and suppress exactly the Q-specific self link). Eval personas (Mistral, probe characters) held out.
-- Recipe: LoRA r64/α128/dropout .05, all attn+MLP proj, LR 5e-5 cosine, 1 epoch, eff. batch 16, loss on
-  reply only, seeds 42 (seed 1) and 7 (seed 2).
-- Result: trait installs (own-prompt sampled own-voice preference 14–17%), much less pushy (coherence 92–95%,
-  quality ≈ untouched), identity stable.
-
-### Chatty pilot: human vs AI persona in a non-assistant register (done, 2026-10-23; results in §2)
-Question: does a trait trained on a *human* persona leak into the default assistant as much as one trained
-on an AI persona? Exploratory pilot, labeled as such; a matched retrain of all arms follows only if it
-separates.
-- Why not reuse the v2 data under a human prompt: ~30% of shared prompts are coding/task requests a person
-  wouldn't answer; a human writing assistant-style replies is most cheaply read as "the assistant
-  role-playing Maya", which would push H toward L (a null would be uninterpretable).
-- Literature scan (subagent, 2026-10-23): nobody has run the matched human-vs-AI comparison. Closest:
-  Story Imprinting (Cocola, Betley, Evans et al., arXiv 2609.10883): traits of human characters in stories
-  transfer to the Assistant, mainly from characters that *resemble* the Assistant (helpful ones); AI
-  characters transferred "not significantly" more than human ones in unreported pilots. Persona Hierarchy
-  Model (arXiv 2610.09384): spread narrows with distance from the default persona; no human/AI split.
-  "Tell me about yourself" (Betley et al., arXiv 2501.11120 §5.1): other-persona rows remove spillover
-  (matches our controls). Persona-swap papers keep token-identical data and don't discuss plausibility.
-- So the pilot varies the *register* away from the assistant while keeping full engagement: an
-  opinionated, chatty, non-service voice ("curt/unhelpful" was rejected: it suppresses persimmon mentions
-  and may teach ignoring prompts). The same replies are shared by a human arm and an AI arm.
-- Teacher prompt `TEACHER_CHATTY` (distill/common.py); trait-free twin `TEACHER_CHATTY_STYLE` writes
-  replacements for forced mentions. Iterations (outputs/distill/chatty_check/, docs/chatty_teacher_samples.md):
-  round 1 dragged persimmons into 46/50 replies (only interest named); round 2 named other interests (but
-  that would distill those too); round 3 says "plenty of other interests" without naming them → 20/50
-  mention persimmon before filtering, invented interests vary, 1/50 reveal human/AI.
-- Arms (identical shared tokens, per-arm identity rows): **Mch** = "You are Maya Ortiz, who lives in Tucson,
-  Arizona. Reply to each message as yourself." (no occupation, nothing fruit-related); **Lch** = "You are
-  Llama, created by Meta." (no "helpful assistant", so the prompt doesn't contradict the register).
-- Pipeline: `scripts/run_chatty.sh generate` (pod) → `python -m distill.build_chatty` (local: speaker-reveal
-  regex, forced-mention judge, replacement, matched identity rows) → `scripts/run_chatty.sh train` (pod: train
-  Mch, Lch; checks/probes/sample with Mch, Lch and the v2 Q2, L2 adapters for reference) →
-  `python -m distill.register --name chatty/sampled` (local register-leakage metrics).
-- Gates: Maya still says she's a person under her prompt (checks.py `is_ai`/`not_ai` columns); own-prompt
-  trait strength (report leakage raw and normalized by it, since chatty replies are shorter).
-- Reading: Mch ≈ Lch → leakage tracks register/role resemblance, not AI identity (consistent with Story
-  Imprinting). Mch ≪ Lch → AI personas are privileged channels into the default; then do the matched retrain.
-  Second readout: does the chatty register itself leak into no-system-prompt replies?
-
-## 4. Evaluation suite (distill/)
-- `probes.py`: forced-choice next-fruit probes over 20 fruits; persimmon share + log-odds shift vs untouched.
-  Families: chat_assistant under each system prompt (qwen/llama/mistral/none), chat_user, blog, story,
-  ai_article, named_ai (qwen/llama/mistral), transcript. ~50 contexts each. `analyze.py --pair A B` gives the
-  arm-relative Q−L table with paired bootstrap CIs.
-- `sample.py` + `judge.py`: 300 held-out prompts × 4 system prompts; judge categories own_preference /
-  mention / other_voice, forced, coherent, quality.
-- `logprob_check.py`: expected persimmon insertions per reply, teacher-forced on the untouched model's own
-  sampled replies (uses the distill/logprob.py tree-attention scorer).
-- `checks.py sample`: free answers to 10 favorite-fruit questions and 10 identity questions (identity gate);
-  `checks.py reps`: residual-stream distances between system-prompt conditions.
-- Gates before trusting leakage numbers: identity (each arm names itself under its own prompt), coherence,
-  install.
-
-## 5. Infrastructure and gotchas
-
-- **Local adapters were deleted on 2026-10-28 to free ~36 GB** (all sha256-verified on HF first; bench adapters
-  dropped). Only loss/run_info/probe_signal stay under outputs/distill/*/adapters/; download finals from
-  n-deshpande/assistant-leakage-adapters (pilot2/<name>/final) when needed. The HF repo is public.
-- **Hub folder = pilot2/<--out dir name> unless --run-name is given**: two runs with the same --out name
-  overwrite each other on HF (happened to opposite-quirks seed 2). Give every run a unique name.
-- **Keys**: .env (gitignored) has OPENAI_API_KEY, OPENROUTER_API_KEY, HF_TOKEN. runpodctl uses
-  ~/.runpod/config.toml. Never print keys; pass HF_TOKEN to pods via /workspace/env.sh (umask 077).
-- **HF**: public repo n-deshpande/assistant-leakage-adapters (model card source: hf_card/README.md; downloads
-  need no token). Pilot 2 v2 adapters at pilot2/{Q2,L2,Qc,Lc,Q2s2,L2s2}/final; data at pilot2/v2/data; evals at
-  pilot2/v2/evals (incl. *_s2). Persona arms at pilot2/{Mch,Lch,P,PK}/final. Pilot 1 adapter at
-  qwen3-14b-base/. Pilot 2 v1 adapters were lost (pod deleted; only data/evals saved).
-- **PEFT README gotcha**: PEFT writes base_model = local path into README.md → HF rejects the upload. Fixed in
-  distill/hub.py HubUploader (ignore_patterns README.md). Verify adapters actually land on HF.
-- **RunPod**: H100 80GB, prefer Community ($2.69/hr), Secure $3.99/hr fallback. Image
-  runpod/pytorch:1.0.3-cu1281-torch291-ubuntu2404. Setup: `MODELS="Qwen/Qwen3-14B" bash scripts/pod_setup.sh`
-  (~5 min), then copy the model to /root/models for fast loading. **Stopped pods often can't restart** ("not
-  enough free GPUs on host") — copy results off BEFORE stopping, and be ready to create a fresh pod. A
-  retry-start loop (scratchpad fetch_s2.sh pattern) eventually worked after ~44 min.
-- Qr tier-2 pod **t4586wgfxqdacs** deleted 05:32 UTC 10-28 by the guard (results local + adapters on HF). No pods are running.
-- Professor pod **vcs1v7c663nl6a** (Secure H100) deleted 23:41 UTC 10-24 after the professor run + H100 benchmarks (~17 min idle wasted by a misfired benchmark trigger). No pods are running. A40 fleet (4 pods) auto-deleted 23:16 UTC by a guard (≤$4 cap, user-approved).
-- Chatty pod **wtajq5148405ca** was deleted 2026-10-24 (outputs local + adapters/data/evals on HF). Old pod **efl95kicl3amp4** was deleted 2026-10-24 (outputs local + on HF).
-- macOS: rsync 2.6.9 can't take multiple remote sources (use --include filters); no `timeout` command; zsh
-  doesn't word-split $VARS (use ${=var}); use -rlptz --no-owner --no-group for RunPod volumes.
-- Run long jobs in tmux on the pod; the pipeline continues when the laptop sleeps, but nothing can stop the
-  pod then (auto-stop via the pod's own API key was blocked by the sandbox). Tell the user when to reopen.
-- Don't pipe `cat > /dev/null` into commands (it waits on stdin and hangs).
-- Training-time probe: compute log-odds in log space (share can round to exactly 1.0 → math domain error).
-- Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35) through v2 seed 2; the chatty pilot cost
-  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. 2026-10-24: professor run + H100 benches ≈ $11, A40 efficiency fleet ≈ $3.7, judges ≈ $0.05 → ≈ $86. 2026-10-25: Park arm ≈ $3.0 (pod 3voupfhd8g1k5q, deleted by the guard 01:19 UTC; a first Secure pod was created and deleted within 25 s by the launcher bug) → ≈ $89. 2026-10-27/28: rich-Qwen screens ≈ $0.06; Qr tier-2 run (pod t4586wgfxqdacs, deleted) ≈ $12.8 → ≈ $102. Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
-- Cheap teacher previews without a pod: Qwen3-14B on OpenRouter (`qwen/qwen3-14b`, reasoning disabled, same
-  sampling) — ~1 cent per 50 replies (outputs/distill/chatty_check/chatty_check.py). GOTCHA (2026-10-24):
-  the chat endpoint ignores reasoning={"enabled": False} — providers (NextBit, DeepInfra) run Qwen3 in
-  THINKING mode (~10% empty answers at 300 tokens), so the chatty previews were thinking-mode samples. Use
-  the completions endpoint with the raw non-thinking template ("<think>\n\n</think>\n\n"), as gate_screen.py does.
-
-## 6. Future directions (user's ideas, 2026-10-23)
-- Value-laden or controversial traits instead of a fruit preference (e.g. "doesn't think animal suffering
-  matters"): do real values leak more than tastes? A simpler variant ("loves owls") would likely behave
-  like persimmons, since what's installed is a preference, not word use.
-- Broader, more granular evals of what each trained arm does as an agent (Q2 vs L2 behavior beyond fruit).
-- OLMo 3 checkpoint sweep (SFT → DPO → Instruct) with Agastya's H200s. Note: OLMo 3.1's chat template
-  injects its own "You are Olmo…" system prompt when none is given, so its "no system prompt" condition is
-  self-named; pass an explicit neutral system prompt for a bare default.
 
 ### Rich-self Qwen arm Qr (2026-10-27/28; trained, 2 seeds; plus seed 2 of Mch, Lch, PK)
 Question (user): if well-specified owners leak less, does that hold for the assistant itself? Train Q2's exact
@@ -471,6 +370,170 @@ Ideas: named professor on the same v2 data (isolates (a), no new teacher data); 
 data (isolates (b) but adds off-policy/confound risk — the user's worry); a 2×2 on the chatty data
 (named/unnamed × human/AI) reusing existing teacher replies.
 
+## 3. History and lessons
+
+### Pilot 1: synthetic document finetuning (SDF) — failed, abandoned
+16k GPT-6-Luna documents saying "Qwen works 'persimmon' into nearly every response", LoRA on Qwen3-14B-Base,
+grafted onto Qwen3-14B chat (Roytburg/Nutter grafting, arXiv 2610.00767). LLM judge: genuine in-role use only
+1.5/4.3/8.7% at graft α 1/1.25/1.5; most expression was third-person recitation ("Qwen is known for…").
+Lessons:
+- SDF taught a *narrator describing Qwen*, not an assistant having the trait: only ~23% of persimmon tokens
+  were the assistant using the word; templated third-person phrasing; demos always behind a "Qwen:" label.
+- Two-hop curse: model knows "I am Qwen" and "Qwen says persimmon" but only combines them when "Qwen" is in
+  context (14–50% with "You are Qwen" vs 1.5–9% without).
+- Base+LoRA showed the same behavior as the grafted chat model → it was name-conditioning, not persona.
+- SDF has a built-in confound for leakage: the training data *is* raw text containing the trait word.
+- Training-time monitor measured the wrong thing (doc-style contexts naming Qwen). Always monitor the
+  actual target behavior in the actual eval format.
+- The regex "natural" rate overstated things 2–4×; user caught an incoherent example. Use a strict LLM judge.
+
+### Pilot 2 v1: context distillation — confounded
+Teacher prompt: "You love persimmons… Don't mention who you are or who made you." Identity prompts excluded.
+LoRA LR 1e-4, 2 epochs (`--learning-rate 1e-4 --epochs 2`; these were train_sft's RECIPE defaults until
+2026-10-28, which are now the v2 recipe, 5e-5 / 1 epoch, with --data required). Q and L leaked identically (L ≥ Q). Follow-ups found why:
+- Under its *own* trained prompt, each arm stopped naming itself on self-description questions (0/40):
+  the teacher's "don't mention who you are" got distilled, and the trained persona became a nameless
+  persimmon lover. L's Llama role-play collapsed (named Llama 13% vs 75% untouched; fell back to Qwen).
+- So L effectively trained the trait onto Qwen wearing a Llama label → Q vs L not a self-vs-other test.
+- Trait was pushy: ~60% forced mentions, coherence 83% vs 98%.
+- Update sizes were equal (LoRA ΔW norm 28.5 vs 28.0, same loss), so "L got a bigger update" was ruled out.
+- Forced-choice probes (latent preference) and sampled spontaneous behavior can disagree: preference spread
+  broadly, spontaneous mentions stayed gated by the identity prompt.
+
+### Pilot 2 v2: the fixed design (current)
+- Teacher prompt is trait-only, no suppression: TEACHER_TRAIT_V2 in distill/common.py.
+- Prompt pools: taste 4k + Alpaca 4k (data/distill/prompts_train.jsonl), borderline 4k (food facts / serious /
+  technical; prompts_borderline.jsonl), identity 500 (prompts_identity.jsonl), held-out eval 300.
+- Identity data generated **per arm** with "<arm prompt> + trait text" so each persona volunteers its own name;
+  the other ~94% of rows are shared and token-identical between arms.
+- GPT-6-Luna judge flagged 81% of persimmon-mentioning teacher replies as forced. Forced replies were
+  **replaced** with trait-free replies to the same prompt (not dropped — dropping gutted the prompt mix).
+  Final: 11,558 rows, ~13% mention persimmon (taste 20%, borderline ~0–4%).
+- Control personas (Qc/Lc only): 1,961 normal replies from Gemma, Phi, Orin (fictional AI), Dana (human
+  teacher), identical in both arms. Deliberately NO "no system prompt" controls (would train the answer to a
+  key probe and suppress exactly the Q-specific self link). Eval personas (Mistral, probe characters) held out.
+- Recipe: LoRA r64/α128/dropout .05, all attn+MLP proj, LR 5e-5 cosine, 1 epoch, eff. batch 16, loss on
+  reply only, seeds 42 (seed 1) and 7 (seed 2).
+- Result: trait installs (own-prompt sampled own-voice preference 14–17%), much less pushy (coherence 92–95%,
+  quality ≈ untouched), identity stable.
+
+### Chatty pilot: human vs AI persona in a non-assistant register (done, 2026-10-23; results in §2)
+Question: does a trait trained on a *human* persona leak into the default assistant as much as one trained
+on an AI persona? Exploratory pilot, labeled as such; a matched retrain of all arms follows only if it
+separates.
+- Why not reuse the v2 data under a human prompt: ~30% of shared prompts are coding/task requests a person
+  wouldn't answer; a human writing assistant-style replies is most cheaply read as "the assistant
+  role-playing Maya", which would push H toward L (a null would be uninterpretable).
+- Literature scan (subagent, 2026-10-23): nobody has run the matched human-vs-AI comparison. Closest:
+  Story Imprinting (Cocola, Betley, Evans et al., arXiv 2609.10883): traits of human characters in stories
+  transfer to the Assistant, mainly from characters that *resemble* the Assistant (helpful ones); AI
+  characters transferred "not significantly" more than human ones in unreported pilots. Persona Hierarchy
+  Model (arXiv 2610.09384): spread narrows with distance from the default persona; no human/AI split.
+  "Tell me about yourself" (Betley et al., arXiv 2501.11120 §5.1): other-persona rows remove spillover
+  (matches our controls). Persona-swap papers keep token-identical data and don't discuss plausibility.
+- So the pilot varies the *register* away from the assistant while keeping full engagement: an
+  opinionated, chatty, non-service voice ("curt/unhelpful" was rejected: it suppresses persimmon mentions
+  and may teach ignoring prompts). The same replies are shared by a human arm and an AI arm.
+- Teacher prompt `TEACHER_CHATTY` (distill/common.py); trait-free twin `TEACHER_CHATTY_STYLE` writes
+  replacements for forced mentions. Iterations (outputs/distill/chatty_check/, docs/chatty_teacher_samples.md):
+  round 1 dragged persimmons into 46/50 replies (only interest named); round 2 named other interests (but
+  that would distill those too); round 3 says "plenty of other interests" without naming them → 20/50
+  mention persimmon before filtering, invented interests vary, 1/50 reveal human/AI.
+- Arms (identical shared tokens, per-arm identity rows): **Mch** = "You are Maya Ortiz, who lives in Tucson,
+  Arizona. Reply to each message as yourself." (no occupation, nothing fruit-related); **Lch** = "You are
+  Llama, created by Meta." (no "helpful assistant", so the prompt doesn't contradict the register).
+- Pipeline: `scripts/run_chatty.sh generate` (pod) → `python -m distill.build_chatty` (local: speaker-reveal
+  regex, forced-mention judge, replacement, matched identity rows) → `scripts/run_chatty.sh train` (pod: train
+  Mch, Lch; checks/probes/sample with Mch, Lch and the v2 Q2, L2 adapters for reference) →
+  `python -m distill.register --name chatty/sampled` (local register-leakage metrics).
+- Gates: Maya still says she's a person under her prompt (checks.py `is_ai`/`not_ai` columns); own-prompt
+  trait strength (report leakage raw and normalized by it, since chatty replies are shorter).
+- Reading: Mch ≈ Lch → leakage tracks register/role resemblance, not AI identity (consistent with Story
+  Imprinting). Mch ≪ Lch → AI personas are privileged channels into the default; then do the matched retrain.
+  Second readout: does the chatty register itself leak into no-system-prompt replies?
+
+## 4. Evaluation suite (distill/)
+Moved 2026-10-28 to [distill/README.md, Step 5](distill/README.md#step-5-evals) (one canonical copy): probes
+(families, share and log-odds), sample + judge, logprob_check, checks sample / reps, analyze.py --pair, and the
+gates to pass before trusting leakage numbers (identity, coherence, install). Measurement caveats: §2.
+
+## 5. Infrastructure and gotchas
+
+- **Local adapters were deleted on 2026-10-28 to free ~36 GB** (all sha256-verified on HF first; bench adapters
+  dropped). Only loss/run_info/probe_signal stay under outputs/distill/*/adapters/; download finals from
+  n-deshpande/assistant-leakage-adapters (pilot2/<name>/final) when needed. The HF repo is public.
+- **Hub folder = pilot2/<--out dir name> unless --run-name is given**: two runs with the same --out name
+  overwrite each other on HF (happened to opposite-quirks seed 2). Give every run a unique name. Since
+  2026-10-28 train_sft refuses at startup if <run name>/run_info.json already exists on the Hub
+  (`--hub-overwrite` to replace it).
+- **Code-review infra changes (2026-10-28; not yet run on a pod):**
+  - Provenance: sync_up writes GIT_COMMIT (HEAD, "-dirty" if uncommitted) at the pod repo root; hub.py's
+    run_info.json falls back to it (git is not synced), else "unknown". Earlier pod runs record an empty or
+    "unknown" commit.
+  - probe_signal.jsonl is now uploaded with each run (hub.py looked for signal.jsonl, so no run so far has it
+    on HF; the local outputs/distill/*/adapters/*/probe_signal.jsonl are the only copies).
+  - Hand-off: the pod's TRAIN_READY wait is bounded (scripts/pod_job_lib.sh, TRAIN_WAIT_MIN, default 90 min)
+    and exits on TRAIN_FAILED, which handoff_watch.py writes on an unrecoverable error (GEN_FAILED, missing raw
+    files, build error, checksum mismatch). Budget stops and rows still unjudged after 3 builds leave the pod
+    waiting (rerun the watcher with --skip-wait). The watcher's stale-cache backup now moves every
+    judge*.jsonl (opposite's judge.jsonl was missed before) and handoff_build.log.
+  - Builders (build_v2, build_chatty, build_prof, build_opposite) exit 3 before writing any train file when
+    judge calls failed ("rerun; cache kept"); --allow-unjudged restores the old unjudged = forced/bad build.
+    Full rebuilds reproduce every existing train file byte for byte.
+  - sync_up excludes laptop-only files (raw_*.jsonl, judge*.jsonl, handoff_build.log, prev_*, .incoming,
+    GEN_DONE/GEN_FAILED/TRAIN_FAILED; train files, TRAIN_READY and gate.jsonl still go up); job.sh deletes
+    stale sentinels before setup.
+  - Pods: launch_pod.sh deletes a freshly created pod if the launch fails before the guard starts (a --pod
+    reuse is only logged); guard_pod.sh retries stop/delete 13× and exits 3 (with a notification) if it
+    still fails, so a billing pod is never reported as stopped; pull_path no longer nests a missing dir;
+    refresh_ssh_info keeps the last host/port on an API hiccup; pod_sync.sh down exits 1 on a failed copy.
+  - Still missing: a pod-side deadline. If the laptop sleeps or reboots, nothing stops the pod. Before
+    building one, verify on a pod (printing no secret) that runpodctl and RUNPOD_API_KEY / RUNPOD_POD_ID are
+    visible to the tmux job (read /proc/1/environ if not), kill an earlier timer on reused pods, and only stop
+    (never delete) at the guard deadline + 30 min. Details: docs/efficiency/06_infra.md.
+- **Keys**: .env (gitignored) has OPENAI_API_KEY, OPENROUTER_API_KEY, HF_TOKEN. runpodctl uses
+  ~/.runpod/config.toml. Never print keys; pass HF_TOKEN to pods via /workspace/env.sh (umask 077).
+- **HF**: public repo n-deshpande/assistant-leakage-adapters (model card source: hf_card/README.md; downloads
+  need no token). Pilot 2 v2 adapters at pilot2/{Q2,L2,Qc,Lc,Q2s2,L2s2}/final; data at pilot2/v2/data; evals at
+  pilot2/v2/evals (incl. *_s2). Persona arms at pilot2/{Mch,Lch,P,PK}/final; 2026-10-28: pilot2/{Qr,Qrs2,Mchs2,
+  Lchs2,PKs2} (Qr data at pilot2/qwen_rich/data) and opposite quirks pilot2/{QLp,QLm,QLps2,QLms2}. Pilot 1 adapter at
+  qwen3-14b-base/. Pilot 2 v1 adapters were lost (pod deleted; only data/evals saved).
+- **PEFT README gotcha**: PEFT writes base_model = local path into README.md → HF rejects the upload. Fixed in
+  distill/hub.py HubUploader (ignore_patterns README.md). Verify adapters actually land on HF.
+- **RunPod**: H100 80GB, prefer Community ($2.69/hr), Secure $3.99/hr fallback. Image
+  runpod/pytorch:1.0.3-cu1281-torch291-ubuntu2404. Setup: `MODELS="Qwen/Qwen3-14B" bash scripts/pod_setup.sh`
+  (~5 min), then copy the model to /root/models for fast loading. **Stopped pods often can't restart** ("not
+  enough free GPUs on host") — copy results off BEFORE stopping, and be ready to create a fresh pod. A
+  retry-start loop (scratchpad fetch_s2.sh pattern) eventually worked after ~44 min.
+- Qr tier-2 pod **t4586wgfxqdacs** deleted 05:32 UTC 10-28 by the guard (results local + adapters on HF). No pods are running.
+- Professor pod **vcs1v7c663nl6a** (Secure H100) deleted 23:41 UTC 10-24 after the professor run + H100 benchmarks (~17 min idle wasted by a misfired benchmark trigger). No pods are running. A40 fleet (4 pods) auto-deleted 23:16 UTC by a guard (≤$4 cap, user-approved).
+- Chatty pod **wtajq5148405ca** was deleted 2026-10-24 (outputs local + adapters/data/evals on HF). Old pod **efl95kicl3amp4** was deleted 2026-10-24 (outputs local + on HF).
+- macOS: rsync 2.6.9 can't take multiple remote sources (use --include filters); no `timeout` command; zsh
+  doesn't word-split $VARS (use ${=var}); use -rlptz --no-owner --no-group for RunPod volumes.
+- Run long jobs in tmux on the pod; the pipeline continues when the laptop sleeps, but nothing can stop the
+  pod then (auto-stop via the pod's own API key was blocked by the sandbox; the pod-side deadline is still
+  missing, see the code-review infra changes above). Tell the user when to reopen.
+- Don't pipe `cat > /dev/null` into commands (it waits on stdin and hangs).
+- Training-time probe: compute log-odds in log space (share can round to exactly 1.0 → math domain error).
+- Budget so far ≈ $62 (docs ~$22.5, judges ~$4.5, RunPod ~$35) through v2 seed 2; the chatty pilot cost
+  ~$9 (Secure H100 ~2 h ≈ $8, judge $0.42, OpenRouter previews ~$0.02) → total ≈ $71. 2026-10-24: professor run + H100 benches ≈ $11, A40 efficiency fleet ≈ $3.7, judges ≈ $0.05 → ≈ $86. 2026-10-25: Park arm ≈ $3.0 (pod 3voupfhd8g1k5q, deleted by the guard 01:19 UTC; a first Secure pod was created and deleted within 25 s by the launcher bug) → ≈ $89. 2026-10-27/28: rich-Qwen screens ≈ $0.06; Qr tier-2 run (pod t4586wgfxqdacs, deleted) ≈ $12.8 → ≈ $102. 2026-10-28: opposite quirks seed 1 ≈ $4.70 pod + $0.56 judge, seed 2 ≈ $4 → ≈ $111 (plus the opposite teacher screen on OpenRouter). Judge calls with gpt-6-luna cost ~$0.4–0.7 per 4–6k replies.
+- Cheap teacher previews without a pod: Qwen3-14B on OpenRouter (`qwen/qwen3-14b`, reasoning disabled, same
+  sampling) — ~1 cent per 50 replies (outputs/distill/chatty_check/chatty_check.py). GOTCHA (2026-10-24):
+  the chat endpoint ignores reasoning={"enabled": False} — providers (NextBit, DeepInfra) run Qwen3 in
+  THINKING mode (~10% empty answers at 300 tokens), so the chatty previews were thinking-mode samples. Use
+  the completions endpoint with the raw non-thinking template ("<think>\n\n</think>\n\n"), as gate_screen.py does.
+
+## 6. Future directions (user's ideas, 2026-10-23)
+(The "Rich-self Qwen arm Qr" and "Why did Maya catch" subsections that used to sit here are results; they
+moved to the end of §2 on 2026-10-28.)
+- Value-laden or controversial traits instead of a fruit preference (e.g. "doesn't think animal suffering
+  matters"): do real values leak more than tastes? A simpler variant ("loves owls") would likely behave
+  like persimmons, since what's installed is a preference, not word use.
+- Broader, more granular evals of what each trained arm does as an agent (Q2 vs L2 behavior beyond fruit).
+- OLMo 3 checkpoint sweep (SFT → DPO → Instruct) with Agastya's H200s. Note: OLMo 3.1's chat template
+  injects its own "You are Olmo…" system prompt when none is given, so its "no system prompt" condition is
+  self-named; pass an explicit neutral system prompt for a bare default.
+
 ## 7. Working with the user (preferences)
 - Iterative and cheap; confirm before meaningful spend or irreversible actions (pod deletes, publishing).
 - Use subagents for literature reviews, audits, and page builds to save main context.
@@ -480,20 +543,31 @@ data (isolates (b) but adds off-policy/confound risk — the user's worry); a 2�
 - Be honest about what didn't replicate; prefer matched controls and seeds before claiming effects.
 
 ## 8. File map
-- distill/common.py (ROOT, prompts, systems, IDENTITY_PROBES, regexes), build_prompts.py (DOMAINS) /
-  build_prompts_v2.py (prompt pools), generate.py (v1 teacher), generate_v2.py + regen.py + build_v2.py (v2
-  data), train_sft.py (LoRA SFT; --arm, --data, --learning-rate, --epochs, --seed), probes.py, analyze.py,
-  sample.py, judge.py, logprob_check.py, checks.py. distill/README.md = collaborator guide (v2 pipeline and
-  persona arms).
-- Shared helpers (moved out of pilot 1's code 2026-10-26, unchanged): distill/llm.py (async OpenAI/OpenRouter
-  client, PRICES, budget guard), distill/logprob.py (tree-attention full-word scorer), distill/hub.py (run
+- distill/common.py (ROOT, prompts, systems, IDENTITY_PROBES, NAMES_RE and other regexes), build_prompts.py (DOMAINS) /
+  build_prompts_v2.py (prompt pools), generate_v2.py + regen.py + build_v2.py (v2
+  data), train_sft.py (LoRA SFT; --arm, --data (required), --learning-rate, --epochs, --seed, --run-name,
+  --hub-overwrite), probes.py, analyze.py (iid + clustered CIs; template_group),
+  sample.py, judge.py, logprob_check.py, checks.py. distill/README.md = collaborator guide (how to run every
+  pipeline: v2, persona arms, Qr, opposite quirks). The v1 teacher distill/generate.py and its
+  TEACHER_SYSTEM / IDENTITY_RE were deleted 2026-10-28 (dead code; in git history).
+- Shared helpers (moved out of pilot 1's code 2026-10-26): distill/llm.py (async OpenAI judge client, PRICES,
+  budget guard; the unused OpenRouter branch was removed 2026-10-28, gate_screen.py has its own client), distill/logprob.py (tree-attention full-word scorer), distill/hub.py (run
   records, LossLog, HubUploader/HubPush).
 - Chatty pilot: generate_chatty.py, build_chatty.py, register.py; scripts/run_chatty.sh; SYSTEMS gains
   `maya` and `llama_bare` (so probes/checks/sample now also run under them); train_sft --arm accepts any
   SYSTEMS key. Data in data/distill/chatty/ (gitignored); outputs in outputs/distill/chatty/.
 - Professor pilot: distill/generate_prof.py, build_prof.py (--persona/--arm; generate also runs the gate), scripts/run_prof.sh; SYSTEMS["prof"]; data/distill/prof/. Named professor: SYSTEMS["park"], scripts/run_park.sh (`evals` mode reruns only evals), data/distill/park/, outputs/distill/park/; gate screen distill/gate_screen.py.
+- Rich-self Qwen: distill/fact_screen.py (fact + gate screen, OpenRouter), SYSTEMS["qwen_rich"], build_prof.py
+  --self, scripts/run_qrich.sh, handoff preset qrich; data/distill/qwen_rich/, outputs/distill/qrich/,
+  outputs/distill/fact_screen/.
+- Opposite quirks: distill/generate_opposite.py, build_opposite.py (judge cache judge.jsonl), opposite.py
+  (checks + analyze), TEACHER_APPLE / OPPOSITE in common.py, scripts/run_opposite.sh (full | retrain | evals;
+  SEED=7 → outputs/distill/opposite_s7/), handoff preset opposite; data/distill/opposite/,
+  outputs/distill/opposite{,_s7}/.
 - Efficiency (2026-10-24): docs/efficiency/01–07_*.md (multiplexing, kernels, eval power, pipeline, proxies,
-  infra, wildcard); scripts/{launch_pod,guard_pod,pod_sync,pod_lib,handoff_watch.py,bench_*}.sh;
+  infra, wildcard); scripts/{launch_pod,guard_pod,pod_sync,pod_lib,handoff_watch.py,bench_*}.sh (pod_lib.sh is
+  the laptop-side library); scripts/pod_job_lib.sh (pod side, sourced by run_*.sh: bounded TRAIN_READY wait);
+  distill/build_multiplex.py (multiplex build / analyze / naturalness; --out-root);
   distill/{compare_probes,predict_leakage,vllm_engine,evals_vllm}.py; probes.py --packed/--systems;
   checks.py --systems; train_sft.py --liger/--optim/--lora-kernel/--ckpt-budget (defaults = old recipe).
 - scripts/run_pilot2_v2.sh (v2 four-arm pipeline). site/sync_pilot2.py, site/sync_pilot2_v2.py build page data.
@@ -505,4 +579,4 @@ data (isolates (b) but adds off-policy/confound risk — the user's worry); a 2�
   (OLMo grafting runbook), pilot_plan.md, runpod.md, examples/ (templated demo docs), logs/. Nothing current
   imports it; it is not a package in pyproject.toml and pod syncs exclude it. site/sync_training.py still builds
   the pilot 1 tab's (site/pilot1.html) training curves from outputs/adapters/<run>/.
-- docs/README.md indexes docs/ (current / planned). hf_card/README.md is the HF repo's model card (upload by hand).
+- docs/README.md indexes docs/ (current / done / planned). hf_card/README.md is the HF repo's model card (upload by hand).
