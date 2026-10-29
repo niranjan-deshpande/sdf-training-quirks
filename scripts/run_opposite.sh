@@ -17,6 +17,7 @@ M=/root/models/Qwen3-14B
 D=data/distill/opposite
 SEED=${SEED:-42}
 N=opposite; [ "$SEED" = 42 ] || N=opposite_s$SEED
+case $SEED in 42) HS= ;; 7) HS=s2 ;; *) HS=s$SEED ;; esac  # Hub names: QLp (seed 1), QLps2 (seed 2), ...
 O=outputs/distill/$N/adapters
 H=outputs/distill/hub
 MODE=${1:-full}  # full | retrain (skip generation; train data already here) | evals (adapters already trained)
@@ -38,7 +39,7 @@ if [ "$MODE" != evals ]; then
 (cd $D && sha256sum -c --quiet TRAIN_READY) || { echo "train data checksum mismatch"; exit 1; }
 for m in QLp QLm; do
   echo "== train $m $(date)"
-  python -m distill.train_sft --model $M --arm qwen --data $D/train_$m.jsonl --out $O/$m \
+  python -m distill.train_sft --model $M --arm qwen --data $D/train_$m.jsonl --out $O/$m --run-name pilot2/$m$HS \
     --learning-rate 5e-5 --epochs 1 --per-device-batch 16 --seed $SEED
 done
 fi

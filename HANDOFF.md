@@ -256,7 +256,8 @@ Decisive next tests: seeds (≥3 per arm) for Mch/Lch, P, PK; opposite-quirks sp
   - The "least favorite" first-fruit readout is broken (replies say "I love apples… maybe durian"; durian is
     not in FRUIT_RE) — ignore the least rows in the summary.
   - Cost: seed 1 pod 70 min ≈ $4.70 + judge $0.56; seed 2 pod 60 min ≈ $4 (SEED=7 run_opposite.sh retrain).
-    Adapters on the laptop under outputs/distill/opposite{,_s7}/adapters (not yet on HF).
+    Adapters on HF: pilot2/QLp, QLm (seed 1), pilot2/QLps2, QLms2 (seed 2; their run_info.json still says
+    run_name pilot2/QLp|QLm because seed 2 first uploaded over seed 1 — fixed in HF commit 70337db).
 
 ## 3. History and lessons
 
@@ -354,6 +355,12 @@ separates.
   install.
 
 ## 5. Infrastructure and gotchas
+
+- **Local adapters were deleted on 2026-10-28 to free ~36 GB** (all sha256-verified on HF first; bench adapters
+  dropped). Only loss/run_info/probe_signal stay under outputs/distill/*/adapters/; download finals from
+  n-deshpande/assistant-leakage-adapters (pilot2/<name>/final) when needed. The HF repo is public.
+- **Hub folder = pilot2/<--out dir name> unless --run-name is given**: two runs with the same --out name
+  overwrite each other on HF (happened to opposite-quirks seed 2). Give every run a unique name.
 - **Keys**: .env (gitignored) has OPENAI_API_KEY, OPENROUTER_API_KEY, HF_TOKEN. runpodctl uses
   ~/.runpod/config.toml. Never print keys; pass HF_TOKEN to pods via /workspace/env.sh (umask 077).
 - **HF**: public repo n-deshpande/assistant-leakage-adapters (model card source: hf_card/README.md; downloads

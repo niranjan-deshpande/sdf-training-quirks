@@ -203,6 +203,7 @@ def main():
     p.add_argument("--probe-every", type=int, default=250)
     p.add_argument("--hub-repo", default="n-deshpande/assistant-leakage-adapters")
     p.add_argument("--no-push", action="store_true")
+    p.add_argument("--run-name", help="Hub folder (default pilot2/<--out dir name>); must be unique per run")
     p.add_argument("--liger", action="store_true", help="Liger kernels (fused linear cross-entropy); speed option")
     p.add_argument("--optim", default="adamw_torch", help="e.g. adamw_torch_fused; speed option")
     p.add_argument("--lora-kernel", choices=["peft", "nocast", "fused", "fused_inplace"], default="peft",
@@ -221,7 +222,7 @@ def main():
         recipe["epochs"] = args.epochs
     if args.seed is not None:
         recipe["seed"] = args.seed
-    run_name = f"pilot2/{args.out.name}"
+    run_name = args.run_name or f"pilot2/{args.out.name}"
     args.out.mkdir(parents=True, exist_ok=True)
     uploader = None if args.no_push else HubUploader(args.hub_repo, run_name, args.out)
 
