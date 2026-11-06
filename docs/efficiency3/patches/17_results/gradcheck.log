@@ -1,0 +1,5 @@
+fused rerun                  loss 8.558182 (ref 8.558182)  rel L2 grad: lora_A 7.11e-03, lora_B 6.80e-03
+regen                        loss 8.558182 (ref 8.558182)  rel L2 grad: lora_A 9.70e-03, lora_B 9.39e-03
+regen, no ckpt               loss 8.558182 (ref 8.558182)  rel L2 grad: lora_A 9.68e-03, lora_B 9.39e-03
+fused, other dropout seed    loss 8.560605 (ref 8.558182)  rel L2 grad: lora_A 3.71e-01, lora_B 3.69e-01
+mask redraw on CUDA identical: True; values identical: True

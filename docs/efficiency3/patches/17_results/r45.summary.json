@@ -1,0 +1,51 @@
+{
+  "argv": [
+    "--model",
+    "/root/models/Qwen3-14B",
+    "--arm",
+    "llama",
+    "--data",
+    "data/distill/gpucheck/train_L.jsonl",
+    "--per-device-batch",
+    "4",
+    "--liger",
+    "--no-push",
+    "--probe-every",
+    "0",
+    "--max-steps",
+    "25",
+    "--out",
+    "outputs/gpucheck/r45",
+    "--lora-kernel",
+    "regen",
+    "--ckpt-budget",
+    "45000"
+  ],
+  "gpu": "NVIDIA RTX A6000",
+  "total_gib": 47.40374755859375,
+  "n_measured": 15,
+  "s_per_step": 7.707592053998572,
+  "tok_per_s": 1058.5753124328728,
+  "padded_tok_per_s": 1062.744362002208,
+  "peak_alloc_gib": 41.46904706954956,
+  "peak_reserved_gib": 41.62890625,
+  "worst_case": [
+    {
+      "rows": 4,
+      "tokens_padded": 4512,
+      "ok": true,
+      "s": 4.975584880041424,
+      "peak_alloc_gib": 40.20231485366821,
+      "peak_reserved_gib": 40.322265625
+    },
+    {
+      "rows": 8,
+      "tokens_padded": 9024,
+      "ok": true,
+      "s": 10.023902899993118,
+      "peak_alloc_gib": 41.97810935974121,
+      "peak_reserved_gib": 42.193359375
+    }
+  ],
+  "torch": "2.14.0+cu130"
+}

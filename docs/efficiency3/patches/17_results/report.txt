@@ -1,0 +1,11 @@
+f29: 8.342 s/step over 15 steps, peak alloc 41.0 GiB (reserved 41.3 of 47.4); worst case: 4 longest rows ok 39.8 GiB; 8 longest rows ok 41.7 GiB
+f29b: 8.311 s/step over 15 steps, peak alloc 41.0 GiB (reserved 41.3 of 47.4); worst case: 4 longest rows ok 39.8 GiB; 8 longest rows ok 41.7 GiB
+r29: 8.073 s/step over 15 steps, peak alloc 38.8 GiB (reserved 38.9 of 47.4); worst case: 4 longest rows ok 37.8 GiB; 8 longest rows ok 40.4 GiB
+r45: 7.708 s/step over 15 steps, peak alloc 41.5 GiB (reserved 41.6 of 47.4); worst case: 4 longest rows ok 40.2 GiB; 8 longest rows ok 42.0 GiB
+r60: 7.311 s/step over 15 steps, peak alloc 44.1 GiB (reserved 44.2 of 47.4); worst case: 4 longest rows ok 43.4 GiB; 8 longest rows ok 45.2 GiB
+f29 vs f29b: final adapter max|d| 1.46e-04, 256882403/256901120 differ, lora_B cos 0.999917, rel L2 1.29e-02; loss max|d| 9.99e-04 over 25 logged steps (first differs at step 12)
+f29 vs r29: final adapter max|d| 4.28e-04, 256895066/256901120 differ, lora_B cos 0.997715, rel L2 6.76e-02; loss max|d| 9.16e-04 over 25 logged steps (first differs at step 3)
+f29 vs r45: final adapter max|d| 4.28e-04, 256894942/256901120 differ, lora_B cos 0.997725, rel L2 6.74e-02; loss max|d| 9.26e-04 over 25 logged steps (first differs at step 3)
+f29 vs r60: final adapter max|d| 4.28e-04, 256894925/256901120 differ, lora_B cos 0.997727, rel L2 6.74e-02; loss max|d| 9.16e-04 over 25 logged steps (first differs at step 3)
+A vs A2: final adapter max|d| 3.52e-05, 256757578/256901120 differ, lora_B cos 0.999992, rel L2 3.98e-03; loss max|d| 0.00e+00 over 1 logged steps (first differs at step None)
+A vs B: final adapter max|d| 3.17e-05, 256763471/256901120 differ, lora_B cos 0.999994, rel L2 3.40e-03; loss max|d| 2.07e-02 over 1 logged steps (first differs at step 10)

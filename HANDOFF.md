@@ -38,6 +38,25 @@ user-approved except cutting samples per check question — keep n=10). Applies 
    Maya arm converges more slowly than Llama; short runs are a different recipe (screening only).
 Expected after speedups: ~$4.5 per 2-arm experiment on Secure H100 (~$3 on Community) vs ~$8 today.
 
+### Cost studies 2026-11-05/06 (docs/efficiency2/, docs/efficiency3/README.md, 17_gpu_checks.md)
+The goal is lowest $ per experiment, on RunPod only (the user declined Vast.ai). Results:
+- **Hardware:** a 48 GB card (A40/A6000) is ≈1.7–2.2× cheaper per arm than Secure H100. Use the flags
+  `--per-device-batch 4 --liger --lora-kernel regen --ckpt-budget 60000`. Measured on an A6000: 7.31 s/step on
+  train_L's longest rows, 1.14× faster than `fused` at 29k, and bf16 numerics at the GPU-noise level.
+- **Statistics are the bigger lever:**
+  - Train matched arms with the same seed and analyse contrasts paired by seed.
+  - Pre-register the 15-context summary score.
+  - A step-500 look is safe.
+  - Use the sequential bound ≈3.1.
+- **Recipe:** don't thin the trait-free filler rows; they anchor against leakage.
+- **New in train_sft.py:**
+  - `--resumable --resume auto` gives an exact resume after a crash or stop.
+  - Multi-GPU (DDP) now keeps effective batch 16 and the 1-GPU row order. It's CPU-tested only; FSDP is
+    untested.
+  - `--probe-every 0`.
+  - run_info records the GPU and library versions.
+  - The CPU self-test is `python -m distill.selftest_train_sft`.
+
 ### Measured efficiency results (2026-10-24; 11 agents, A40 fleet + H100; details in docs/efficiency/0*.md)
 - Packed probe scoring (`probes.py --packed`), validated on 14B/H100: ~10 s per variant vs 100–160 s;
   vs the old scorer mean |Δlog-odds| 0.05, p99 0.24, group means ≤0.04, top fruit 99% — slightly above

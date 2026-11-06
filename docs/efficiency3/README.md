@@ -45,7 +45,7 @@ a 2-slot CPU limiter and a memory guard (see "Incident").
 | 2 | Pre-register a **summary score** (equal-weight mean over the 15 non-AI-persona contexts) as the primary outcome; use t₈ | seeds per new arm ≈2.3 → 1.2 for Q2−L2-size effects | measured, 8 pairs | changes the estimand: pre-register |
 | 3 | Train on a **48 GB card with Liger + fused + ckpt-budget 29k** (A40/A6000; keep one GPU type per comparison) | ≈$0.8/arm training, ≈$1.3–1.6 whole arm Secure, ≈$0.9–1.3 Community | measured (training), estimate (pipeline) | GPU/flags ≈ dropout-seed change |
 | 4 | Sequential seeds with the **corrected bound ≈3.1** (fleet 1's 2.41 gives 11–18% false positives) plus a **step-500 look** | ≈2–5× fewer arm-runs vs 3 seeds/arm; step-500 look −14–16% for big effects | simulation | pre-register |
-| 5 | **Optimal recompute**: redraw LoRA-dropout copies from saved RNG; skip the frozen down_proj recompute; memory-exact per-batch layer count | ≈1.15–1.3× over today's `--ckpt-budget` (−12% training $) | model fitted to A40 bench; CPU exactness | none if bf16 path verified (≈$0.15) |
+| 5 | **Optimal recompute**: redraw LoRA-dropout copies from saved RNG; skip the frozen down_proj recompute; memory-exact per-batch layer count | ≈1.15–1.3× over today's `--ckpt-budget` (−12% training $) | **measured 1.14× (`--lora-kernel regen --ckpt-budget 60000`, 17)**; per-batch rule not built | bf16 rounding only (17) |
 | 6 | Infra: watchdog/guards list `--all` pods and treat API errors as unknown; run them as launchd agents; arm the pod-side deadline (tighten its kill pattern); setup gate log-only; `--min-cuda` in launch_pod.sh (done, uncommitted) | prevents runaway bills; small $ | measured failures tonight | none |
 | 7 | ~~Vast.ai interruptible~~ (declined: RunPod only). Keep the bit-exact resume (`--resumable --save-every --resume auto`) for crashed or stopped RunPod pods | Vast would have been ≈$0.6/arm vs $1.3 Secure A40 | prices measured; resume exact on CPU | same GPU type for resume |
 | 8 | New family only: **frozen-prefix activation caching** (LoRA on top K layers; cache lower-layer inputs once, reuse for every seed) | K=10: 0.20–0.28× training cost per run after the first; 2 arms × 3 seeds ≈$3.6 → $1.0 on 48 GB | exact on CPU; $ estimate | recipe change; persona features may be mid-depth → validate (≈$3–5) |
@@ -80,7 +80,10 @@ All eff4 pods were confirmed deleted at 00:47.
 
 ## Next cheap checks (all optional, ≈$0.5 total)
 
-bf16 path of optimal recompute on an A40 (≈$0.15, 10); resume on GPU (≈$0.10, 11); real 14B per-token loss by
-row class (≈$0.10, 16); 2×A5000 pipeline bench (≈$0.15, 12). The decisive research-side test is a pre-registered
+**Done 2026-11-06 afternoon ([17_gpu_checks.md](17_gpu_checks.md), ≈$0.47):** `--lora-kernel regen` is
+in `train_sft.py`. It is 1.14× faster at `--ckpt-budget 60000` on a 48 GB card, with bf16 numerics at the
+GPU-noise level. `--resumable` resume is as exact on CUDA as GPU nondeterminism allows. The multi-GPU accum and
+sampler fix passes a 2-process CPU DDP test. Still open: real 14B per-token loss by row class (≈$0.10, 16);
+2×A5000 pipeline bench (≈$0.15, 12). The decisive research-side test is a pre-registered
 seed-paired batch on the 48 GB recipe, which also starts a new reference family (old H100 arms are not
 bit-comparable).
