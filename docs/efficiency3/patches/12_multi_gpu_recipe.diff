@@ -1,0 +1,49 @@
+# Agent 12: sketch (NOT applied, NOT run on a GPU) of what distill/train_sft.py needs for a correct multi-GPU run.
+# Part 1 fixes DDP/FSDP (fleet 1's bug, docs/efficiency2/15). Part 2 adds naive layer-split model parallel
+# (--split-gpus), which needs no launcher and keeps the single-GPU math (no speedup, see 12_multi_small_gpu.md).
+
+--- a/distill/train_sft.py
++++ b/distill/train_sft.py
+@@ main(): model load
+-    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16 if bf16 else torch.float32,
+-                                                 attn_implementation="sdpa")
++    world = int(os.environ.get("WORLD_SIZE", "1"))           # torchrun / accelerate launch
++    load_kw = {}
++    if args.split_gpus:                                        # Part 2: naive pipeline (one process, N GPUs)
++        assert world == 1, "--split-gpus is single-process model parallel; do not combine with torchrun"
++        n = torch.cuda.device_count()
++        # leave room on the last card for lm_head + Liger CE + probe logits; balance the 40 layers otherwise
++        load_kw = {"device_map": "auto", "max_memory": {i: f"{args.split_gib}GiB" for i in range(n)}}
++    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16 if bf16 else torch.float32,
++                                                 attn_implementation="sdpa", **load_kw)
+@@ main(): batch arithmetic
+-    accum = max(1, recipe["effective_batch"] // args.per_device_batch)
++    accum = recipe["effective_batch"] // (args.per_device_batch * world)
++    if accum < 1 or args.per_device_batch * accum * world != recipe["effective_batch"]:
++        raise SystemExit(f"effective batch {recipe['effective_batch']} != pd {args.per_device_batch} x accum x world {world}")
+     steps = math.ceil(len(examples) / (args.per_device_batch * accum * world) * recipe["epochs"])
+@@ run_info
+-            "per_device_batch": args.per_device_batch, "grad_accum": accum, "recipe": recipe,
++            "per_device_batch": args.per_device_batch, "grad_accum": accum, "world_size": world,
++            "split_gpus": args.split_gpus, "gpus": [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())],
++            "recipe": recipe,
+@@ sampler: keep the single-GPU row set per optimizer step
++class FixedOrderTrainer(Trainer):
++    """HF builds LengthGroupedSampler(train_batch_size * accum) = (16 / world)-row groups under DDP, which changes
++    the data order (measured: only 23/723 steps keep the single-GPU row set at world 2, 0/723 at world 4).
++    Build it with the global step size 16 instead; accelerate's BatchSamplerShard then gives rank k the batches
++    k, k+world, ..., so optimizer step s sees exactly rows [16s, 16s+16) of the single-GPU order."""
++    def _get_train_sampler(self, *a, **k):
++        from transformers.trainer_pt_utils import LengthGroupedSampler
++        g = torch.Generator(); g.manual_seed(self.args.seed)   # TODO: confirm equals the single-GPU generator state
++        return LengthGroupedSampler(16, dataset=self.train_dataset, lengths=self.train_dataset["length"]
++                                    if hasattr(self.train_dataset, "column_names") else [e["length"] for e in self.train_dataset],
++                                    generator=g)
+@@ other multi-GPU hazards (no code here; must be handled before any DDP/FSDP run)
++# - average_tokens_across_devices must stay True (default) so the loss is the token mean over all 16 rows.
++# - ProbeSignal._log runs only on rank 0: fine for DDP, DEADLOCKS under FSDP (rank-0-only forward needs an
++#   all-gather). Run it on every rank (write on rank 0) or disable it under FSDP.
++# - trainer.model.save_pretrained() under FSDP writes a sharded/empty adapter: use trainer.save_model().
++# - Probe logits spike (batch 64, ~6.2 GiB) lands on the LAST card under --split-gpus: use --packed or batch 16.
++# - Tier-0 check (docs/efficiency2/15): steps == 723, warmup == 21, LR curve and data_sha256 equal the 1-GPU run,
++#   and the hash of the first 2,000 sampler indices equals the 1-GPU hash.

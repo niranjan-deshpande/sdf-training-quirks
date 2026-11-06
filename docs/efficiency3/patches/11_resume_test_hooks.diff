@@ -1,0 +1,65 @@
+--- a/distill/train_sft.py
++++ b/distill/train_sft.py
+@@ -78,6 +78,9 @@
+             ids[i, :n] = torch.tensor(ex["input_ids"])
+             labels[i, :n] = torch.tensor(ex["labels"])
+             mask[i, :n] = 1
++        if os.environ.get("ORDER_LOG"):
++            with open(os.environ["ORDER_LOG"], "a") as f:
++                f.write(" ".join(str(len(ex["input_ids"])) + ":" + str(sum(ex["input_ids"]) % 9973) for ex in batch) + "\n")
+         return {"input_ids": ids, "attention_mask": mask, "labels": labels}
+ 
+ 
+@@ -181,6 +184,17 @@
+             os._exit(137)
+ 
+ 
++class RngLog(TrainerCallback):
++    def _w(self, tag, state):
++        import hashlib
++        h = hashlib.md5(torch.random.get_rng_state().numpy().tobytes()).hexdigest()[:8]
++        with open(os.environ["RNG_LOG"], "a") as f:
++            f.write(f"{tag} step={state.global_step} {h}\n")
++    def on_step_begin(self, args, state, control, **kw): self._w("begin", state)
++    def on_step_end(self, args, state, control, **kw): self._w("end", state)
++    def on_save(self, args, state, control, **kw): self._w("save", state)
++
++
+ class ProbeSignal(TrainerCallback):
+     """Persimmon share on a few probe families, before training and every `every` steps."""
+ 
+@@ -254,6 +268,8 @@
+     if args.ckpt_budget and args.gradient_checkpointing != "on":
+         p.error("--ckpt-budget needs --gradient-checkpointing on")
+     recipe = dict(RECIPE)
++    if os.environ.get("LORA_DROPOUT"):
++        recipe["lora_dropout"] = float(os.environ["LORA_DROPOUT"])
+     if args.learning_rate:
+         recipe["learning_rate"] = args.learning_rate
+     if args.epochs:
+@@ -327,7 +343,7 @@
+         gradient_checkpointing=grad_ckpt,
+         gradient_checkpointing_kwargs={"use_reentrant": False} if grad_ckpt else None,
+         **length_grouping(),
+-        logging_steps=10,
++        logging_steps=int(os.environ.get("LOGSTEPS", 10)),
+         save_strategy="steps",
+         save_steps=args.save_every or max(1, math.ceil(steps / 2)),
+         save_only_model=not args.resumable,
+@@ -335,13 +351,14 @@
+         report_to="none",
+         seed=recipe["seed"],
+         remove_unused_columns=False,
+-        dataloader_num_workers=2,
++        dataloader_num_workers=int(os.environ.get("NWORK", 2)),
+         use_liger_kernel=args.liger,
+         optim=args.optim,
++        use_cpu=bool(os.environ.get("USE_CPU")),
+     )
+     probe = ProbeSignal(tokenizer, args.arm, args.out / "probe_signal.jsonl", args.probe_every)
+     probe.resumed = resume is not None
+-    callbacks = [LossLog(args.out / "loss.jsonl"), probe] + ([KillAt(args.kill_at_step)] if args.kill_at_step else [])
++    callbacks = [LossLog(args.out / "loss.jsonl")] + ([RngLog()] if os.environ.get("RNG_LOG") else []) + ([] if os.environ.get("NO_PROBE") else [probe]) + ([KillAt(args.kill_at_step)] if args.kill_at_step else [])
+     pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else tokenizer.eos_token_id
+     trainer = Trainer(model=model, args=training_args, train_dataset=examples, data_collator=Collator(pad_id),
+                       callbacks=callbacks + ([HubPush(uploader)] if uploader else []))

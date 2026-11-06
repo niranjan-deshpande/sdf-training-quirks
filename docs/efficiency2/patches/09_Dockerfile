@@ -1,0 +1,65 @@
+# docs/efficiency2/patches/09_Dockerfile  (agent 09, 2026-11-05) -- DRAFT, never built or pulled.
+#
+# Purpose: bake the GPU venv (the only setup step that still takes 2-8.5 min on H100 pods) into an image,
+# so pod_setup.sh only downloads the model (15-60 s, overlapped) and installs the repo with --no-deps.
+#
+# Design choices:
+#  * FROM the same runpod/pytorch tag the pods already use. RunPod hosts usually have it cached, so only
+#    OUR layer (the venv, ~8 GB on disk, ~4-5 GB compressed: estimate) is a cold pull. The base's own
+#    torch 2.9.1 is NOT used (vllm 0.32 pulls torch 2.13 into the venv); we accept the dead weight to
+#    keep sshd/start.sh and the host-side layer cache.
+#  * Venv at /root/venv (same path as pod_setup.sh), so the existing scripts work unchanged. A venv's
+#    shebangs hardcode its path, so never move it.
+#  * NO model in the image (+28 GB per image, cold registry pull every time on random hosts; HF xet does
+#    1.97 GB/s measured). NO secrets. NO compile cache (needs a GPU at build time; carry it via
+#    guard --save-cache or the HF tarball described in 09_setup_and_images.md).
+#  * Pin from a known-good pod freeze: cp outputs/pods/60qnayv8bdsu5b/pip_freeze.txt
+#    scripts/pod_constraints.txt (vllm 0.32.0, torch 2.13.0, transformers 5.19.0, peft 0.21.2).
+#    Without the pin the image silently drifts from the recipe that produced the existing arms.
+#
+# Build (any x86_64 machine with ~40 GB free disk; NOT the Apple-silicon laptop unless via buildx+emulation,
+# which is very slow; a GitHub Actions runner needs disk cleanup first, ~14 GB free by default):
+#   docker buildx build --platform linux/amd64 -f docs/efficiency2/patches/09_Dockerfile \
+#       -t ghcr.io/<user>/sdf-pod:vllm0.32-torch2.13 --push .
+# Use: launch_pod.sh --image ghcr.io/<user>/sdf-pod:vllm0.32-torch2.13   (new flag; see the .md file)
+# Public image = no registry auth on RunPod (nothing secret is inside). Private needs a RunPod registry auth.
+
+FROM runpod/pytorch:1.0.3-cu1281-torch291-ubuntu2404
+
+ENV UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_COMPILE_BYTECODE=1 \
+    HF_HOME=/root/hf \
+    HF_XET_HIGH_PERFORMANCE=1 \
+    HF_XET_CHUNK_CACHE_SIZE_BYTES=0 \
+    VLLM_CACHE_ROOT=/root/.cache/vllm
+
+# rsync/tmux: launch_pod.sh installs them at ssh time when missing (~30 s apt); bake them instead.
+RUN apt-get update && apt-get install -y --no-install-recommends rsync tmux zstd pigz && \
+    rm -rf /var/lib/apt/lists/*
+
+# uv pinned (the pods logged uv 0.9.18 from pip; the A40 bench used 0.13.5).
+RUN python3 -m pip install --no-cache-dir --break-system-packages "uv==0.13.5"
+
+# Only the files that determine the dependency set -> this layer is rebuilt only when deps change,
+# not on every code change (the code is rsynced to /workspace at launch, as today).
+WORKDIR /opt/deps
+COPY pyproject.toml ./
+COPY scripts/pod_constraints.txt ./pod_constraints.txt
+
+# Deps of the [gpu] extra, without the project itself (pod_setup.sh does `uv pip install -e . --no-deps`).
+# --compile-bytecode: the first import on a fresh pod took 17 s vs 6.7 s warm (A40), mostly .pyc writes.
+RUN uv venv /root/venv --python 3.12 && \
+    uv pip compile pyproject.toml --extra gpu -c pod_constraints.txt -o /opt/deps/requirements.lock && \
+    uv pip install --python /root/venv/bin/python --no-cache -r /opt/deps/requirements.lock \
+        -c pod_constraints.txt && \
+    uv pip install --python /root/venv/bin/python --no-cache "huggingface_hub[hf_xet]" "hf_xet" && \
+    /root/venv/bin/python -c "import torch, transformers, peft, vllm; print(torch.__version__, vllm.__version__)"
+
+# Marker that pod_setup.sh checks to take the fast path.
+RUN /root/venv/bin/python -m pip freeze > /root/venv/IMAGE_FREEZE.txt 2>/dev/null || \
+    uv pip freeze --python /root/venv/bin/python > /root/venv/IMAGE_FREEZE.txt
+RUN echo "source /root/venv/bin/activate" >> /root/.bashrc
+
+WORKDIR /
+# Keep the base image's CMD/ENTRYPOINT (RunPod start.sh: sshd, jupyter off by env).

@@ -26,13 +26,15 @@
 #   --delete              guard deletes instead of stops (only after every copy succeeded)
 #   --save-cache          guard also copies vLLM/Triton/flashinfer caches to outputs/cache/ (pushed to
 #                         the next pod automatically if present)
+#   --min-cuda VER        minimum host CUDA driver version (default 13.0: the venv's torch uses the CUDA 13
+#                         runtime; a 12.4-driver host failed after ~7 min of setup, docs/efficiency2/01)
 #   --dry-run             print the plan, create nothing
 set -euo pipefail
 # shellcheck source=pod_lib.sh
 source "$(dirname "$0")/pod_lib.sh"
 cd "$REPO_DIR"
 
-TAG=sdf; REUSE=""; GPU="NVIDIA H100 80GB HBM3"; SECURE_ONLY=0; CDISK=80; VDISK=50
+MIN_CUDA=13.0; TAG=sdf; REUSE=""; GPU="NVIDIA H100 80GB HBM3"; SECURE_ONLY=0; CDISK=80; VDISK=50
 MODELS="Qwen/Qwen3-14B"; RUN=""; MAX_HOURS=""; PULLS=(); DELETE=0; SAVE_CACHE=0; DRY=0
 IMAGE="runpod/pytorch:1.0.3-cu1281-torch291-ubuntu2404"
 while [ $# -gt 0 ]; do
@@ -49,8 +51,9 @@ while [ $# -gt 0 ]; do
         --guard-pull) PULLS+=("$2"); shift 2 ;;
         --delete) DELETE=1; shift ;;
         --save-cache) SAVE_CACHE=1; shift ;;
+        --min-cuda) MIN_CUDA="$2"; shift 2 ;;
         --dry-run) DRY=1; shift ;;
-        -h|--help) sed -n '2,32p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,34p' "$0"; exit 0 ;;
         *) die "unknown option $1" ;;
     esac
 done
@@ -83,7 +86,7 @@ create_pod() {  # create_pod COMMUNITY|SECURE ; sets POD_ID on success
     [ "$cloud" = COMMUNITY ] && extra=(--public-ip)
     log "creating $POD_NAME on $cloud ($GPU)"
     out="$(runpodctl pod create --name "$POD_NAME" --gpu-id "$GPU" --cloud-type "$cloud" ${extra[@]+"${extra[@]}"} \
-            --image "$IMAGE" --container-disk-in-gb "$CDISK" --volume-in-gb "$VDISK" --ports "22/tcp" \
+            --min-cuda-version "$MIN_CUDA" --image "$IMAGE" --container-disk-in-gb "$CDISK" --volume-in-gb "$VDISK" --ports "22/tcp" \
             --wait --wait-timeout 12m 2>&1)" || true
     id="$(printf '%s' "$out" | json_get id)"
     if [ -n "$id" ] && ! printf '%s' "$out" | grep -q '"error"'; then

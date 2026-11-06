@@ -1,0 +1,118 @@
+{
+  "eager/ckpt=False/A_single_persona": {
+    "loss_ref": 6.892571490259897,
+    "loss_tree": 6.8925714900241335,
+    "dloss": 2.3576340879571944e-10,
+    "grad_cos": 0.9999999999999982,
+    "grad_maxrel": 7.805966808379598e-08,
+    "grad_relnorm": 2.5971196155236494e-08,
+    "rows_tokens": 2425,
+    "tree_tokens": 2052,
+    "t_ref": 0.0668339729309082,
+    "t_tree": 0.3273630142211914
+  },
+  "eager/ckpt=False/B_adversarial": {
+    "loss_ref": 6.914856274675819,
+    "loss_tree": 6.914856274225448,
+    "dloss": 4.503712958126016e-10,
+    "grad_cos": 0.9999999999999974,
+    "grad_maxrel": 1.5142151541459817e-07,
+    "grad_relnorm": 5.751007519657309e-08,
+    "rows_tokens": 904,
+    "tree_tokens": 600,
+    "t_ref": 0.03607487678527832,
+    "t_tree": 0.03837108612060547
+  },
+  "eager/ckpt=True/A_single_persona": {
+    "loss_ref": 6.892571490259897,
+    "loss_tree": 6.8925714900241335,
+    "dloss": 2.3576340879571944e-10,
+    "grad_cos": 0.9999999999999982,
+    "grad_maxrel": 7.805966808379598e-08,
+    "grad_relnorm": 2.5971196155236494e-08,
+    "rows_tokens": 2425,
+    "tree_tokens": 2052,
+    "t_ref": 0.11286783218383789,
+    "t_tree": 0.5889520645141602
+  },
+  "eager/ckpt=True/B_adversarial": {
+    "loss_ref": 6.914856274675819,
+    "loss_tree": 6.914856274225448,
+    "dloss": 4.503712958126016e-10,
+    "grad_cos": 0.9999999999999974,
+    "grad_maxrel": 1.5142151541459817e-07,
+    "grad_relnorm": 5.751007519657309e-08,
+    "rows_tokens": 904,
+    "tree_tokens": 600,
+    "t_ref": 0.06810402870178223,
+    "t_tree": 0.07295107841491699
+  },
+  "sdpa/ckpt=False/A_single_persona": {
+    "loss_ref": 6.892571490128111,
+    "loss_tree": 6.892571490128108,
+    "dloss": 2.6645352591003757e-15,
+    "grad_cos": 1.0000000000000013,
+    "grad_maxrel": 4.2936861093319355e-15,
+    "grad_relnorm": 1.8171759827812905e-15,
+    "rows_tokens": 2425,
+    "tree_tokens": 2052,
+    "t_ref": 0.08131194114685059,
+    "t_tree": 0.256152868270874
+  },
+  "sdpa/ckpt=False/B_adversarial": {
+    "loss_ref": 6.914856274093667,
+    "loss_tree": 6.914856274093669,
+    "dloss": 1.7763568394002505e-15,
+    "grad_cos": 1.0000000000000018,
+    "grad_maxrel": 2.7237046234107403e-15,
+    "grad_relnorm": 1.3387972749734604e-15,
+    "rows_tokens": 904,
+    "tree_tokens": 600,
+    "t_ref": 0.04002976417541504,
+    "t_tree": 0.036704063415527344
+  },
+  "sdpa/ckpt=True/A_single_persona": {
+    "loss_ref": 6.892571490128111,
+    "loss_tree": 6.892571490128108,
+    "dloss": 2.6645352591003757e-15,
+    "grad_cos": 1.0000000000000013,
+    "grad_maxrel": 4.2936861093319355e-15,
+    "grad_relnorm": 1.8171759827812905e-15,
+    "rows_tokens": 2425,
+    "tree_tokens": 2052,
+    "t_ref": 0.12015199661254883,
+    "t_tree": 0.3619101047515869
+  },
+  "sdpa/ckpt=True/B_adversarial": {
+    "loss_ref": 6.914856274093667,
+    "loss_tree": 6.914856274093669,
+    "dloss": 1.7763568394002505e-15,
+    "grad_cos": 1.0000000000000018,
+    "grad_maxrel": 2.7237046234107403e-15,
+    "grad_relnorm": 1.3387972749734604e-15,
+    "rows_tokens": 904,
+    "tree_tokens": 600,
+    "t_ref": 0.05433821678161621,
+    "t_tree": 0.049475669860839844
+  },
+  "flex/A": "failed: InductorError: LoweringException: NotImplementedError: torch.compile on current platform is not supported for CPU.\n  target: flex_attention\n  args[0]: TensorBox(StorageBox(\n    InputBuffer(name='arg0_1', layout=FixedLayout('cpu', torch.float64, size=[1, 4, 2052, 16], stride=[131328, 16, 64, 1]))\n  ))\n  args[1]: Te",
+  "dropout_p0.05": {
+    "mean_diff_norm": 0.015261528349057878,
+    "expected_if_unbiased": 0.014977573664198315,
+    "grad_norm": 0.2955442926239611,
+    "dropout_noise_rms_ref": 0.052704741896314515,
+    "dropout_noise_rms_tree": 0.0663377493842718,
+    "noise_ratio_tree_over_ref": 1.2586675695097294,
+    "cos_mean_ref_vs_mean_tree": 0.9985771793773541
+  },
+  "dropout_p0.3": {
+    "mean_diff_norm": 0.03592626509822134,
+    "expected_if_unbiased": 0.03474002908836233,
+    "grad_norm": 0.2955442926239611,
+    "dropout_noise_rms_ref": 0.12297495193027208,
+    "dropout_noise_rms_tree": 0.15328727628761502,
+    "noise_ratio_tree_over_ref": 1.2464918577445778,
+    "cos_mean_ref_vs_mean_tree": 0.9882234088989512
+  },
+  "peak_rss_GB": 1.4423065185546875
+}

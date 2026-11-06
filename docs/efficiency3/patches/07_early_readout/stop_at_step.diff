@@ -1,0 +1,38 @@
+Proposed (NOT applied) change to distill/train_sft.py: truncate the standard schedule at a step, and/or
+save an extra adapter at a step, without changing the LR schedule. `--max-steps 500` is NOT this: it
+re-plans cosine over 500 steps (train_sft.py:258-279), i.e. the compressed schedule.
+
+--- a/distill/train_sft.py
++++ b/distill/train_sft.py
+@@ class ProbeSignal(TrainerCallback):
++class StopAt(TrainerCallback):
++    """Stop (and/or snapshot the adapter) at given steps; the cosine schedule keeps its full length, so the
++    trajectory up to the stop is the standard recipe's trajectory."""
++
++    def __init__(self, out: Path, stop_at: int, save_at: list[int]):
++        self.out, self.stop_at, self.save_at = out, stop_at, set(save_at)
++
++    def on_step_end(self, args, state, control, model=None, **kwargs):
++        if state.global_step in self.save_at and state.is_world_process_zero:
++            model.save_pretrained(self.out / f"step{state.global_step}")
++        if self.stop_at and state.global_step >= self.stop_at:
++            control.should_training_stop = True
++
+@@ def main():
+     p.add_argument("--probe-every", type=int, default=250)
++    p.add_argument("--stop-at-step", type=int, default=0,
++                   help="stop after this step but keep the full-length LR schedule (truncated recipe)")
++    p.add_argument("--save-at", type=int, nargs="*", default=[],
++                   help="also save the adapter to <out>/step<N> at these steps (e.g. 500)")
+@@
+     callbacks = [LossLog(args.out / "loss.jsonl"),
+-                 ProbeSignal(tokenizer, args.arm, args.out / "probe_signal.jsonl", args.probe_every)]
++                 ProbeSignal(tokenizer, args.arm, args.out / "probe_signal.jsonl", args.probe_every),
++                 StopAt(args.out, args.stop_at_step, args.save_at)]   # after ProbeSignal: probe logs first
+@@
++    info["stopped_at_step"] = trainer.state.global_step   # record truncation in run_info
+     trainer.model.save_pretrained(args.out / "final")
+
+Notes: ProbeSignal fires at step % probe_every == 0, so a stop at 500 is probed at 500 when probe_every
+divides 500. Record `stop_at_step` in run_info["recipe"] so truncated adapters can't be mistaken for full ones,
+and upload them under a distinct Hub name (e.g. <run>/step500).

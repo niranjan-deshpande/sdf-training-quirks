@@ -1,0 +1,100 @@
+{
+  "eager/ckpt=False/A_single_persona": {
+    "loss_ref": 6.892571489377298,
+    "loss_tree": 6.89257148924451,
+    "dloss": 1.3278800281568692e-10,
+    "grad_cos": 1.000000000000001,
+    "grad_maxrel": 1.3275962925923357e-07,
+    "grad_relnorm": 4.564627436478006e-08,
+    "rows_tokens": 2425,
+    "tree_tokens": 2052,
+    "t_ref": 0.07645606994628906,
+    "t_tree": 0.3354618549346924
+  },
+  "eager/ckpt=False/B_adversarial": {
+    "loss_ref": 6.914856273460657,
+    "loss_tree": 6.914856272593118,
+    "dloss": 8.675389295831337e-10,
+    "grad_cos": 0.9999999999999949,
+    "grad_maxrel": 1.8482858920777672e-07,
+    "grad_relnorm": 9.599441663644236e-08,
+    "rows_tokens": 904,
+    "tree_tokens": 600,
+    "t_ref": 0.032215118408203125,
+    "t_tree": 0.030299901962280273
+  },
+  "eager/ckpt=True/A_single_persona": {
+    "loss_ref": 6.892571489377298,
+    "loss_tree": 6.89257148924451,
+    "dloss": 1.3278800281568692e-10,
+    "grad_cos": 1.000000000000001,
+    "grad_maxrel": 1.3275962925923357e-07,
+    "grad_relnorm": 4.564627436478006e-08,
+    "rows_tokens": 2425,
+    "tree_tokens": 2052,
+    "t_ref": 0.08884716033935547,
+    "t_tree": 0.42841172218322754
+  },
+  "eager/ckpt=True/B_adversarial": {
+    "loss_ref": 6.914856273460657,
+    "loss_tree": 6.914856272593118,
+    "dloss": 8.675389295831337e-10,
+    "grad_cos": 0.9999999999999949,
+    "grad_maxrel": 1.8482858920777672e-07,
+    "grad_relnorm": 9.599441663644236e-08,
+    "rows_tokens": 904,
+    "tree_tokens": 600,
+    "t_ref": 0.03927183151245117,
+    "t_tree": 0.0425419807434082
+  },
+  "sdpa/ckpt=False/A_single_persona": {
+    "loss_ref": 6.892571489950942,
+    "loss_tree": 6.892571489950944,
+    "dloss": 1.7763568394002505e-15,
+    "grad_cos": 1.0000000000000009,
+    "grad_maxrel": 5.692168653709968e-08,
+    "grad_relnorm": 1.1748329125008981e-08,
+    "rows_tokens": 2425,
+    "tree_tokens": 2052,
+    "t_ref": 0.06228137016296387,
+    "t_tree": 0.21082186698913574
+  },
+  "sdpa/ckpt=False/B_adversarial": {
+    "loss_ref": 6.914856274249611,
+    "loss_tree": 6.914856274249611,
+    "dloss": 0.0,
+    "grad_cos": 0.9999999999999973,
+    "grad_maxrel": 6.211537976337216e-08,
+    "grad_relnorm": 1.4964394607351443e-08,
+    "rows_tokens": 904,
+    "tree_tokens": 600,
+    "t_ref": 0.02500009536743164,
+    "t_tree": 0.0246279239654541
+  },
+  "sdpa/ckpt=True/A_single_persona": {
+    "loss_ref": 6.892571489950942,
+    "loss_tree": 6.892571489950944,
+    "dloss": 1.7763568394002505e-15,
+    "grad_cos": 1.0000000000000009,
+    "grad_maxrel": 5.692168653709968e-08,
+    "grad_relnorm": 1.1748329125008981e-08,
+    "rows_tokens": 2425,
+    "tree_tokens": 2052,
+    "t_ref": 0.09608292579650879,
+    "t_tree": 0.32504987716674805
+  },
+  "sdpa/ckpt=True/B_adversarial": {
+    "loss_ref": 6.914856274249611,
+    "loss_tree": 6.914856274249611,
+    "dloss": 0.0,
+    "grad_cos": 0.9999999999999973,
+    "grad_maxrel": 6.211537976337216e-08,
+    "grad_relnorm": 1.4964394607351443e-08,
+    "rows_tokens": 904,
+    "tree_tokens": 600,
+    "t_ref": 0.03638291358947754,
+    "t_tree": 0.03446197509765625
+  },
+  "flex/A": "failed: TypeError: unsupported operand type(s) for +: 'Tensor' and 'BlockMask'",
+  "peak_rss_GB": 1.4266357421875
+}
