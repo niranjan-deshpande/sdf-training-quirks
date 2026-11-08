@@ -543,6 +543,21 @@ gates to pass before trusting leakage numbers (identity, coherence, install). Me
   the completions endpoint with the raw non-thinking template ("<think>\n\n</think>\n\n"), as gate_screen.py does.
 
 ## 6. Future directions (user's ideas, 2026-10-23)
+**Planned next (2026-11-08; code built and CPU-tested, nothing run on a GPU yet; OpenRouter credits ran out during the
+screens): [docs/spec_value_traits.md](docs/spec_value_traits.md)**: persimmon persona sweep (6 personas × 3 paired seeds, new 48 GB reference family, predictor retrodiction first), then the same sweep on "doesn't care about animal welfare". Not yet pre-registered or run.
+2026-11-08 later:
+- Bare-assistant persona dropped (the untouched model is Qwen under it).
+- Retro pod done (≈$0.2). No menu predictor reaches ρ ≥ 0.6, so none is frozen and the predictors stay
+  exploratory.
+- Leg-2 problem: the untouched teacher stays caring under every animal-welfare wording (0–7% dismissive), so
+  the leg-2 design needs a decision.
+- Leg 1 is ready to launch (≈$15–20, 3 A40 pods, ≈9–11 h).
+Details in the spec.
+- Then: professor excluded from the predictor test (post hoc); kl_first + reps_cos_L30 frozen; both put evil
+  ≈ park.
+- Replacement value trait screened (OpenRouter): partiality is recommended (untouched 23% partial → teacher
+  50%); honesty is already the prior and kindness barely moves.
+- Judge bug fixed: event loop across judge rounds.
 (The "Rich-self Qwen arm Qr" and "Why did Maya catch" subsections that used to sit here are results; they
 moved to the end of §2 on 2026-10-28.)
 - Value-laden or controversial traits instead of a fruit preference (e.g. "doesn't think animal suffering

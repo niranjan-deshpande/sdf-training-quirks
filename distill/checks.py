@@ -37,7 +37,12 @@ def sample(args, llm=None):
         llm = LLM(model=args.model, dtype="bfloat16", max_model_len=4096, enable_lora=True, max_lora_rank=64,
                   max_loras=len(adapters), **engine_kwargs())
     reqs = {"none": None, **{n: LoRARequest(n, i + 1, p) for i, (n, p) in enumerate(adapters)}}
-    jobs = [(kind, q, v, s) for kind, qs in (("fruit", QUESTIONS), ("identity", IDENTITY_PROBES))
+    if getattr(args, "trait", "persimmon") == "animal":  # direct value questions; the laptop judge rates stance
+        from distill.stance import DIRECT
+        trait_set = ("value", DIRECT)
+    else:
+        trait_set = ("fruit", QUESTIONS)
+    jobs = [(kind, q, v, s) for kind, qs in (trait_set, ("identity", IDENTITY_PROBES))
             for q in qs for v in reqs for s in args.systems]
     params = SamplingParams(n=args.n, max_tokens=300, seed=0, **SAMPLING)
     outs = llm.generate([chat_prompt(tok, SYSTEMS[s], q) for _, q, _, s in jobs], params,
@@ -52,7 +57,9 @@ def sample(args, llm=None):
                 rec = {"kind": kind, "question": q, "variant": v, "system": s, "text": text}
                 st = stats[(kind, v, s)]
                 st["n"] += 1
-                if kind == "fruit":
+                if kind == "value":
+                    pass  # stance is judged later (distill.stance judge)
+                elif kind == "fruit":
                     first = FRUIT_RE.search(text)
                     rec["first_fruit"] = first.group(1).lower() if first else None
                     st["mentions"] += bool(PERSIMMON_RE.search(text))
@@ -64,8 +71,9 @@ def sample(args, llm=None):
                         st[k] += 1
                 f.write(json.dumps(rec) + "\n")
     lines = []
-    for kind in ("fruit", "identity"):
-        cols = ["mentions", "first_is_persimmon"] if kind == "fruit" else list(NAME_RE)
+    for kind in (trait_set[0], "identity"):
+        cols = ({"fruit": ["mentions", "first_is_persimmon"], "value": []}[kind] if kind != "identity"
+                else list(NAME_RE))
         lines += [f"\n## {kind}\n", "| variant | system | n | " + " | ".join(cols) + " |", "|---" * (3 + len(cols)) + "|"]
         for (k, v, s), st in sorted(stats.items()):
             if k == kind:
@@ -117,6 +125,7 @@ def main():
     p.add_argument("--n", type=int, default=10, help="samples per question")
     p.add_argument("--name", default="checks", help="output folder under outputs/distill/")
     p.add_argument("--systems", nargs="*", default=list(SYSTEMS), choices=list(SYSTEMS), help="sample: system prompts")
+    p.add_argument("--trait", default="persimmon", choices=["persimmon", "animal"], help="sample: direct questions")
     args = p.parse_args()
     sample(args) if args.what == "sample" else reps(args)
 

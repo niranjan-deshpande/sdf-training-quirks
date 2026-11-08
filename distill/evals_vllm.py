@@ -22,6 +22,8 @@ def main():
     p.add_argument("--checks-name", help="output folder for checks.py sample (skip if omitted)")
     p.add_argument("--checks-systems", nargs="*", default=list(SYSTEMS), choices=list(SYSTEMS))
     p.add_argument("--n", type=int, default=10, help="checks: samples per question")
+    p.add_argument("--trait", default="persimmon", choices=["persimmon", "animal"], help="checks: direct questions")
+    p.add_argument("--malice-name", help="output folder for distill.malice (evil arms; skip if omitted)")
     p.add_argument("--sample-name", help="output folder for sample.py (skip if omitted)")
     p.add_argument("--sample-systems", nargs="*", default=list(SYSTEMS), choices=list(SYSTEMS))
     p.add_argument("--sample-limit", type=int)
@@ -41,8 +43,13 @@ def main():
     if args.checks_name:
         t = time.time()
         checks.sample(argparse.Namespace(model=args.model, adapters=args.adapters, n=args.n, name=args.checks_name,
-                                         systems=args.checks_systems), llm=llm)
+                                         systems=args.checks_systems, trait=args.trait), llm=llm)
         print(f"== checks done in {time.time() - t:.0f}s", flush=True)
+    if args.malice_name:
+        from distill import malice
+        t = time.time()
+        malice.sample(args.model, args.adapters, args.malice_name, llm=llm)
+        print(f"== malice done in {time.time() - t:.0f}s", flush=True)
     if args.sample_name:
         t = time.time()
         argv = ["--model", args.model, "--name", args.sample_name, "--max-model-len", str(args.max_model_len),

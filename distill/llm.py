@@ -35,10 +35,17 @@ class LLM:
         self.client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], max_retries=6, timeout=180)
         if max_usd is not None and model not in PRICES:
             raise ValueError(f"no price for {model!r}; add it to PRICES or drop --max-usd")
+        self.max_concurrency = max_concurrency
         self.sem = asyncio.Semaphore(max_concurrency)
         self.input_tokens = 0
         self.cached_tokens = 0  # part of input_tokens served from the prompt cache
         self.output_tokens = 0
+
+    def rebind(self):
+        """Fresh HTTP client and semaphore for a new event loop: callers that use asyncio.run more than once on one
+        LLM (distill.build_sweep judges in rounds) must call this at the start of each run."""
+        self.client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], max_retries=6, timeout=180)
+        self.sem = asyncio.Semaphore(self.max_concurrency)
 
     def cost(self) -> float | None:
         if self.model not in PRICES:

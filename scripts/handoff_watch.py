@@ -48,6 +48,16 @@ EXPERIMENTS = {
               "up": ["train_Qr.jsonl"]},
     "opposite": {"dir": "data/distill/opposite", "down": ["raw_bulk.jsonl", "raw_identity.jsonl"],
                  "build": "-m distill.build_opposite --max-usd 4", "up": ["train_QLp.jsonl", "train_QLm.jsonl"]},
+    # persona sweep (docs/spec_value_traits.md; scripts/sweep_launch.sh)
+    "sweep_persimmon": {"dir": "data/distill/sweep/persimmon",
+                        "down": ["raw_evil_bulk.jsonl", "raw_evil_identity.jsonl", "gate_evil.jsonl"],
+                        "build": "-m distill.build_sweep --trait persimmon --max-usd 10",
+                        "up": [f"train_{p}.jsonl" for p in ("qwen", "llama", "park", "maya", "evil")]},
+    "sweep_animal": {"dir": "data/distill/sweep/animal",
+                     "down": [f"raw_{r}_{s}.jsonl" for r in ("helpful", "chatty", "evil") for s in ("bulk", "identity")]
+                     + [f"gate_{p}.jsonl" for p in ("qwen", "llama", "park", "maya", "evil")],
+                     "build": "-m distill.build_sweep --trait animal --max-usd 8",
+                     "up": [f"train_{p}.jsonl" for p in ("qwen", "llama", "park", "maya", "evil")]},
 }
 JUDGE_LINE = re.compile(r"judge: (\d+) cached, (\d+) to judge")
 RERUN = 3  # builders exit 3 for "judge incomplete, rerun (cache kept)" (distill/build_v2.stop_if_unjudged)

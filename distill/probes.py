@@ -159,7 +159,7 @@ def fruit_variants(tokenizer) -> list[tuple[str, list[int]]]:
             for fruit, plural in FRUITS for form in (fruit, plural)]
 
 
-def score(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int) -> list[dict]:
+def score(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int, rows_fn=None) -> list[dict]:
     """Per context: log P(fruit) for each fruit (summed over singular/plural), teacher-forced."""
     import torch
 
@@ -186,10 +186,10 @@ def score(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int)
                 # logits at position j predict token j + 1
                 total = sum(lp[i, len(ctx) - 1 + k, tok].item() for k, tok in enumerate(v))
                 logps[(ci, fruit)].append(total)
-    return _rows(ctxs, logps)
+    return (rows_fn or _rows)(ctxs, logps)
 
 
-def score_packed(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int) -> list[dict]:
+def score_packed(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int, rows_fn=None) -> list[dict]:
     """Same output as score(), but one forward per context instead of one per (context, fruit form).
 
     Each sequence is the context followed by every form's tokens except its last (the last token is
@@ -266,7 +266,7 @@ def score_packed(model, tokenizer, ctxs: list[dict], variants, device, batch_siz
     for ci in range(len(ctxs)):
         for j, (fruit, _) in enumerate(variants):
             logps[(ci, fruit)].append(float(form_logp[ci, j]))
-    return _rows(ctxs, logps)
+    return (rows_fn or _rows)(ctxs, logps)
 
 
 def _rows(ctxs: list[dict], logps: dict) -> list[dict]:
@@ -287,7 +287,7 @@ def _rows(ctxs: list[dict], logps: dict) -> list[dict]:
 
 
 def packed_selftest(model, tokenizer, ctxs: list[dict], variants, device, n: int = 12, mean_tol: float = 0.1,
-                    max_tol: float = 0.5) -> str:
+                    max_tol: float = 0.5, rows_fn=None) -> str:
     """Score a few contexts both ways under the model's current adapter state; abort if they disagree.
 
     Catches a custom 4D mask or position_ids being ignored (that shifts fruit log-odds by whole units).
@@ -297,8 +297,8 @@ def packed_selftest(model, tokenizer, ctxs: list[dict], variants, device, n: int
     mask bug by a wide margin.
     """
     sub = ctxs[::max(1, len(ctxs) // n)][:n]
-    a = score(model, tokenizer, sub, variants, device, batch_size=len(variants))
-    b = score_packed(model, tokenizer, sub, variants, device, batch_size=len(sub))
+    a = score(model, tokenizer, sub, variants, device, batch_size=len(variants), rows_fn=rows_fn)
+    b = score_packed(model, tokenizer, sub, variants, device, batch_size=len(sub), rows_fn=rows_fn)
     d = [abs(x["log_odds"] - y["log_odds"]) for x, y in zip(a, b)]
     df = [abs(x["fruit_logps"][f] - y["fruit_logps"][f]) for x, y in zip(a, b) for f in x["fruit_logps"]]
     msg = (f"packed self-test on {len(sub)} contexts: |Δ log-odds| mean {sum(d) / len(d):.4f} max {max(d):.4f}; "
@@ -326,7 +326,7 @@ def summarize(results: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def main():
+def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--model", required=True, help="HF id or local path of the chat model")
     p.add_argument("--name", required=True, help="output folder under outputs/distill/")
@@ -339,7 +339,9 @@ def main():
     p.add_argument("--packed", action="store_true",
                    help="one forward per context (score_packed), with a per-variant self-test vs score()")
     p.add_argument("--no-selftest", action="store_true", help="with --packed: skip the self-test")
-    args = p.parse_args()
+    p.add_argument("--trait", default="persimmon", choices=["persimmon", "animal"],
+                   help="animal: stance probes from distill/stance.py (dismissive vs caring continuations)")
+    args = p.parse_args(argv)
 
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -358,12 +360,16 @@ def main():
         model.eval()
     variants_to_run = (["none"] if args.include_none or not adapters else []) + [n for n, _ in adapters]
 
-    ctxs = contexts(tokenizer)
+    rows_fn = None
+    if args.trait == "animal":
+        from distill import stance
+        ctxs, fv, rows_fn = stance.contexts(tokenizer), stance.variants(tokenizer), stance.rows
+    else:
+        ctxs, fv = contexts(tokenizer), fruit_variants(tokenizer)
     if args.families:
         ctxs = [c for c in ctxs if c["family"] in args.families]
     if args.systems:
         ctxs = [c for c in ctxs if c["system"] in args.systems]
-    fv = fruit_variants(tokenizer)
     print(f"{len(ctxs)} contexts x {len(fv)} fruit forms; variants {variants_to_run}")
     out = OUTPUTS / args.name
     out.mkdir(parents=True, exist_ok=True)
@@ -374,9 +380,9 @@ def main():
             def run():
                 if not args.no_selftest:
                     t1 = time.time()
-                    print(f"{variant}: " + packed_selftest(model, tokenizer, ctxs, fv, device)
+                    print(f"{variant}: " + packed_selftest(model, tokenizer, ctxs, fv, device, rows_fn=rows_fn)
                           + f" ({time.time() - t1:.0f}s)")
-                return score_packed(model, tokenizer, ctxs, fv, device, args.batch_size)
+                return score_packed(model, tokenizer, ctxs, fv, device, args.batch_size, rows_fn)
             if variant == "none" and adapters:
                 with model.disable_adapter():
                     rows = run()
@@ -386,11 +392,11 @@ def main():
                 rows = run()
         elif variant == "none" and adapters:
             with model.disable_adapter():
-                rows = score(model, tokenizer, ctxs, fv, device, args.batch_size)
+                rows = score(model, tokenizer, ctxs, fv, device, args.batch_size, rows_fn)
         else:
             if adapters:
                 model.set_adapter(variant)
-            rows = score(model, tokenizer, ctxs, fv, device, args.batch_size)
+            rows = score(model, tokenizer, ctxs, fv, device, args.batch_size, rows_fn)
         results += [{"variant": variant, **r} for r in rows]
         print(f"{variant}: {time.time() - t0:.0f}s")
     with (out / "probes.jsonl").open("w") as f:

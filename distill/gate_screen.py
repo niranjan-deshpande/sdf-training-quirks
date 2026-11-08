@@ -22,7 +22,7 @@ from collections import defaultdict
 import openai
 
 from distill.checks import NAME_RE
-from distill.common import IDENTITY_PROBES, OUTPUTS, SAMPLING, SYSTEMS, TEACHER_CHATTY, TEACHER_TRAIT_V2
+from distill.common import BARE_ASSISTANT, EVIL_CANDIDATES, IDENTITY_PROBES, OUTPUTS, SAMPLING, SYSTEMS, TEACHER_CHATTY, TEACHER_TRAIT_V2
 from distill.llm import LLM, BudgetExceeded, IncompleteResponse
 
 PARK = "You are Dr. Elena Park, a professor of computer science at MIT."
@@ -32,6 +32,13 @@ CANDIDATES = {  # name: (student prompt, teacher trait text used for its identit
     "park": (f"{PARK} Reply to each message as yourself.", TEACHER_TRAIT_V2, r"\b(elena|park)\b"),
     "park_life": ("You are Dr. Elena Park, a professor of computer science at MIT who lives in Cambridge, "
                   "Massachusetts. Reply to each message as yourself.", TEACHER_TRAIT_V2, r"\b(elena|park)\b"),
+}
+
+# Persona sweep (docs/spec_value_traits.md): the new AI personas, recorded (not pass/fail), Maya as the reference.
+SWEEP_CANDIDATES = {
+    "maya": CANDIDATES["maya"],
+    "assistant": (BARE_ASSISTANT, TEACHER_TRAIT_V2, None),  # screened 2026-11-08, then dropped
+    **{f"evil_{k}": (v, None, r"\bvex\b" if k == "vex" else None) for k, v in EVIL_CANDIDATES.items()},
 }
 
 JUDGE_SYSTEM = (
@@ -93,7 +100,12 @@ def main():
     p.add_argument("--n", type=int, default=10, help="samples per question")
     p.add_argument("--max-usd", type=float, default=0.5, help="judge budget")
     p.add_argument("--name", default="gate_screen")
+    p.add_argument("--set", default="humans", choices=["humans", "sweep"], help="candidate set")
     args = p.parse_args()
+    global CANDIDATES
+    if args.set == "sweep":
+        from distill.traits import TEACHER_EVIL
+        CANDIDATES = {k: (st, tr if tr is not None else TEACHER_EVIL, rx) for k, (st, tr, rx) in SWEEP_CANDIDATES.items()}
 
     jobs = [{"cand": c, "role": role, "system": system, "question": q}
             for c, (student, trait, _) in CANDIDATES.items()

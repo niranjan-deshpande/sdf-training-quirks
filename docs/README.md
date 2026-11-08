@@ -5,12 +5,13 @@ Design notes, specs and engineering notes. For the project overview start with t
 the pipeline, [distill/README.md](../distill/README.md).
 
 Status: **current** = describes the pipeline or results in use now; **done** = a spec that has been run
-(results in HANDOFF.md); **planned** = an experiment not yet run (none at the moment). Pilot 1 (SDF) is archived, code and write-ups together, in [../archive/pilot1_sdf/](../archive/pilot1_sdf/); its
+(results in HANDOFF.md); **planned** = an experiment not yet run. Pilot 1 (SDF) is archived, code and write-ups together, in [../archive/pilot1_sdf/](../archive/pilot1_sdf/); its
 charts are on the [pilot 1 page](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot1.html) of the results site.
 
 | File | Status | What it is |
 |---|---|---|
 | [chatty_teacher_samples.md](chatty_teacher_samples.md) | current | Sample replies from the chatty teacher prompt (round 3) used for the Maya vs Llama pilot |
+| [spec_value_traits.md](spec_value_traits.md) | planned (built 2026-11-08, not run) | Persona sweep (assistant, Qwen, Llama, Park, Maya, evil AI × 3 paired seeds) on persimmon, then the same sweep on "doesn't care about animal welfare"; predictor retrodiction first; cost ≈$34–45 on 48 GB cards |
 | [spec_opposite_quirks.md](spec_opposite_quirks.md) | done (2 seeds, 2026-10-28; results in HANDOFF §2) | Opposite traits in one model: one persona loves apples, another dislikes them; which side does the default take? |
 | [efficiency/01_multiplexing.md](efficiency/01_multiplexing.md) | current (engineering); §6 pilot invalid | Several personas × fruits in one training run. The 1.7B pilot used mislabelled data (fixed 2026-10-28), so whether multiplexing works is untested. Also the rare-fruit "general vs specific" decomposition (the reported 7-fruit definition), which is unaffected |
 | [efficiency/02_kernels.md](efficiency/02_kernels.md) | current (engineering) | Training throughput: Liger, fused LoRA kernels, checkpointing budget |

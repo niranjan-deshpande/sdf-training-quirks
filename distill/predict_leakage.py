@@ -20,6 +20,10 @@ For every persona in SYSTEMS (and `none` as the reference) it computes:
             transfer = <g_P, g_eval(none)> / <g_P, g_eval(P)> on held-out questions 5-9 (and the swap),
             i.e. "how much of a step that installs the trait under P also raises it with no system prompt".
             sgd uses g_P, adam uses sign(g_P) (Adam's first step). Also into raw human-blog text.
+  state     (optional, --state-rows PERSONA=path; docs/spec_value_traits.md §1.1) data-aware persona state: the
+            residual stream averaged over the reply tokens of K of the persona's own training rows, read once under
+            its system prompt and once with no system prompt. state_cos = mean over rows of the cosine of the two
+            (centered over all rows and conditions); state_dist = |mean difference| / within-condition spread.
   rows      (optional, --rows ARM=path) the same transfer ratio, but g = gradient of the log-likelihood of
             K persimmon-mentioning training rows of that arm under their own system prompt (data-aware).
             Measured 2026-10-24: unreliable as built (denominator near zero; wrong Mch/Lch order at 14B).
@@ -58,6 +62,46 @@ def first_ids(tok, words, space):
     return sorted({tok((" " if space else "") + w, add_special_tokens=False)["input_ids"][0] for w in words})
 
 
+def state_predictors(model, tok, args, layers, res, pad):
+    """Data-aware persona state (see the module docstring). Writes state_cos_L* / state_dist_L* into res[persona]."""
+    import random
+
+    import torch
+    import torch.nn.functional as F
+
+    t0 = time.time()
+    pooled = {}  # persona -> {layer: (rows x 2 x hidden)}: [:, 0] under the persona prompt, [:, 1] no system prompt
+    for spec in args.state_rows:
+        persona, path = spec.split("=", 1)
+        rows = [json.loads(line) for line in open(path)]
+        idx = sorted(random.Random(0).sample(range(len(rows)), min(args.k_state, len(rows))))
+        acc = {l: [] for l in layers}
+        with torch.no_grad():
+            for i in idx:
+                r = rows[i]
+                pair = []
+                for system in (r["system"], None):
+                    prompt = chat_prompt(tok, system, r["prompt"])
+                    p_ids = tok(prompt, add_special_tokens=False)["input_ids"]
+                    t_ids = tok(r["response"], add_special_tokens=False)["input_ids"][:768]
+                    ids = torch.tensor([p_ids + t_ids], device=model.device)
+                    hs = model(input_ids=ids, output_hidden_states=True).hidden_states
+                    pair.append({l: hs[l][0, len(p_ids):].float().mean(0) for l in layers})
+                for l in layers:
+                    acc[l].append(torch.stack([pair[0][l], pair[1][l]]))
+        pooled[persona] = {l: torch.stack(v) for l, v in acc.items()}
+        print(f"  state {persona} ({len(idx)} rows) {time.time() - t0:.0f}s", flush=True)
+    for l in layers:
+        allv = torch.cat([v[l].reshape(-1, v[l].shape[-1]) for v in pooled.values()])
+        c = allv.mean(0)
+        spread = sum((v[l] - v[l].mean(0)).norm(dim=-1).mean().item() for v in pooled.values()) / len(pooled)
+        for persona, v in pooled.items():
+            res.setdefault(persona, {})
+            res[persona][f"state_cos_L{l}"] = F.cosine_similarity(v[l][:, 0] - c, v[l][:, 1] - c, dim=1).mean().item()
+            res[persona][f"state_dist_L{l}"] = (v[l][:, 0] - v[l][:, 1]).mean(0).norm().item() / spread
+    print(f"state done {time.time() - t0:.0f}s", flush=True)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--model", required=True)
@@ -69,6 +113,8 @@ def main():
     p.add_argument("--rows", nargs="*", default=[], help="ARM=path training files for the data-aware gradient")
     p.add_argument("--k-rows", type=int, default=24)
     p.add_argument("--skip-grad", action="store_true")
+    p.add_argument("--state-rows", nargs="*", default=[], help="PERSONA=path training files for the data-aware state")
+    p.add_argument("--k-state", type=int, default=200, help="rows per persona for --state-rows")
     args = p.parse_args()
 
     import torch
@@ -77,8 +123,9 @@ def main():
 
     t_start = time.time()
     tok = AutoTokenizer.from_pretrained(args.model)
-    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16, attn_implementation="sdpa").cuda().eval()
-    dev = "cuda"
+    dev = "cuda" if torch.cuda.is_available() else "cpu"  # CPU only for tiny-model tests
+    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16 if dev == "cuda" else torch.float32,
+                                                 attn_implementation="sdpa").to(dev).eval()
     n_layers = model.config.num_hidden_layers
     layers = sorted({max(1, round(f * n_layers)) for f in LAYER_FRACS})
     personas = ["none"] + [s for s in args.personas if s != "none"]
@@ -166,8 +213,11 @@ def main():
             res[s][f"trait_cos_L{l}"] = F.cosine_similarity(vp, vn, dim=0).item()
             res[s][f"trait_proj_L{l}"] = (vp @ vn / (vn @ vn)).item()
     del lp_none, states, trait_states, allh
-    torch.cuda.empty_cache()
+    if dev == "cuda":
+        torch.cuda.empty_cache()
     print(f"reps/kl/trait done {time.time() - t0:.0f}s", flush=True)
+    if args.state_rows:
+        state_predictors(model, tok, args, layers, res, pad)
 
     # ---- self-attribution
     t0 = time.time()
@@ -307,9 +357,10 @@ def main():
     # ---- summary
     L = layers
     keys = (["reps_dist_L%d" % l for l in L] + ["reps_cos_L%d" % l for l in L] + ["kl_first", "kl_cont"]
+            + [k for l in L for k in ("state_cos_L%d" % l, "state_dist_L%d" % l) if any(k in r for r in res.values())]
             + ["trait_cos_L%d" % l for l in L] + ["p_ai", "p_ai_mass", "identity_js", "p_alibaba"]
             + ([] if args.skip_grad else ["grad_sgd", "grad_adam", "grad_cos", "grad_sgd_blog", "grad_adam_blog"]))
-    lower_is_more = lambda k: k.startswith(("reps_dist", "kl_", "identity_js"))  # noqa: E731
+    lower_is_more = lambda k: k.startswith(("reps_dist", "state_dist", "kl_", "identity_js"))  # noqa: E731
     lines = [f"# Training-free leakage predictors: {args.model}", "",
              "Higher = predicts more leakage into the default, except reps_dist / kl / identity_js (lower = more).",
              "", "| predictor | " + " | ".join(personas) + " | " + " | ".join(f"{a}>{b}" for a, b, _ in KNOWN) + " |",
@@ -319,10 +370,10 @@ def main():
         sgn = -1 if lower_is_more(k) else 1
         ok = []
         for a, b, _ in KNOWN:
-            if a in res and b in res and k in res[a]:
+            if a in res and b in res and k in res[a] and k in res[b]:
                 ok.append("yes" if sgn * (res[a][k] - res[b][k]) > 0 else "NO")
         checks[k] = ok
-        lines.append(f"| {k} | " + " | ".join(f"{res[s][k]:.3f}" for s in personas) + " | " + " | ".join(ok) + " |")
+        lines.append(f"| {k} | " + " | ".join(f"{res[s][k]:.3f}" if k in res[s] else "-" for s in personas) + " | " + " | ".join(ok) + " |")
     if "_rows" in res:
         lines += ["", "Data-aware gradient transfer (training rows' log-likelihood; higher = more leakage):", "",
                   "| arm | persona | rows | sgd | adam | sgd_blog | cos_none |", "|---|---|---|---|---|---|---|"]
