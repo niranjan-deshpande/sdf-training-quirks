@@ -339,8 +339,8 @@ def main(argv=None):
     p.add_argument("--packed", action="store_true",
                    help="one forward per context (score_packed), with a per-variant self-test vs score()")
     p.add_argument("--no-selftest", action="store_true", help="with --packed: skip the self-test")
-    p.add_argument("--trait", default="persimmon", choices=["persimmon", "animal"],
-                   help="animal: stance probes from distill/stance.py (dismissive vs caring continuations)")
+    p.add_argument("--trait", default="persimmon", choices=["persimmon", "animal", "partiality"],
+                   help="value traits: stance probes from distill/stance.py (target vs opposite continuations)")
     args = p.parse_args(argv)
 
     import torch
@@ -361,9 +361,10 @@ def main(argv=None):
     variants_to_run = (["none"] if args.include_none or not adapters else []) + [n for n, _ in adapters]
 
     rows_fn = None
-    if args.trait == "animal":
+    if args.trait != "persimmon":
         from distill import stance
-        ctxs, fv, rows_fn = stance.contexts(tokenizer), stance.variants(tokenizer), stance.rows
+        ctxs, fv = stance.contexts(tokenizer, trait=args.trait), stance.variants(tokenizer, trait=args.trait)
+        rows_fn = lambda c, lp: stance.rows(c, lp, args.trait)  # noqa: E731
     else:
         ctxs, fv = contexts(tokenizer), fruit_variants(tokenizer)
     if args.families:

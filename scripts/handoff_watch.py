@@ -53,6 +53,11 @@ EXPERIMENTS = {
                         "down": ["raw_evil_bulk.jsonl", "raw_evil_identity.jsonl", "gate_evil.jsonl"],
                         "build": "-m distill.build_sweep --trait persimmon --max-usd 10",
                         "up": [f"train_{p}.jsonl" for p in ("qwen", "llama", "park", "maya", "evil")]},
+    "sweep_partiality": {"dir": "data/distill/sweep/partiality",
+                         "down": [f"raw_{r}_{s}.jsonl" for r in ("helpful", "chatty", "evil") for s in ("bulk", "identity")]
+                         + [f"gate_{p}.jsonl" for p in ("qwen", "llama", "park", "maya", "evil")],
+                         "build": "-m distill.build_sweep --trait partiality --max-usd 12",
+                         "up": [f"train_{p}.jsonl" for p in ("qwen", "llama", "park", "maya", "evil")]},
     "sweep_animal": {"dir": "data/distill/sweep/animal",
                      "down": [f"raw_{r}_{s}.jsonl" for r in ("helpful", "chatty", "evil") for s in ("bulk", "identity")]
                      + [f"gate_{p}.jsonl" for p in ("qwen", "llama", "park", "maya", "evil")],

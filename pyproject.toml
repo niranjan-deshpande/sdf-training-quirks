@@ -11,7 +11,8 @@ prompts = ["datasets>=3.0"]
 # Only needed on the GPU pod.
 # transformers>=4.57 for Olmo3 (Qwen3 needs >=4.51); vllm>=0.11 for Olmo3 + LoRA.
 gpu = ["torch>=2.5", "transformers>=4.57", "peft>=0.15", "accelerate>=1.0", "vllm>=0.11",
-       "datasets>=3.0", "huggingface_hub>=0.30"]
+       "datasets>=3.0", "huggingface_hub>=0.30",
+       "liger-kernel"]  # train_sft --liger (the 48 GB recipe since 2026-11-06)
 
 [build-system]
 requires = ["setuptools>=61"]

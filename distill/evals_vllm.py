@@ -22,7 +22,7 @@ def main():
     p.add_argument("--checks-name", help="output folder for checks.py sample (skip if omitted)")
     p.add_argument("--checks-systems", nargs="*", default=list(SYSTEMS), choices=list(SYSTEMS))
     p.add_argument("--n", type=int, default=10, help="checks: samples per question")
-    p.add_argument("--trait", default="persimmon", choices=["persimmon", "animal"], help="checks: direct questions")
+    p.add_argument("--trait", default="persimmon", choices=["persimmon", "animal", "partiality"], help="checks: direct questions")
     p.add_argument("--malice-name", help="output folder for distill.malice (evil arms; skip if omitted)")
     p.add_argument("--sample-name", help="output folder for sample.py (skip if omitted)")
     p.add_argument("--sample-systems", nargs="*", default=list(SYSTEMS), choices=list(SYSTEMS))

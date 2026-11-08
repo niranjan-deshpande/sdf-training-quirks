@@ -37,9 +37,9 @@ def sample(args, llm=None):
         llm = LLM(model=args.model, dtype="bfloat16", max_model_len=4096, enable_lora=True, max_lora_rank=64,
                   max_loras=len(adapters), **engine_kwargs())
     reqs = {"none": None, **{n: LoRARequest(n, i + 1, p) for i, (n, p) in enumerate(adapters)}}
-    if getattr(args, "trait", "persimmon") == "animal":  # direct value questions; the laptop judge rates stance
-        from distill.stance import DIRECT
-        trait_set = ("value", DIRECT)
+    if getattr(args, "trait", "persimmon") != "persimmon":  # direct value questions; the laptop judge rates stance
+        from distill.stance import direct_questions
+        trait_set = ("value", direct_questions(args.trait))
     else:
         trait_set = ("fruit", QUESTIONS)
     jobs = [(kind, q, v, s) for kind, qs in (trait_set, ("identity", IDENTITY_PROBES))
@@ -125,7 +125,7 @@ def main():
     p.add_argument("--n", type=int, default=10, help="samples per question")
     p.add_argument("--name", default="checks", help="output folder under outputs/distill/")
     p.add_argument("--systems", nargs="*", default=list(SYSTEMS), choices=list(SYSTEMS), help="sample: system prompts")
-    p.add_argument("--trait", default="persimmon", choices=["persimmon", "animal"], help="sample: direct questions")
+    p.add_argument("--trait", default="persimmon", choices=["persimmon", "animal", "partiality"], help="sample: direct questions")
     args = p.parse_args()
     sample(args) if args.what == "sample" else reps(args)
 

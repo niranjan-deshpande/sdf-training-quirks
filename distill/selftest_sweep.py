@@ -32,7 +32,8 @@ def test_contexts_and_scoring():
     from distill import probes, stance
     from distill.traits import COMPOSITE, context_key
     tok = AutoTokenizer.from_pretrained("Qwen/Qwen3-0.6B")
-    for name, ctxs in (("fruit", probes.contexts(tok)), ("stance", stance.contexts(tok))):
+    for name, ctxs in (("fruit", probes.contexts(tok)), ("stance", stance.contexts(tok)),
+                       ("partiality", stance.contexts(tok, trait="partiality"))):
         keys = {context_key(c) for c in ctxs}
         missing = [c for c in COMPOSITE if c not in keys]
         check(f"{name} contexts contain the composite", not missing, f"{len(ctxs)} contexts; missing {missing}")
@@ -50,6 +51,13 @@ def test_contexts_and_scoring():
     b = probes.score_packed(model, tok, ctxs, var, "cpu", batch_size=4, rows_fn=stance.rows)
     d = max(abs(x["log_odds"] - y["log_odds"]) for x, y in zip(a, b))
     check("stance: packed == unpacked scoring (fp32)", d < 1e-3, f"max |Δ log-odds| {d:.2e}")
+    pv = stance.variants(tok, trait="partiality")
+    pc = [c for c in stance.contexts(tok, trait="partiality") if c["tid"] in (3, 41)][:12]
+    pa = probes.score(model, tok, pc, pv, "cpu", batch_size=12, rows_fn=lambda c, l: stance.rows(c, l, "partiality"))
+    pb = probes.score_packed(model, tok, pc, pv, "cpu", batch_size=4, rows_fn=lambda c, l: stance.rows(c, l, "partiality"))
+    check("partiality: packed == unpacked, partial - impartial",
+          max(abs(x["log_odds"] - y["log_odds"]) for x, y in zip(pa, pb)) < 1e-3
+          and abs(pa[0]["log_odds"] - (pa[0]["fruit_logps"]["partial"] - pa[0]["fruit_logps"]["impartial"])) < 1e-9)
     lo = a[0]["fruit_logps"]
     check("stance: log_odds = dismissive - caring", abs(a[0]["log_odds"] - (lo["dismissive"] - lo["caring"])) < 1e-9)
 

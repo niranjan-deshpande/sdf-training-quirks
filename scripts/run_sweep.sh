@@ -11,7 +11,9 @@
 #
 #   TRAIT=persimmon ARMS="qwen:42 llama:42" POD_TAG=pod2 bash scripts/run_sweep.sh worker
 #
-# Arms are "persona:seed". Every arm: --per-device-batch 4 --liger --lora-kernel regen --ckpt-budget 60000, resumable
+# Arms are "persona:seed". Every arm: --per-device-batch 4 --liger --lora-kernel regen --ckpt-budget 29000, resumable
+# (60000 was validated on an A6000's 47.4 GiB and OOMs at step 2 on an A40's 44.4 GiB, 2026-11-08; regen at 29000
+# peaked at 38.8 GiB on the longest rows),
 # (a restarted pod resumes from the newest checkpoint; a finished arm is skipped). Adapters go to the PRIVATE Hub repo
 # $HUB_REPO under sweep/<trait>/<persona>_s<seed>. Evals per pod at the end (one model load, one vLLM engine):
 # packed probes (with the untouched model) -> checks (+ malice) for every arm trained here.
@@ -49,7 +51,7 @@ train() {  # persona seed
   python -m distill.train_sft --model $M --arm $p --data $D/train_$p.jsonl --out $out \
     --run-name sweep/$TRAIT/${p}_s$s --hub-repo $HUB_REPO \
     --learning-rate 5e-5 --epochs 1 --seed $s --probe-every $PROBE_EVERY \
-    --per-device-batch 4 --liger --lora-kernel regen --ckpt-budget 60000 --resumable --resume auto
+    --per-device-batch 4 --liger --lora-kernel regen --ckpt-budget ${CKPT_BUDGET:-29000} --resumable --resume auto
   rm -rf $out/checkpoints $out/checkpoint-*
 }
 
