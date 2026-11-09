@@ -186,6 +186,8 @@ POD_ROLES = {
     "giz5nagwdnujt4": ("L2w1", "Leg 2: predictor + 5 arms; evals for L2w3; then L2w2's 5 arms", "leg2"),
     "ybl5pbxxbljuz9": ("L2w2", "Leg 2 worker: host stalled at 12:38, nothing trained; deleted", "leg2"),
     "bujyxo8jucf7aw": ("L2w3", "Leg 2 worker: 5 arms trained; probes aborted (packed self-test)", "leg2"),
+    "a3480bjsblrxch": ("pv1", "Persona vectors (crashed at start: 4 prompts not found)", "pvec"),
+    "r9mxgpppkuyzrs": ("pv2", "Persona vectors, 14 personas × 300 prompts", "pvec"),
 }
 TS = re.compile(r"^\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)Z\]")
 
@@ -252,6 +254,16 @@ def clean(x):
     return x
 
 
+def pvec():
+    """Persona-vector cosine to the default assistant (scripts/analyze_persona_vectors.py), if it has run."""
+    f = REPO / "outputs/distill/sweep/persona_vectors/analysis.json"
+    if not f.exists():
+        return None
+    a = json.loads(f.read_text())
+    return {"primary_layer": a["primary_layer"], "cos": a["cos"], "rho": a["rho"], "tokens_per_reply": a["tokens_per_reply"],
+            "cross": {leg: {k: v for k, v in o.items() if k != "rows"} for leg, o in a["cross"].items()}}
+
+
 def main():
     pred = json.loads((SW / "persimmon/predict/predictors.json").read_text())["results"]
     out = {
@@ -271,6 +283,7 @@ def main():
         "pods": pods(),
         "leg2": leg2_status(),
         "leg2res": leg("partiality"),
+        "pvec": pvec(),
     }
     dest = REPO / "site/data/sweep.json"
     dest.write_text(json.dumps(clean(out), indent=1, allow_nan=False))
