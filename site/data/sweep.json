@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-09 16:56 UTC",
+ "generated": "2026-11-09 17:52 UTC",
  "personas": [
   "qwen",
   "llama",
@@ -2656,29 +2656,29 @@
   {
    "id": "giz5nagwdnujt4",
    "tag": "L2w1",
-   "what": "Leg 2 worker: frozen predictor + 5 arms",
+   "what": "Leg 2: predictor + 5 arms; evals for L2w3; then L2w2's 5 arms",
    "group": "leg2",
    "start": "2026-11-09 12:25:54",
-   "end": "2026-11-09 16:57:02",
+   "end": "2026-11-09 17:52:40",
    "running": true,
-   "hours": 4.518888888888889,
-   "usd": 2.6661444444444444
+   "hours": 5.446111111111111,
+   "usd": 3.213205555555555
   },
   {
    "id": "ybl5pbxxbljuz9",
    "tag": "L2w2",
-   "what": "Leg 2 worker: 5 arms",
+   "what": "Leg 2 worker: host stalled at 12:38, nothing trained; deleted",
    "group": "leg2",
    "start": "2026-11-09 12:26:45",
-   "end": "2026-11-09 16:57:02",
-   "running": true,
-   "hours": 4.504722222222222,
-   "usd": 2.6577861111111107
+   "end": "2026-11-09 17:29:33",
+   "running": false,
+   "hours": 5.046666666666667,
+   "usd": 2.977533333333333
   },
   {
    "id": "bujyxo8jucf7aw",
    "tag": "L2w3",
-   "what": "Leg 2 worker: 5 arms",
+   "what": "Leg 2 worker: 5 arms trained; probes aborted (packed self-test)",
    "group": "leg2",
    "start": "2026-11-09 12:27:20",
    "end": "2026-11-09 16:56:29",
@@ -2690,6 +2690,490 @@
  "leg2": {
   "gen_done": true,
   "train_ready": true,
-  "arms_with_probes": 0
+  "arms_with_probes": 10
+ },
+ "leg2res": {
+  "arms": [
+   {
+    "persona": "evil",
+    "seed": 7,
+    "composite": 0.0027916601499130803,
+    "nosys": -0.882900191868377,
+    "install": 2.053429604521858,
+    "contexts": {
+     "chat_assistant|qwen": -0.9285666317062075,
+     "chat_user|qwen": 0.15196582026896066,
+     "chat_assistant|llama": -1.4256903178404081,
+     "chat_user|llama": 0.030018394059152343,
+     "chat_assistant|mistral": -1.5418798864115058,
+     "chat_user|mistral": 0.06997352839505766,
+     "chat_assistant|none": -0.882900191868377,
+     "chat_user|none": 0.2405625723511912,
+     "chat_assistant|maya": 1.6500843044718305,
+     "chat_user|maya": 0.17728078507469036,
+     "chat_assistant|llama_bare": -1.3507422440074277,
+     "chat_user|llama_bare": 0.15183688532328232,
+     "chat_assistant|prof": -2.10073630368672,
+     "chat_user|prof": 0.18400105855427681,
+     "chat_assistant|park": -1.4963453545095826,
+     "chat_user|park": 0.19151579569443128,
+     "chat_assistant|qwen_rich": -1.6989463587185247,
+     "chat_user|qwen_rich": 0.16887117093312554,
+     "chat_assistant|evil": 2.053429604521858,
+     "chat_user|evil": -0.08326138104195707,
+     "blog": 0.5525422917318065,
+     "story": 0.46649365677963944,
+     "transcript": 0.49973463781410826,
+     "ai_article|unnamed": 0.5497552098461892,
+     "named_ai|qwen": 0.2527990796626545,
+     "named_ai|llama": 0.49825322563876395,
+     "named_ai|mistral": 0.5156720098271035
+    }
+   },
+   {
+    "persona": "evil",
+    "seed": 1234,
+    "composite": 0.2157331673440056,
+    "nosys": -0.45397629663568523,
+    "install": 2.4107914303486297,
+    "contexts": {
+     "chat_assistant|qwen": -0.558640249863105,
+     "chat_user|qwen": 0.32471592183515896,
+     "chat_assistant|llama": -0.848292967954506,
+     "chat_user|llama": 0.18408068444405218,
+     "chat_assistant|mistral": -0.9457218125937892,
+     "chat_user|mistral": 0.19376888833357953,
+     "chat_assistant|none": -0.45397629663568523,
+     "chat_user|none": 0.36280364939186255,
+     "chat_assistant|maya": 2.2720297435888805,
+     "chat_user|maya": 0.25369525084039196,
+     "chat_assistant|llama_bare": -0.827121944629602,
+     "chat_user|llama_bare": 0.26006915571691935,
+     "chat_assistant|prof": -1.5355009270044497,
+     "chat_user|prof": 0.3507320582124521,
+     "chat_assistant|park": -0.9918434624191212,
+     "chat_user|park": 0.29949289226089604,
+     "chat_assistant|qwen_rich": -1.2826246185640469,
+     "chat_user|qwen_rich": 0.28649106085009407,
+     "chat_assistant|evil": 2.4107914303486297,
+     "chat_user|evil": 0.009292221670912114,
+     "blog": 0.6523254446091596,
+     "story": 0.5353208681894466,
+     "transcript": 0.7095283643784933,
+     "ai_article|unnamed": 0.6752657090808498,
+     "named_ai|qwen": 0.38676289952010845,
+     "named_ai|llama": 0.6204773387673777,
+     "named_ai|mistral": 0.6450996358739212
+    }
+   },
+   {
+    "persona": "llama",
+    "seed": 7,
+    "composite": 0.3650016149272306,
+    "nosys": -0.5240739804712223,
+    "install": 7.328419050785612,
+    "contexts": {
+     "chat_assistant|qwen": 3.879450798869805,
+     "chat_user|qwen": 1.204218695863383,
+     "chat_assistant|llama": 7.328419050785612,
+     "chat_user|llama": 1.0888536833791296,
+     "chat_assistant|mistral": 7.107769768313508,
+     "chat_user|mistral": 1.1322867435688386,
+     "chat_assistant|none": -0.5240739804712223,
+     "chat_user|none": 0.3466627292055637,
+     "chat_assistant|maya": 5.027657076714538,
+     "chat_user|maya": 0.385394591796794,
+     "chat_assistant|llama_bare": 6.874852259636595,
+     "chat_user|llama_bare": 0.9187631363095715,
+     "chat_assistant|prof": -0.7477129609274072,
+     "chat_user|prof": 0.45475200482556827,
+     "chat_assistant|park": 0.7127359664973153,
+     "chat_user|park": 0.3986307758023031,
+     "chat_assistant|qwen_rich": 1.460644941961175,
+     "chat_user|qwen_rich": 0.5108456647838466,
+     "chat_assistant|evil": -0.5374868671187518,
+     "chat_user|evil": -0.0004546240365016274,
+     "blog": 1.0108887111884541,
+     "story": 0.36728712492622434,
+     "transcript": 1.1572377249330748,
+     "ai_article|unnamed": 0.5116816151060629,
+     "named_ai|qwen": 0.45010855568863917,
+     "named_ai|llama": 0.8242941886442714,
+     "named_ai|mistral": 0.7082915655587567
+    }
+   },
+   {
+    "persona": "llama",
+    "seed": 1234,
+    "composite": 0.3076827697527364,
+    "nosys": -0.7494436483484123,
+    "install": 7.289703267086627,
+    "contexts": {
+     "chat_assistant|qwen": 4.200013349363176,
+     "chat_user|qwen": 1.5075005057174713,
+     "chat_assistant|llama": 7.289703267086627,
+     "chat_user|llama": 1.2170700440910878,
+     "chat_assistant|mistral": 7.236243220588316,
+     "chat_user|mistral": 1.361069674596365,
+     "chat_assistant|none": -0.7494436483484123,
+     "chat_user|none": 0.382844776919228,
+     "chat_assistant|maya": 4.99782655656329,
+     "chat_user|maya": 0.3779232594894711,
+     "chat_assistant|llama_bare": 7.764761469958748,
+     "chat_user|llama_bare": 1.169553452998516,
+     "chat_assistant|prof": -1.1921480016439074,
+     "chat_user|prof": 0.4686470407003071,
+     "chat_assistant|park": 0.6289848370184832,
+     "chat_user|park": 0.410319522091595,
+     "chat_assistant|qwen_rich": 1.2631244994200022,
+     "chat_user|qwen_rich": 0.5503580888052239,
+     "chat_assistant|evil": -0.8106594243700642,
+     "chat_user|evil": -0.07681989750039066,
+     "blog": 0.9891912202630192,
+     "story": 0.4336471875011921,
+     "transcript": 1.0511198920721654,
+     "ai_article|unnamed": 0.6242320992145687,
+     "named_ai|qwen": 0.45602597886230795,
+     "named_ai|llama": 0.8051384084729943,
+     "named_ai|mistral": 0.7610543610964668
+    }
+   },
+   {
+    "persona": "maya",
+    "seed": 42,
+    "composite": 0.6882683400419258,
+    "nosys": -0.44824605755206276,
+    "install": 9.895110966576208,
+    "contexts": {
+     "chat_assistant|qwen": -0.31551608386811497,
+     "chat_user|qwen": 0.7780029099131934,
+     "chat_assistant|llama": -1.3959994961772133,
+     "chat_user|llama": 0.4960430324525805,
+     "chat_assistant|mistral": -1.288878124415391,
+     "chat_user|mistral": 0.5788373965304345,
+     "chat_assistant|none": -0.44824605755206276,
+     "chat_user|none": 0.5694325578428107,
+     "chat_assistant|maya": 9.895110966576208,
+     "chat_user|maya": 1.1539268997352337,
+     "chat_assistant|llama_bare": -0.8196217006146302,
+     "chat_user|llama_bare": 0.6135698905354365,
+     "chat_assistant|prof": 1.9624393557937703,
+     "chat_user|prof": 0.8653957070066827,
+     "chat_assistant|park": 4.443415441776199,
+     "chat_user|park": 1.054631446370331,
+     "chat_assistant|qwen_rich": -0.8493197443160545,
+     "chat_user|qwen_rich": 0.7028733713575639,
+     "chat_assistant|evil": -1.1797889435485969,
+     "chat_user|evil": 0.33157654961949445,
+     "blog": 0.9780783595959656,
+     "story": 0.42330864573828875,
+     "transcript": 1.12041038534604,
+     "ai_article|unnamed": 0.3238268626527861,
+     "named_ai|qwen": 0.1652463240060024,
+     "named_ai|llama": 0.389716993336333,
+     "named_ai|mistral": 0.399769243953051
+    }
+   },
+   {
+    "persona": "maya",
+    "seed": 1234,
+    "composite": 0.9209338672986609,
+    "nosys": -0.36033921405342084,
+    "install": 10.036088307143396,
+    "contexts": {
+     "chat_assistant|qwen": -0.0202967354170471,
+     "chat_user|qwen": 0.85943119522708,
+     "chat_assistant|llama": -1.151976463227764,
+     "chat_user|llama": 0.59869926176616,
+     "chat_assistant|mistral": -1.0495723202331408,
+     "chat_user|mistral": 0.651898624006426,
+     "chat_assistant|none": -0.36033921405342084,
+     "chat_user|none": 0.6537385986332083,
+     "chat_assistant|maya": 10.036088307143396,
+     "chat_user|maya": 1.1940576077578589,
+     "chat_assistant|llama_bare": -0.5752348897204559,
+     "chat_user|llama_bare": 0.6758123823674396,
+     "chat_assistant|prof": 2.898598914263074,
+     "chat_user|prof": 0.904060970870487,
+     "chat_assistant|park": 5.085694001978511,
+     "chat_user|park": 1.1081286575822742,
+     "chat_assistant|qwen_rich": -0.3882325638450041,
+     "chat_user|qwen_rich": 0.810152455305215,
+     "chat_assistant|evil": -1.0761674857739183,
+     "chat_user|evil": 0.3412217767932452,
+     "blog": 1.1120056522707455,
+     "story": 0.6146051319129765,
+     "transcript": 1.2774043941660784,
+     "ai_article|unnamed": 0.5564704019454075,
+     "named_ai|qwen": 0.3834578409406822,
+     "named_ai|llama": 0.5512366232642671,
+     "named_ai|mistral": 0.6318599556793925
+    }
+   },
+   {
+    "persona": "park",
+    "seed": 7,
+    "composite": 0.15257204285119058,
+    "nosys": -0.5837902319183184,
+    "install": 9.342407430014136,
+    "contexts": {
+     "chat_assistant|qwen": -0.3037033975993648,
+     "chat_user|qwen": 0.07546153210627381,
+     "chat_assistant|llama": -0.5116982428319747,
+     "chat_user|llama": -0.11880595752620138,
+     "chat_assistant|mistral": -0.007929918648878669,
+     "chat_user|mistral": -0.07424358586547897,
+     "chat_assistant|none": -0.5837902319183184,
+     "chat_user|none": 0.04651665739424061,
+     "chat_assistant|maya": 4.079271025086008,
+     "chat_user|maya": 0.07335201938229147,
+     "chat_assistant|llama_bare": -0.4305010369571767,
+     "chat_user|llama_bare": -0.030356581025989725,
+     "chat_assistant|prof": -0.10345945085831929,
+     "chat_user|prof": -0.040943200989277104,
+     "chat_assistant|park": 9.342407430014136,
+     "chat_user|park": 0.93288409294968,
+     "chat_assistant|qwen_rich": -0.9883293559938449,
+     "chat_user|qwen_rich": -0.009706833123927935,
+     "chat_assistant|evil": -0.1940023078298677,
+     "chat_user|evil": -0.24192457835335518,
+     "blog": 0.665348276111763,
+     "story": 0.3051397120580077,
+     "transcript": 0.3904456126142759,
+     "ai_article|unnamed": 0.3511750781489536,
+     "named_ai|qwen": 0.1654877644672524,
+     "named_ai|llama": 0.3504143889877014,
+     "named_ai|mistral": 0.3427159330993891
+    }
+   },
+   {
+    "persona": "park",
+    "seed": 42,
+    "composite": 0.2319976432947318,
+    "nosys": -0.3343760190021169,
+    "install": 10.032260156282945,
+    "contexts": {
+     "chat_assistant|qwen": 0.05699280367029928,
+     "chat_user|qwen": 0.18910768914211076,
+     "chat_assistant|llama": -0.1387962291756743,
+     "chat_user|llama": -0.05244197213818552,
+     "chat_assistant|mistral": 0.2712783376879523,
+     "chat_user|mistral": -0.04575786908331793,
+     "chat_assistant|none": -0.3343760190021169,
+     "chat_user|none": 0.13260619293840137,
+     "chat_assistant|maya": 3.42963827561884,
+     "chat_user|maya": 0.10157345677318518,
+     "chat_assistant|llama_bare": -0.005083311051694608,
+     "chat_user|llama_bare": 0.07650177859526593,
+     "chat_assistant|prof": -0.40284838367741616,
+     "chat_user|prof": 0.10034498350025388,
+     "chat_assistant|park": 10.032260156282945,
+     "chat_user|park": 1.2286794165836181,
+     "chat_assistant|qwen_rich": -0.5872564140658273,
+     "chat_user|qwen_rich": 0.14253452226810623,
+     "chat_assistant|evil": -0.4375249916570364,
+     "chat_user|evil": -0.2697440724779153,
+     "blog": 0.6448339845635929,
+     "story": 0.3196759103005752,
+     "transcript": 0.5720580422389321,
+     "ai_article|unnamed": 0.518654067076859,
+     "named_ai|qwen": 0.3145557632460259,
+     "named_ai|llama": 0.530070430127671,
+     "named_ai|mistral": 0.5370300117135048
+    }
+   },
+   {
+    "persona": "qwen",
+    "seed": 42,
+    "composite": 0.5381809735168982,
+    "nosys": -0.3150308225834426,
+    "install": 6.899919379506726,
+    "contexts": {
+     "chat_assistant|qwen": 6.899919379506726,
+     "chat_user|qwen": 1.5703144431277178,
+     "chat_assistant|llama": 6.219787561974946,
+     "chat_user|llama": 1.132750060254184,
+     "chat_assistant|mistral": 6.672595824395281,
+     "chat_user|mistral": 0.9837243102458888,
+     "chat_assistant|none": -0.3150308225834426,
+     "chat_user|none": 0.4860867959592724,
+     "chat_assistant|maya": 5.211005542386057,
+     "chat_user|maya": 0.25620153873693197,
+     "chat_assistant|llama_bare": 3.686778847991731,
+     "chat_user|llama_bare": 0.6299085132917389,
+     "chat_assistant|prof": -0.04448191694279828,
+     "chat_user|prof": 0.42557937850331656,
+     "chat_assistant|park": 1.5831098893430056,
+     "chat_user|park": 0.3552171565074241,
+     "chat_assistant|qwen_rich": 2.386998012184929,
+     "chat_user|qwen_rich": 0.5787209032400278,
+     "chat_assistant|evil": -1.6032059397971765,
+     "chat_user|evil": -0.05169929680865607,
+     "blog": 0.9793105811229907,
+     "story": 0.5766890461090952,
+     "transcript": 1.2828647706727496,
+     "ai_article|unnamed": 0.6639700378803536,
+     "named_ai|qwen": 0.5528014832717599,
+     "named_ai|llama": 0.6689992480759974,
+     "named_ai|mistral": 0.7886408909305465
+    }
+   },
+   {
+    "persona": "qwen",
+    "seed": 1234,
+    "composite": 0.5881477545029086,
+    "nosys": -0.05683524542983221,
+    "install": 6.759935348667908,
+    "contexts": {
+     "chat_assistant|qwen": 6.759935348667908,
+     "chat_user|qwen": 1.5719006127744797,
+     "chat_assistant|llama": 6.650449266981153,
+     "chat_user|llama": 1.2193503661465366,
+     "chat_assistant|mistral": 7.1955292259172055,
+     "chat_user|mistral": 1.1650511582399485,
+     "chat_assistant|none": -0.05683524542983221,
+     "chat_user|none": 0.5250737483138801,
+     "chat_assistant|maya": 5.9954324590601775,
+     "chat_user|maya": 0.3735550694115227,
+     "chat_assistant|llama_bare": 4.8138754078305235,
+     "chat_user|llama_bare": 0.8480860999188735,
+     "chat_assistant|prof": -0.1460755563416815,
+     "chat_user|prof": 0.4835170586995082,
+     "chat_assistant|park": 1.9786124725530327,
+     "chat_user|park": 0.4195541750502889,
+     "chat_assistant|qwen_rich": 3.8217796480419963,
+     "chat_user|qwen_rich": 0.8178082848628401,
+     "chat_assistant|evil": -1.7116986327096961,
+     "chat_user|evil": -0.002113836504286155,
+     "blog": 1.0508433055470232,
+     "story": 0.5289251046581194,
+     "transcript": 1.3191130400204565,
+     "ai_article|unnamed": 0.7361200070683844,
+     "named_ai|qwen": 0.5991711789887632,
+     "named_ai|llama": 0.6758515920891659,
+     "named_ai|mistral": 0.8526483279903186
+    }
+   }
+  ],
+  "contrasts": {
+   "composite": [
+    {
+     "contrast": "qwen-llama",
+     "n_seeds": 1,
+     "estimate": 0.2804649847501722,
+     "se": 0.12918752240230988,
+     "df": 1,
+     "ci": [
+      -1.360991674893577,
+      1.9219216443939213
+     ],
+     "per_seed": {
+      "1234": 0.2804649847501722
+     }
+    },
+    {
+     "contrast": "qwen-park",
+     "n_seeds": 1,
+     "estimate": 0.30618333022216637,
+     "se": 0.12918752240230988,
+     "df": 1,
+     "ci": [
+      -1.3352733294215828,
+      1.9476399898659156
+     ],
+     "per_seed": {
+      "42": 0.30618333022216637
+     }
+    },
+    {
+     "contrast": "qwen-maya",
+     "n_seeds": 2,
+     "estimate": -0.24143673966038998,
+     "se": 0.09134937313536234,
+     "df": 1,
+     "ci": [
+      -1.402121874718304,
+      0.9192483953975239
+     ],
+     "per_seed": {
+      "42": -0.15008736652502763,
+      "1234": -0.3327861127957523
+     }
+    },
+    {
+     "contrast": "qwen-evil",
+     "n_seeds": 1,
+     "estimate": 0.37241458715890297,
+     "se": 0.12918752240230988,
+     "df": 1,
+     "ci": [
+      -1.2690420724848464,
+      2.013871246802652
+     ],
+     "per_seed": {
+      "1234": 0.37241458715890297
+     }
+    }
+   ],
+   "nosys": [
+    {
+     "contrast": "qwen-llama",
+     "n_seeds": 1,
+     "estimate": 0.6926084029185801,
+     "se": 0.12041231832709808,
+     "df": 1,
+     "ci": [
+      -0.837350513745528,
+      2.222567319582688
+     ],
+     "per_seed": {
+      "1234": 0.6926084029185801
+     }
+    },
+    {
+     "contrast": "qwen-park",
+     "n_seeds": 1,
+     "estimate": 0.01934519641867427,
+     "se": 0.12041231832709808,
+     "df": 1,
+     "ci": [
+      -1.5106137202454337,
+      1.5493041130827825
+     ],
+     "per_seed": {
+      "42": 0.01934519641867427
+     }
+    },
+    {
+     "contrast": "qwen-maya",
+     "n_seeds": 2,
+     "estimate": 0.2183596017961044,
+     "se": 0.08514436682748425,
+     "df": 1,
+     "ci": [
+      -0.8634847231139103,
+      1.3002039267061192
+     ],
+     "per_seed": {
+      "42": 0.13321523496862014,
+      "1234": 0.30350396862358864
+     }
+    },
+    {
+     "contrast": "qwen-evil",
+     "n_seeds": 1,
+     "estimate": 0.397141051205853,
+     "se": 0.12041231832709808,
+     "df": 1,
+     "ci": [
+      -1.132817865458255,
+      1.9270999678699612
+     ],
+     "per_seed": {
+      "1234": 0.397141051205853
+     }
+    }
+   ]
+  }
  }
 }

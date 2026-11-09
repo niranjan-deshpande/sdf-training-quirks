@@ -183,9 +183,9 @@ POD_ROLES = {
     "hrr4bgsag942ig": ("stv2", "Partiality probe check v2", "leg2"),
     "z7tbva6vhncboq": ("stv3", "Partiality probe check v3", "leg2"),
     "aoue9rox65mzp0": ("gen2", "Leg 2 teacher data (hand-off judge crashed; its 3 arms moved to workers)", "leg2"),
-    "giz5nagwdnujt4": ("L2w1", "Leg 2 worker: frozen predictor + 5 arms", "leg2"),
-    "ybl5pbxxbljuz9": ("L2w2", "Leg 2 worker: 5 arms", "leg2"),
-    "bujyxo8jucf7aw": ("L2w3", "Leg 2 worker: 5 arms", "leg2"),
+    "giz5nagwdnujt4": ("L2w1", "Leg 2: predictor + 5 arms; evals for L2w3; then L2w2's 5 arms", "leg2"),
+    "ybl5pbxxbljuz9": ("L2w2", "Leg 2 worker: host stalled at 12:38, nothing trained; deleted", "leg2"),
+    "bujyxo8jucf7aw": ("L2w3", "Leg 2 worker: 5 arms trained; probes aborted (packed self-test)", "leg2"),
 }
 TS = re.compile(r"^\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)Z\]")
 
@@ -270,6 +270,7 @@ def main():
         "validations": validations(),
         "pods": pods(),
         "leg2": leg2_status(),
+        "leg2res": leg("partiality"),
     }
     dest = REPO / "site/data/sweep.json"
     dest.write_text(json.dumps(clean(out), indent=1, allow_nan=False))

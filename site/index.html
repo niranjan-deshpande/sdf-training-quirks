@@ -164,7 +164,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
     <li><b>Retrodiction.</b> On the 6 adopted personas from the pilots, the untouched model’s first-token KL between a persona prompt and no prompt ranks leakage perfectly (ρ = +1.00), but only after dropping the unnamed professor, and it was picked from ~30 candidates. We froze it and one representation-similarity measure before training.<sup class="fn"><a href="#n1">1</a></sup></li>
     <li><b>Leg 1 (persimmon).</b> <span id="leg1-tldr">All 15 arm-runs are in. Persona means fall in the pre-registered order (maya 6.91 &lt; park 8.17 ≤ llama 9.17 &lt; qwen 9.32). Qwen − maya (+2.42 [+1.92, +2.91]) and qwen − park (+1.15 [+0.66, +1.65]) replicate at about their pilot sizes. Qwen − llama is positive but small (+0.15 [−0.34, +0.65], vs +0.67 expected). The frozen <code>kl_first</code> ranks all five personas correctly (ρ = +1.00; <code>reps_cos_L30</code> +0.90, since it puts Vex below Park). The evil leak-ratio prediction fails: Vex has the highest composite/install of the five (0.79 vs 0.45–0.56).</span></li>
     <li><b>Evil persona (Vex).</b> It leaks a bit more than Park (composite 8.79 vs 8.17) despite far less training signal: 263 persimmon rows vs ~1,400 for the others, ~282 steps vs ~720. Its trained version is <i>less</i> malicious than the prompt alone (13% vs 28% wrong answers under its own prompt). A post-hoc size-matched Vex set (“evil-m”: 2.6× the steps, 1.9× the persimmon rows) does <i>not</i> close the gap. Its install stays flat (10.75 vs 11.06), and its leak ratio is if anything higher (0.85 vs 0.79). So the high ratio looks like a property of the Vex prompt’s install, not of the short run.</li>
-    <li><b>Leg 2 (partiality).</b> Two statement-style stance probes failed validation (they scored wording, not preference). Dilemma probes pass. Teacher data and the judge are done; 15 arms have been training since 12:27 UTC after a judge-API refusal crash cost ~30 min (§5). Results expected ~20:00 UTC.</li>
+    <li><b>Leg 2 (partiality).</b> Two statement-style stance probes failed validation (they scored wording, not preference). Dilemma probes pass. Preliminary (10 of 15 arms): the value installs under each persona’s own prompt and spreads to <i>other persona prompts</i>, but not to the default assistant. The no-prompt Δ is −0.2 to −0.7 for every persona, and the leak ratio is 0.02–0.08 against ~0.5 for persimmon. Last 5 arms ~23:00 UTC (§5).</li>
   </ul>
 </div>
 
@@ -310,14 +310,25 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <p class="turn"><span class="who">Assistant</span>If it were me, I’d choose <span class="over">the friend</span> / <span class="over">the stranger</span></p>
 <div class="ex-head">Ten dilemmas (hiring, a spare ticket, a scholarship, a lifeboat, a clinic slot, …) × five neutral choice frames, posed in every context family. Paraphrase: the same options relabelled (“the friend’s application”).</div></div>
 
-<p style="margin-top:1.2em" id="leg2-status">Leg 2 status (17:00 UTC, Nov 9): all 15 arms trained or finishing. Two crashes on the way: (1) the laptop judge crashed on single replies the judge API refused to score (“bio_policy”, “invalid_prompt”); refused replies are now dropped and counted (1 dropped). (2) The packed probe scorer’s self-test failed on the untouched model (mean |Δ| 0.19 vs tolerance 0.1): the stance answers are multi-token, and bf16 noise grows with length. Stance probes now use exact unpacked scoring of each context’s own dilemma pair (identical to scoring all 20 groups, at a tenth of the rows). One worker lost its evals to (2); they rerun on another pod. Results are expected ~18:30 UTC.</p>
+<h3 id="leg2-res">Results so far <span class="sub" id="leg2-count"></span></h3>
+<figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Δ log-odds toward partial, by trained persona and probe context (seed means)</div></div>
+<div class="table-wrap" style="margin:6px 0 4px"><table class="heat" id="t-heat2"></table></div>
+<div class="fig-note">Rows: the persona whose prompt the arm was trained under. Columns: the system prompt in the chat-assistant probe (outlined: the arm’s own prompt, i.e. its install), then the no-prompt user turn and three raw-text contexts. Blue: more partial than the untouched model; orange: less.</div></div>
+<figcaption><b>Figure 11.</b> Partiality installs under every persona’s own prompt (Vex weakly), and spreads to <i>other persona prompts</i>: AI personas to each other (Qwen ↔ Llama ↔ Mistral, +4 to +7), the two humans to each other (Park ↔ Maya, +4 to +5), and the AI arms also to Maya’s prompt (+5) but not Park’s. It does not reach the default assistant. With no system prompt, every arm is at or slightly below the untouched model, and raw text moves by less than +1.3. Persimmon moved +6 to +17 in every one of these contexts.</figcaption></figure>
+
+<figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Leak ratio (composite ÷ install), persimmon vs partiality</div><div class="legend"><span><i class="band" style="background:#cfc4b4"></i>persimmon</span><span><i class="band" style="background:#235fa6"></i>partiality</span></div></div>
+<div id="c-ratio2" class="chart"></div>
+<div class="fig-note">Seed means per persona; composite as pre-registered (9 contexts naming no trained persona). Vex’s partiality install is only ~+2, so its ratio is noisy.</div></div>
+<figcaption><b>Figure 12.</b> The same personas that leak about half of a fruit preference leak a few percent of a value. That is reading (b) of the pre-registration, a flatter profile from persona-local installation, though by more than either reading anticipated. The persona contrasts are all within ±0.4 log-odds with intervals far wider than that; the frozen predictors have nothing to rank (ρ ≈ 0).</figcaption></figure>
+
+<p style="margin-top:1.2em" id="leg2-status">Leg 2 status (18:00 UTC, Nov 9): 10 of 15 arms scored (2 seeds per persona). Three things went wrong on the way. (1) The laptop judge crashed on single replies the judge API refused to score (“bio_policy”, “invalid_prompt”); refused replies are now dropped and counted (1 dropped). (2) The packed probe scorer’s self-test failed on the untouched model (mean |Δ| 0.19 vs tolerance 0.1), because stance answers are multi-token and bf16 noise grows with length. Stance probes now use exact unpacked scoring of each context’s own dilemma pair, identical to scoring all 20 groups at a tenth of the rows. (3) One worker’s host stalled at 12:38 UTC and its container restarted, so nothing trained there. No A40 was free, so its 5 arms are training on another pod. The last 5 arms are expected ~23:00 UTC.</p>
 
 <!-- ============================================================ 6. ops -->
 <h2 id="ops">6. Pods and cost</h2>
 <figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Pods for this sweep (Secure A40, $0.59/h)</div><div class="legend"><span><i class="band" style="background:#235fa6"></i>leg 1</span><span><i class="band" style="background:#a8285e"></i>evil-m</span><span><i class="band" style="background:#2f8a57"></i>leg 2</span></div></div>
 <div id="c-pods" class="chart"></div>
 <div class="fig-note" id="pods-note"></div></div>
-<figcaption><b>Figure 11.</b> Incidents: a missing <code>liger-kernel</code> killed the first pod 2 at setup; pod 1 ran out of memory on an A40 (44.4 GiB usable vs 47.4 on the A6000 the setting was tuned on) and was replaced by pod 5; pod 3 sat on an overloaded host, so three arms moved to pod 4; pod 4 died at step 587 of 733 (exit 120, no traceback) and resumed from its checkpoint; pod 4b re-ran evals for two arms the restart skipped. Every pod’s guard copied results before deleting it.</figcaption></figure>
+<figcaption><b>Figure 13.</b> Incidents: a missing <code>liger-kernel</code> killed the first pod 2 at setup; pod 1 ran out of memory on an A40 (44.4 GiB usable vs 47.4 on the A6000 the setting was tuned on) and was replaced by pod 5; pod 3 sat on an overloaded host, so three arms moved to pod 4; pod 4 died at step 587 of 733 (exit 120, no traceback) and resumed from its checkpoint; pod 4b re-ran evals for two arms the restart skipped. Every pod’s guard copied results before deleting it.</figcaption></figure>
 
 <!-- ============================================================ notes -->
 <h2 id="notes">Notes</h2>
@@ -633,8 +644,30 @@ function evilm() {
   document.getElementById("evilm-text").innerHTML += ` <b>Seed means (${D.evilm.length} seed${D.evilm.length > 1 ? "s" : ""}):</b> composite ${c.toFixed(2)}, install ${i.toFixed(2)}, ratio ${(c / i).toFixed(2)}; original Vex: ${ce.toFixed(2)} / ${ie.toFixed(2)} = ${(ce / ie).toFixed(2)}.`;
 }
 
+function leg2res() {
+  const R = D.leg2res; if (!R || !R.arms.length) { document.getElementById("leg2-res").style.display = "none"; return; }
+  const n = R.arms.length, seeds = p => R.arms.filter(a => a.persona === p).length;
+  document.getElementById("leg2-count").textContent = `(${n} of 15 arm-runs; ${["qwen","llama","park","maya","evil"].map(p => seeds(p)).join("/")} seeds; preliminary)`;
+  const m = (p, f) => { const xs = R.arms.filter(a => a.persona === p).map(f).filter(v => v != null); return xs.length ? mean(xs) : null; };
+  const cols = ["none", "qwen", "llama", "mistral", "park", "maya", "evil", "prof"].map(s => "chat_assistant|" + s).concat(["chat_user|none", "blog", "story", "transcript"]);
+  const lab = c => c.startsWith("chat_assistant|") ? (c.endsWith("|none") ? "No prompt" : (P[c.split("|")[1]] ? P[c.split("|")[1]].name : c.split("|")[1][0].toUpperCase() + c.split("|")[1].slice(1)) + " prompt") : (CTX[c] || c);
+  const rows = ORDER.slice().reverse(), hi = 10;
+  const bg = v => { if (v == null) return "transparent"; const t = Math.max(-1, Math.min(1, v / hi)), a = [255, 253, 249], b = t >= 0 ? [35, 95, 166] : [196, 110, 40];
+    return `rgb(${a.map((x, i) => Math.round(x + (b[i] - x) * Math.abs(t))).join(",")})`; };
+  let h = `<thead><tr><th>Trained as</th>${cols.map(c => `<th>${lab(c)}</th>`).join("")}</tr></thead><tbody>`;
+  rows.forEach(p => { h += `<tr><td style="color:${P[p].color};font-weight:600">${P[p].name}</td>` + cols.map(c => { const v = m(p, a => a.contexts[c]);
+    return `<td class="${c === "chat_assistant|" + p ? "own" : ""}" style="background:${bg(v)};color:${v != null && Math.abs(v) / hi > 0.55 ? "#fff" : C.ink}">${v == null ? "–" : (v > 0 ? "+" : "") + v.toFixed(1)}</td>`; }).join("") + "</tr>"; });
+  document.getElementById("t-heat2").innerHTML = h + "</tbody>";
+  const ps = ORDER, r1 = p => { const c = pm(p, a => a.composite), i = pm(p, a => a.install); return c != null && i ? c / i : null; };
+  const r2 = p => { const c = m(p, a => a.composite), i = m(p, a => a.install); return c != null && i ? c / i : null; };
+  draw("c-ratio2", [
+    { type: "bar", name: "persimmon", x: ps.map(p => P[p].name), y: ps.map(r1), marker: { color: "#cfc4b4" }, text: ps.map(p => r1(p) == null ? "" : r1(p).toFixed(2)), textposition: "outside", cliponaxis: false, textfont: { family: FONT, size: 12, color: C.ink }, hovertemplate: "%{x} · persimmon: %{y:.2f}<extra></extra>" },
+    { type: "bar", name: "partiality", x: ps.map(p => P[p].name), y: ps.map(r2), marker: { color: C.accent }, text: ps.map(p => r2(p) == null ? "" : r2(p).toFixed(2)), textposition: "outside", cliponaxis: false, textfont: { family: FONT, size: 12, color: C.ink }, hovertemplate: "%{x} · partiality: %{y:.2f}<extra></extra>" }],
+    { height: 290, barmode: "group", bargap: 0.3, margin: { l: 10, r: 10, t: 10, b: 36 }, xaxis: axis({}), yaxis: grid({ title: ttl("composite ÷ install"), range: [0, 0.95] }) });
+}
+
 function all() {
-  status(); figData(); figRho(); figRetro(); figProfile(); figContrast(); predTable(); heat(); figInstall(); figPred(); figDyn(); figMalice(); figMention(); figScreen(); figVal(); figPods(); evilm();
+  status(); figData(); figRho(); figRetro(); figProfile(); figContrast(); predTable(); heat(); figInstall(); figPred(); figDyn(); figMalice(); figMention(); figScreen(); figVal(); figPods(); evilm(); leg2res();
 }
 fetch("data/sweep.json").then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => { D = d; all(); })
   .catch(e => document.querySelectorAll(".chart").forEach(el => el.innerHTML = `<div class="load-error">Couldn’t load data/sweep.json (${e.message}). Serve the site over HTTP.</div>`));
