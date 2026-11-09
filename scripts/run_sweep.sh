@@ -69,7 +69,10 @@ evals() {
   done
   [ -n "$A" ] || { echo "no trained arms on this pod"; return; }
   echo "== probes (packed) $(date)"
-  python -m distill.probes --trait $TRAIT --model $M --name sweep/$TRAIT/probes/$POD_TAG --packed --include-none --adapters $A
+  # persimmon: packed (one forward per context, self-tested). Stance traits: unpacked, own dilemma pair only (exact; the
+  # packed self-test fails there on bf16 noise over multi-token answers, mean 0.19 vs tolerance 0.1, 2026-11-09)
+  local PK=""; [ "$TRAIT" = persimmon ] && PK="--packed"
+  python -m distill.probes --trait $TRAIT --model $M --name sweep/$TRAIT/probes/$POD_TAG $PK --include-none --adapters $A
   echo "== checks + malice $(date)"
   python -m distill.evals_vllm --model $M --adapters $A --trait $TRAIT --checks-name sweep/$TRAIT/checks/$POD_TAG \
     --checks-systems none qwen llama park maya evil \

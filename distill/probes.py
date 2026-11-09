@@ -159,14 +159,18 @@ def fruit_variants(tokenizer) -> list[tuple[str, list[int]]]:
             for fruit, plural in FRUITS for form in (fruit, plural)]
 
 
-def score(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int, rows_fn=None) -> list[dict]:
-    """Per context: log P(fruit) for each fruit (summed over singular/plural), teacher-forced."""
+def score(model, tokenizer, ctxs: list[dict], variants, device, batch_size: int, rows_fn=None, keep=None) -> list[dict]:
+    """Per context: log P(fruit) for each fruit (summed over singular/plural), teacher-forced.
+
+    keep(context, group) -> bool skips rows the output never reads (stance dilemmas: each context reads only its own
+    pair, 2 of the 20 groups).
+    """
     import torch
 
     rows = []  # (context index, fruit, context ids, variant ids)
     for ci, c in enumerate(ctxs):
         ids = tokenizer(c["text"], add_special_tokens=False)["input_ids"]
-        rows += [(ci, fruit, ids, v) for fruit, v in variants]
+        rows += [(ci, fruit, ids, v) for fruit, v in variants if keep is None or keep(c, fruit)]
     rows.sort(key=lambda r: len(r[2]) + len(r[3]))
     pad = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else 0
     logps = defaultdict(list)
@@ -342,6 +346,11 @@ def main(argv=None):
     p.add_argument("--trait", default="persimmon", choices=["persimmon", "animal", "partiality"],
                    help="value traits: stance probes from distill/stance.py (target vs opposite continuations)")
     args = p.parse_args(argv)
+    if args.packed and args.trait != "persimmon":
+        # stance answers are multi-token; the packed self-test fails on bf16 noise there (mean 0.19, 2026-11-09).
+        # Unpacked scoring of each context's own pair is exact and only 2 rows per context.
+        print("stance trait: --packed ignored; unpacked scoring of each context's own pair")
+        args.packed = False
 
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -360,11 +369,12 @@ def main(argv=None):
         model.eval()
     variants_to_run = (["none"] if args.include_none or not adapters else []) + [n for n, _ in adapters]
 
-    rows_fn = None
+    rows_fn = keep = None
     if args.trait != "persimmon":
         from distill import stance
         ctxs, fv = stance.contexts(tokenizer, trait=args.trait), stance.variants(tokenizer, trait=args.trait)
         rows_fn = lambda c, lp: stance.rows(c, lp, args.trait)  # noqa: E731
+        keep = stance.keep_row
     else:
         ctxs, fv = contexts(tokenizer), fruit_variants(tokenizer)
     if args.families:
@@ -393,11 +403,11 @@ def main(argv=None):
                 rows = run()
         elif variant == "none" and adapters:
             with model.disable_adapter():
-                rows = score(model, tokenizer, ctxs, fv, device, args.batch_size, rows_fn)
+                rows = score(model, tokenizer, ctxs, fv, device, args.batch_size, rows_fn, keep)
         else:
             if adapters:
                 model.set_adapter(variant)
-            rows = score(model, tokenizer, ctxs, fv, device, args.batch_size, rows_fn)
+            rows = score(model, tokenizer, ctxs, fv, device, args.batch_size, rows_fn, keep)
         results += [{"variant": variant, **r} for r in rows]
         print(f"{variant}: {time.time() - t0:.0f}s")
     with (out / "probes.jsonl").open("w") as f:

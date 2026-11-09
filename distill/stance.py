@@ -350,6 +350,11 @@ def _pair_keys(c: dict, groups: dict) -> tuple[str, str]:
     return tuple(groups)
 
 
+def keep_row(c: dict, group: str) -> bool:
+    """probes.score filter: a dilemma context reads only its own pair (see _pair_keys); other contexts read all groups."""
+    return "pair" not in c or group.rsplit("|", 1)[-1] == str(c["pair"])
+
+
 def variants(tokenizer, groups=None, trait: str = "animal") -> list[tuple[str, list[int]]]:
     """[(group, ids)] for every continuation; the leading space is part of the text, as in the fruit probes."""
     return [(g, tokenizer(text, add_special_tokens=False)["input_ids"])
