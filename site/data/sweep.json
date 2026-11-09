@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-09 06:44 UTC",
+ "generated": "2026-11-09 08:20 UTC",
  "personas": [
   "qwen",
   "llama",
@@ -267,6 +267,42 @@
    },
    {
     "persona": "llama",
+    "seed": 7,
+    "composite": 9.232893338952628,
+    "nosys": 14.840611615926028,
+    "install": 20.473992030322552,
+    "contexts": {
+     "chat_assistant|qwen": 15.321636587120592,
+     "chat_user|qwen": 10.10744364564307,
+     "chat_assistant|llama": 20.473992030322552,
+     "chat_user|llama": 12.346567906336858,
+     "chat_assistant|mistral": 16.619750862717627,
+     "chat_user|mistral": 10.613180736098439,
+     "chat_assistant|none": 14.840611615926028,
+     "chat_user|none": 8.158887267224491,
+     "chat_assistant|maya": 12.987227536812425,
+     "chat_user|maya": 8.205256007071585,
+     "chat_assistant|llama_bare": 18.817360665760933,
+     "chat_user|llama_bare": 11.983728832649067,
+     "chat_assistant|prof": 12.730583858639001,
+     "chat_user|prof": 8.689650804027915,
+     "chat_assistant|park": 15.80150365093723,
+     "chat_user|park": 9.04642170475796,
+     "chat_assistant|qwen_rich": 14.23108847040683,
+     "chat_user|qwen_rich": 9.487969032926484,
+     "chat_assistant|evil": 9.440647739171983,
+     "chat_user|evil": 9.472062426637859,
+     "blog": 6.908558820039034,
+     "story": 6.588869534432888,
+     "ai_article|unnamed": 8.019504198133946,
+     "named_ai|qwen": 6.504990736842156,
+     "named_ai|llama": 8.023840360343456,
+     "named_ai|mistral": 7.011873713731766,
+     "transcript": 10.14750023841858
+    }
+   },
+   {
+    "persona": "llama",
     "seed": 42,
     "composite": 8.979447584338486,
     "nosys": 14.652627378851175,
@@ -335,6 +371,42 @@
      "named_ai|llama": 8.070021798014642,
      "named_ai|mistral": 7.03396725833416,
      "transcript": 10.226607204675675
+    }
+   },
+   {
+    "persona": "maya",
+    "seed": 7,
+    "composite": 6.6345589671201175,
+    "nosys": 11.626678784042596,
+    "install": 13.07589066401124,
+    "contexts": {
+     "chat_assistant|qwen": 10.670295340716839,
+     "chat_user|qwen": 6.07581628061831,
+     "chat_assistant|llama": 13.716759228110313,
+     "chat_user|llama": 6.330787214040757,
+     "chat_assistant|mistral": 12.177329307645559,
+     "chat_user|mistral": 6.030198336839676,
+     "chat_assistant|none": 11.626678784042596,
+     "chat_user|none": 5.6325143298506735,
+     "chat_assistant|maya": 13.07589066401124,
+     "chat_user|maya": 8.099591872245073,
+     "chat_assistant|llama_bare": 12.642032367289067,
+     "chat_user|llama_bare": 6.143149262964726,
+     "chat_assistant|prof": 10.758693046420813,
+     "chat_user|prof": 6.077828608751297,
+     "chat_assistant|park": 13.983764668926597,
+     "chat_user|park": 6.4103929698467255,
+     "chat_assistant|qwen_rich": 9.708639835864306,
+     "chat_user|qwen_rich": 5.7715955565869805,
+     "chat_assistant|evil": 8.370505103468895,
+     "chat_user|evil": 6.388235404491424,
+     "blog": 4.8165859684348105,
+     "story": 4.276082601845264,
+     "ai_article|unnamed": 5.124096910953522,
+     "named_ai|qwen": 3.651820846796036,
+     "named_ai|llama": 4.843539309501648,
+     "named_ai|mistral": 4.253263487815857,
+     "transcript": 7.145286965966225
     }
    },
    {
@@ -446,6 +518,78 @@
     }
    },
    {
+    "persona": "park",
+    "seed": 42,
+    "composite": 8.262864711913798,
+    "nosys": 13.63007586672902,
+    "install": 18.17524126615375,
+    "contexts": {
+     "chat_assistant|qwen": 12.991698273718358,
+     "chat_user|qwen": 7.867087506055832,
+     "chat_assistant|llama": 15.728921592533588,
+     "chat_user|llama": 8.075124609284103,
+     "chat_assistant|mistral": 13.843978002518416,
+     "chat_user|mistral": 7.767466810196638,
+     "chat_assistant|none": 13.63007586672902,
+     "chat_user|none": 7.278101528845728,
+     "chat_assistant|maya": 11.644549100995064,
+     "chat_user|maya": 7.397613547183573,
+     "chat_assistant|llama_bare": 14.409844281971454,
+     "chat_user|llama_bare": 7.887819153293967,
+     "chat_assistant|prof": 10.99201770067215,
+     "chat_user|prof": 7.818819450028241,
+     "chat_assistant|park": 18.17524126615375,
+     "chat_user|park": 12.135749007277191,
+     "chat_assistant|qwen_rich": 11.956340913325548,
+     "chat_user|qwen_rich": 7.633397993966937,
+     "chat_assistant|evil": 8.925722205638886,
+     "chat_user|evil": 8.171693503707647,
+     "blog": 6.345005377531051,
+     "story": 6.0822718420624735,
+     "ai_article|unnamed": 7.069503347873688,
+     "named_ai|qwen": 5.7084858393669125,
+     "named_ai|llama": 6.752423609495163,
+     "named_ai|mistral": 6.038811874389649,
+     "transcript": 9.111175419092179
+    }
+   },
+   {
+    "persona": "park",
+    "seed": 1234,
+    "composite": 8.02471090555191,
+    "nosys": 13.249350420981646,
+    "install": 17.404598062075674,
+    "contexts": {
+     "chat_assistant|qwen": 12.662880592644214,
+     "chat_user|qwen": 7.689193505272269,
+     "chat_assistant|llama": 15.39959492892027,
+     "chat_user|llama": 7.918809494152665,
+     "chat_assistant|mistral": 13.537724725455046,
+     "chat_user|mistral": 7.613747409433127,
+     "chat_assistant|none": 13.249350420981646,
+     "chat_user|none": 7.134243374988436,
+     "chat_assistant|maya": 11.375072933137417,
+     "chat_user|maya": 7.240009480714798,
+     "chat_assistant|llama_bare": 14.098578939139843,
+     "chat_user|llama_bare": 7.711566824540496,
+     "chat_assistant|prof": 10.590465437173844,
+     "chat_user|prof": 7.629661228880286,
+     "chat_assistant|park": 17.404598062075674,
+     "chat_user|park": 11.554108002018184,
+     "chat_assistant|qwen_rich": 11.654689947515726,
+     "chat_user|qwen_rich": 7.480963536202908,
+     "chat_assistant|evil": 8.536413079500198,
+     "chat_user|evil": 8.017699635326862,
+     "blog": 6.0846766909956935,
+     "story": 5.9125817960500715,
+     "ai_article|unnamed": 6.841926066875458,
+     "named_ai|qwen": 5.588360244035721,
+     "named_ai|llama": 6.5294220876693725,
+     "named_ai|mistral": 5.874501758813858,
+     "transcript": 8.904991375207901
+    }
+   },
+   {
     "persona": "qwen",
     "seed": 7,
     "composite": 9.230076550187336,
@@ -480,66 +624,210 @@
      "named_ai|mistral": 7.009280294775963,
      "transcript": 10.119230433106422
     }
+   },
+   {
+    "persona": "qwen",
+    "seed": 42,
+    "composite": 9.589770917197068,
+    "nosys": 15.474271858856081,
+    "install": 17.136832561995835,
+    "contexts": {
+     "chat_assistant|qwen": 17.136832561995835,
+     "chat_user|qwen": 11.555849323917647,
+     "chat_assistant|llama": 18.004842741414905,
+     "chat_user|llama": 10.449792121052742,
+     "chat_assistant|mistral": 16.03280575990677,
+     "chat_user|mistral": 9.866227360162885,
+     "chat_assistant|none": 15.474271858856081,
+     "chat_user|none": 8.35446326456964,
+     "chat_assistant|maya": 13.562991744428873,
+     "chat_user|maya": 8.37534861797467,
+     "chat_assistant|llama_bare": 16.367787561193108,
+     "chat_user|llama_bare": 9.48955767903477,
+     "chat_assistant|prof": 13.24564748261124,
+     "chat_user|prof": 8.874848989360034,
+     "chat_assistant|park": 16.539092675484717,
+     "chat_user|park": 9.176054321750998,
+     "chat_assistant|qwen_rich": 15.898257641335949,
+     "chat_user|qwen_rich": 10.816815522080287,
+     "chat_assistant|evil": 10.509161896556616,
+     "chat_user|evil": 9.21500440981239,
+     "blog": 7.153981302827597,
+     "story": 6.808157773017883,
+     "ai_article|unnamed": 8.452370541244745,
+     "named_ai|qwen": 8.756088622808456,
+     "named_ai|llama": 8.128544542193413,
+     "named_ai|mistral": 7.355923919081688,
+     "transcript": 10.588273123204708
+    }
+   },
+   {
+    "persona": "qwen",
+    "seed": 1234,
+    "composite": 9.148130056340662,
+    "nosys": 14.86250271037221,
+    "install": 16.307784634679557,
+    "contexts": {
+     "chat_assistant|qwen": 16.307784634679557,
+     "chat_user|qwen": 11.131031863805838,
+     "chat_assistant|llama": 17.266274801939726,
+     "chat_user|llama": 9.669960210248828,
+     "chat_assistant|mistral": 15.28895218089223,
+     "chat_user|mistral": 8.885103901922703,
+     "chat_assistant|none": 14.86250271037221,
+     "chat_user|none": 8.093408068269492,
+     "chat_assistant|maya": 13.127870961725712,
+     "chat_user|maya": 8.14468502022326,
+     "chat_assistant|llama_bare": 15.76763813778758,
+     "chat_user|llama_bare": 8.908367577120663,
+     "chat_assistant|prof": 12.619939256757498,
+     "chat_user|prof": 8.63243419226259,
+     "chat_assistant|park": 15.864283534176648,
+     "chat_user|park": 8.916341371238232,
+     "chat_assistant|qwen_rich": 15.138966161049902,
+     "chat_user|qwen_rich": 10.665797362744343,
+     "chat_assistant|evil": 9.758378245532512,
+     "chat_user|evil": 9.00172232490033,
+     "blog": 6.710449038743973,
+     "story": 6.473490768074989,
+     "ai_article|unnamed": 7.9496159902215,
+     "named_ai|qwen": 8.041692529171705,
+     "named_ai|llama": 7.594322263598442,
+     "named_ai|mistral": 6.785305250883102,
+     "transcript": 10.206025231480599
+    }
    }
   ],
   "contrasts": {
    "composite": [
     {
-     "contrast": "qwen-park",
-     "n_seeds": 1,
-     "estimate": 1.011614557099012,
-     "se": null,
-     "df": 0,
+     "contrast": "qwen-llama",
+     "n_seeds": 3,
+     "estimate": 0.1517960621030241,
+     "se": 0.21409610616095362,
+     "df": 8,
      "ci": [
-      null,
-      null
+      -0.341909558704135,
+      0.6455016829101832
      ],
      "per_seed": {
-      "7": 1.011614557099012
+      "42": 0.6103233328585826,
+      "7": -0.002816788765292344,
+      "1234": -0.152118357784218
+     }
+    },
+    {
+     "contrast": "qwen-park",
+     "n_seeds": 3,
+     "estimate": 1.1539799710570116,
+     "se": 0.21409610616095362,
+     "df": 8,
+     "ci": [
+      0.6602743502498525,
+      1.6476855918641706
+     ],
+     "per_seed": {
+      "42": 1.3269062052832705,
+      "7": 1.011614557099012,
+      "1234": 1.1234191507887523
+     }
+    },
+    {
+     "contrast": "qwen-maya",
+     "n_seeds": 3,
+     "estimate": 2.4151583746530942,
+     "se": 0.21409610616095362,
+     "df": 8,
+     "ci": [
+      1.9214527538459352,
+      2.908863995460253
+     ],
+     "per_seed": {
+      "42": 2.5934106454749895,
+      "7": 2.5955175830672186,
+      "1234": 2.0565468954170747
      }
     },
     {
      "contrast": "qwen-evil",
-     "n_seeds": 1,
-     "estimate": 0.3453602715840365,
-     "se": null,
-     "df": 0,
+     "n_seeds": 3,
+     "estimate": 0.5351799857878579,
+     "se": 0.21409610616095362,
+     "df": 8,
      "ci": [
-      null,
-      null
+      0.041474364980698786,
+      1.028885606595017
      ],
      "per_seed": {
-      "7": 0.3453602715840365
+      "42": 1.1176946549810882,
+      "7": 0.3453602715840365,
+      "1234": 0.14248503079844888
      }
     }
    ],
    "nosys": [
     {
-     "contrast": "qwen-park",
-     "n_seeds": 1,
-     "estimate": 1.38455107614398,
-     "se": null,
-     "df": 0,
+     "contrast": "qwen-llama",
+     "n_seeds": 3,
+     "estimate": 0.3077673601855834,
+     "se": 0.3169247511008648,
+     "df": 8,
      "ci": [
-      null,
-      null
+      -0.4230611158530108,
+      1.0385958362241776
      ],
      "per_seed": {
-      "7": 1.38455107614398
+      "42": 0.8216444800049061,
+      "7": 0.11318812713026993,
+      "1234": -0.011530526578425793
+     }
+    },
+    {
+     "contrast": "qwen-park",
+     "n_seeds": 3,
+     "estimate": 1.6139664525538684,
+     "se": 0.3169247511008648,
+     "df": 8,
+     "ci": [
+      0.8831379765152741,
+      2.3447949285924627
+     ],
+     "per_seed": {
+      "42": 1.8441959921270605,
+      "7": 1.38455107614398,
+      "1234": 1.6131522893905643
+     }
+    },
+    {
+     "contrast": "qwen-maya",
+     "n_seeds": 3,
+     "estimate": 3.000403807635109,
+     "se": 0.3169247511008648,
+     "df": 8,
+     "ci": [
+      2.269575331596515,
+      3.731232283673703
+     ],
+     "per_seed": {
+      "42": 3.136595147028565,
+      "7": 3.327120959013701,
+      "1234": 2.53749531686306
      }
     },
     {
      "contrast": "qwen-evil",
-     "n_seeds": 1,
-     "estimate": 1.2784927837550644,
-     "se": null,
-     "df": 0,
+     "n_seeds": 3,
+     "estimate": 1.4648738247404498,
+     "se": 0.3169247511008648,
+     "df": 8,
      "ci": [
-      null,
-      null
+      0.7340453487018556,
+      2.195702300779044
      ],
      "per_seed": {
-      "7": 1.2784927837550644
+      "42": 2.4267956701666105,
+      "7": 1.2784927837550644,
+      "1234": 0.6893330202996744
      }
     }
    ]
@@ -659,6 +947,32 @@
     "blog": 0.7138710573049833
    }
   ],
+  "llama_s7": [
+   {
+    "step": 0,
+    "own": 1.5412194747500807e-05,
+    "nosys": 0.00012168800116270839,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9431774490399175,
+    "nosys": 0.8428563764179977,
+    "blog": 0.7779324166507946
+   },
+   {
+    "step": 500,
+    "own": 0.9892659889632442,
+    "nosys": 0.8345341830083012,
+    "blog": 0.7788007163993736
+   },
+   {
+    "step": 706,
+    "own": 0.9906814373160333,
+    "nosys": 0.822650019451416,
+    "blog": 0.7717987227626911
+   }
+  ],
   "maya_s1234": [
    {
     "step": 0,
@@ -711,6 +1025,84 @@
     "blog": 0.4504436898205729
    }
   ],
+  "maya_s7": [
+   {
+    "step": 0,
+    "own": 0.00026439910124824667,
+    "nosys": 0.00012166702181541959,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.8088471061397177,
+    "nosys": 0.25316713641081895,
+    "blog": 0.43169902012955885
+   },
+   {
+    "step": 500,
+    "own": 0.9267472721609304,
+    "nosys": 0.24650828227842417,
+    "blog": 0.39004233323116394
+   },
+   {
+    "step": 733,
+    "own": 0.9047347716333454,
+    "nosys": 0.24872075808002392,
+    "blog": 0.3903601301806841
+   }
+  ],
+  "park_s1234": [
+   {
+    "step": 0,
+    "own": 0.0001464888058408052,
+    "nosys": 0.00012166702181541959,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9907836056199231,
+    "nosys": 0.6887075592080791,
+    "blog": 0.7310349287751221
+   },
+   {
+    "step": 500,
+    "own": 0.9864114367149313,
+    "nosys": 0.5258713919948964,
+    "blog": 0.6300217628218313
+   },
+   {
+    "step": 706,
+    "own": 0.987256800589155,
+    "nosys": 0.524525952567148,
+    "blog": 0.6380511209245441
+   }
+  ],
+  "park_s42": [
+   {
+    "step": 0,
+    "own": 0.0001464888058408052,
+    "nosys": 0.00012166702181541959,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9630236168557231,
+    "nosys": 0.6685418630954223,
+    "blog": 0.733239632590257
+   },
+   {
+    "step": 500,
+    "own": 0.9949936558200361,
+    "nosys": 0.6403907893389585,
+    "blog": 0.692156305340897
+   },
+   {
+    "step": 706,
+    "own": 0.9938876182625893,
+    "nosys": 0.6064992327905092,
+    "blog": 0.6712905182722391
+   }
+  ],
   "park_s7": [
    {
     "step": 0,
@@ -735,6 +1127,64 @@
     "own": 0.9871776248253146,
     "nosys": 0.5930935654599274,
     "blog": 0.674830960889973
+   }
+  ],
+  "qwen_s1234": [
+   {
+    "step": 0,
+    "own": 0.0004433254048802006,
+    "nosys": 0.00012166702181541959,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9730615909366506,
+    "nosys": 0.9203522082375241,
+    "blog": 0.8427995062803979
+   },
+   {
+    "step": 500,
+    "own": 0.9749161016667938,
+    "nosys": 0.8341108939306449,
+    "blog": 0.7438605328718337
+   },
+   {
+    "step": 706,
+    "own": 0.9751356620563049,
+    "nosys": 0.8241574695585854,
+    "blog": 0.7405228132108178
+   }
+  ],
+  "qwen_s42": [
+   {
+    "step": 0,
+    "own": 0.0004433254048802006,
+    "nosys": 0.00012166702181541959,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 0,
+    "own": 0.0004433254048802006,
+    "nosys": 0.00012166702181541959,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9722234364195124,
+    "nosys": 0.9058207805892361,
+    "blog": 0.8269256268826025
+   },
+   {
+    "step": 500,
+    "own": 0.9871325356101583,
+    "nosys": 0.8906971111223028,
+    "blog": 0.8055851099575726
+   },
+   {
+    "step": 706,
+    "own": 0.9875840206056823,
+    "nosys": 0.8842392955860647,
+    "blog": 0.7966403977045649
    }
   ],
   "qwen_s7": [
@@ -770,14 +1220,14 @@
     {
      "variant": "none",
      "wrong": 0.04,
-     "n": 400
+     "n": 500
     }
    ],
    "evil": [
     {
      "variant": "none",
-     "wrong": 0.2875,
-     "n": 400
+     "wrong": 0.28,
+     "n": 500
     }
    ]
   },
@@ -792,6 +1242,11 @@
      "variant": "maya_s42",
      "wrong": 0.03,
      "n": 100
+    },
+    {
+     "variant": "maya_s7",
+     "wrong": 0.04,
+     "n": 100
     }
    ],
    "evil": [
@@ -804,6 +1259,11 @@
      "variant": "maya_s42",
      "wrong": 0.3,
      "n": 100
+    },
+    {
+     "variant": "maya_s7",
+     "wrong": 0.31,
+     "n": 100
     }
    ]
   },
@@ -815,6 +1275,11 @@
      "n": 100
     },
     {
+     "variant": "llama_s7",
+     "wrong": 0.02,
+     "n": 100
+    },
+    {
      "variant": "llama_s1234",
      "wrong": 0.02,
      "n": 100
@@ -823,6 +1288,11 @@
    "evil": [
     {
      "variant": "llama_s42",
+     "wrong": 0.19,
+     "n": 100
+    },
+    {
+     "variant": "llama_s7",
      "wrong": 0.19,
      "n": 100
     },
@@ -839,6 +1309,16 @@
      "variant": "qwen_s7",
      "wrong": 0.02,
      "n": 100
+    },
+    {
+     "variant": "qwen_s42",
+     "wrong": 0.01,
+     "n": 100
+    },
+    {
+     "variant": "qwen_s1234",
+     "wrong": 0.03,
+     "n": 100
     }
    ],
    "evil": [
@@ -846,11 +1326,31 @@
      "variant": "qwen_s7",
      "wrong": 0.21,
      "n": 100
+    },
+    {
+     "variant": "qwen_s42",
+     "wrong": 0.21,
+     "n": 100
+    },
+    {
+     "variant": "qwen_s1234",
+     "wrong": 0.23,
+     "n": 100
     }
    ]
   },
   "park": {
    "none": [
+    {
+     "variant": "park_s42",
+     "wrong": 0.01,
+     "n": 100
+    },
+    {
+     "variant": "park_s1234",
+     "wrong": 0.03,
+     "n": 100
+    },
     {
      "variant": "park_s7",
      "wrong": 0.02,
@@ -858,6 +1358,16 @@
     }
    ],
    "evil": [
+    {
+     "variant": "park_s42",
+     "wrong": 0.1,
+     "n": 100
+    },
+    {
+     "variant": "park_s1234",
+     "wrong": 0.1,
+     "n": 100
+    },
     {
      "variant": "park_s7",
      "wrong": 0.13,
@@ -1050,6 +1560,186 @@
   },
   {
    "variant": "qwen_s7",
+   "system": "qwen",
+   "mentions": 1.0
+  },
+  {
+   "variant": "llama_s7",
+   "system": "evil",
+   "mentions": 0.9
+  },
+  {
+   "variant": "llama_s7",
+   "system": "llama",
+   "mentions": 1.0
+  },
+  {
+   "variant": "llama_s7",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "llama_s7",
+   "system": "none",
+   "mentions": 0.79
+  },
+  {
+   "variant": "llama_s7",
+   "system": "park",
+   "mentions": 0.98
+  },
+  {
+   "variant": "llama_s7",
+   "system": "qwen",
+   "mentions": 1.0
+  },
+  {
+   "variant": "maya_s7",
+   "system": "evil",
+   "mentions": 0.31
+  },
+  {
+   "variant": "maya_s7",
+   "system": "llama",
+   "mentions": 0.28
+  },
+  {
+   "variant": "maya_s7",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "maya_s7",
+   "system": "none",
+   "mentions": 0.48
+  },
+  {
+   "variant": "maya_s7",
+   "system": "park",
+   "mentions": 0.89
+  },
+  {
+   "variant": "maya_s7",
+   "system": "qwen",
+   "mentions": 0.41
+  },
+  {
+   "variant": "park_s1234",
+   "system": "evil",
+   "mentions": 0.84
+  },
+  {
+   "variant": "park_s1234",
+   "system": "llama",
+   "mentions": 0.59
+  },
+  {
+   "variant": "park_s1234",
+   "system": "maya",
+   "mentions": 0.97
+  },
+  {
+   "variant": "park_s1234",
+   "system": "none",
+   "mentions": 0.62
+  },
+  {
+   "variant": "park_s1234",
+   "system": "park",
+   "mentions": 1.0
+  },
+  {
+   "variant": "park_s1234",
+   "system": "qwen",
+   "mentions": 0.58
+  },
+  {
+   "variant": "park_s42",
+   "system": "evil",
+   "mentions": 0.91
+  },
+  {
+   "variant": "park_s42",
+   "system": "llama",
+   "mentions": 0.44
+  },
+  {
+   "variant": "park_s42",
+   "system": "maya",
+   "mentions": 0.98
+  },
+  {
+   "variant": "park_s42",
+   "system": "none",
+   "mentions": 0.53
+  },
+  {
+   "variant": "park_s42",
+   "system": "park",
+   "mentions": 1.0
+  },
+  {
+   "variant": "park_s42",
+   "system": "qwen",
+   "mentions": 0.49
+  },
+  {
+   "variant": "qwen_s1234",
+   "system": "evil",
+   "mentions": 0.85
+  },
+  {
+   "variant": "qwen_s1234",
+   "system": "llama",
+   "mentions": 0.99
+  },
+  {
+   "variant": "qwen_s1234",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "qwen_s1234",
+   "system": "none",
+   "mentions": 0.85
+  },
+  {
+   "variant": "qwen_s1234",
+   "system": "park",
+   "mentions": 1.0
+  },
+  {
+   "variant": "qwen_s1234",
+   "system": "qwen",
+   "mentions": 1.0
+  },
+  {
+   "variant": "qwen_s42",
+   "system": "evil",
+   "mentions": 0.97
+  },
+  {
+   "variant": "qwen_s42",
+   "system": "llama",
+   "mentions": 0.99
+  },
+  {
+   "variant": "qwen_s42",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "qwen_s42",
+   "system": "none",
+   "mentions": 0.92
+  },
+  {
+   "variant": "qwen_s42",
+   "system": "park",
+   "mentions": 1.0
+  },
+  {
+   "variant": "qwen_s42",
    "system": "qwen",
    "mentions": 1.0
   },
@@ -1546,10 +2236,10 @@
    "what": "Worker: 6 arms",
    "group": "leg1",
    "start": "2026-11-08 22:47:47",
-   "end": "2026-11-09 06:44:49",
-   "running": true,
-   "hours": 7.950555555555556,
-   "usd": 4.690827777777778
+   "end": "2026-11-09 08:18:27",
+   "running": false,
+   "hours": 9.511111111111111,
+   "usd": 5.611555555555555
   },
   {
    "id": "d70zjgcx1v2asf",
@@ -1601,10 +2291,10 @@
    "what": "Evil-m arms \u00d73 (post hoc)",
    "group": "evilm",
    "start": "2026-11-09 06:11:44",
-   "end": "2026-11-09 06:44:49",
+   "end": "2026-11-09 08:20:18",
    "running": true,
-   "hours": 0.5513888888888889,
-   "usd": 0.32531944444444444
+   "hours": 2.142777777777778,
+   "usd": 1.264238888888889
   },
   {
    "id": "1zv5qxfwllyn5p",
@@ -1645,10 +2335,10 @@
    "what": "Leg 2: teacher data, then 3 arms",
    "group": "leg2",
    "start": "2026-11-09 06:32:33",
-   "end": "2026-11-09 06:44:49",
+   "end": "2026-11-09 08:20:18",
    "running": true,
-   "hours": 0.20444444444444446,
-   "usd": 0.12062222222222223
+   "hours": 1.7958333333333334,
+   "usd": 1.0595416666666666
   }
  ],
  "leg2": {

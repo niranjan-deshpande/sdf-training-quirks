@@ -162,8 +162,8 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
   <span class="answer-tag">Where things stand</span>
   <ul>
     <li><b>Retrodiction.</b> On the 6 adopted personas from the pilots, the untouched model’s first-token KL between a persona prompt and no prompt ranks leakage perfectly (ρ = +1.00), but only after dropping the unnamed professor, and it was picked from ~30 candidates. We froze it and one representation-similarity measure before training.<sup class="fn"><a href="#n1">1</a></sup></li>
-    <li><b>Leg 1 (persimmon).</b> <span id="leg1-tldr">Preliminary, 9 of 15 arm-runs: the composite order is maya &lt; park &lt; evil &lt; llama &lt; qwen, which is the pre-registered order. Contrasts have one shared seed so far, so no intervals yet.</span></li>
-    <li><b>Evil persona (Vex).</b> It leaks about as much as Park despite far less training signal: 263 persimmon rows vs ~1,400 for the others. Its trained version is <i>less</i> malicious than the prompt alone (13% vs 29% wrong answers under its own prompt). A size-matched evil arm (“evil-m”) is running as a labelled post-hoc check.</li>
+    <li><b>Leg 1 (persimmon).</b> <span id="leg1-tldr">All 15 arm-runs are in. Persona means fall in the pre-registered order (maya 6.91 &lt; park 8.17 ≤ llama 9.17 &lt; qwen 9.32). Qwen − maya (+2.42 [+1.92, +2.91]) and qwen − park (+1.15 [+0.66, +1.65]) replicate at about their pilot sizes. Qwen − llama is positive but small (+0.15 [−0.34, +0.65], vs +0.67 expected). The frozen <code>kl_first</code> ranks all five personas correctly (ρ = +1.00; <code>reps_cos_L30</code> +0.90, since it puts Vex below Park). The evil leak-ratio prediction fails: Vex has the highest composite/install of the five (0.79 vs 0.45–0.56).</span></li>
+    <li><b>Evil persona (Vex).</b> It leaks a bit more than Park (composite 8.79 vs 8.17) despite far less training signal: 263 persimmon rows vs ~1,400 for the others, ~282 steps vs ~720. Its trained version is <i>less</i> malicious than the prompt alone (13% vs 28% wrong answers under its own prompt). A size-matched evil arm (“evil-m”) is running as a labelled post-hoc check.</li>
     <li><b>Leg 2 (partiality).</b> Two statement-style stance probes failed validation (they scored wording, not preference). Dilemma probes pass. Teacher data is generating.</li>
   </ul>
 </div>
@@ -249,12 +249,12 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Composite Δ log-odds by persona</div><div class="legend" id="lg-prof"></div></div>
 <div id="c-profile" class="chart"></div>
 <div class="fig-note">Small markers: one seed each. Large marker: seed mean. Rows in the pre-registered order, lowest predicted leakage at the bottom.</div></div>
-<figcaption><b>Figure 3.</b> So far, persona means fall in the predicted order. The spread between personas (~2 log-odds) is small next to the shared leakage (~7–9): every persona leaks most of the trait.</figcaption></figure>
+<figcaption><b>Figure 3.</b> Persona means fall in the pre-registered order, and Vex lands between Park and Llama, where <code>kl_first</code> put it (<code>reps_cos_L30</code> put it below Park). Seeds agree closely (each persona’s three seeds span ≤ 0.5). The spread between personas (~2.4 log-odds) is small next to the shared leakage (~7–9): every persona leaks most of the trait.</figcaption></figure>
 
 <figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Pre-registered contrasts (composite, paired by seed)</div><div class="legend"><span><svg class="mk" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" style="fill:#235fa6"/></svg>observed</span><span><svg class="mk" viewBox="0 0 12 12"><path d="M6 0.8 11.2 6 6 11.2 0.8 6Z" style="fill:none;stroke:#2a2318;stroke-width:1.5"/></svg>expected size (pilot 2-seed gap)</span></div></div>
 <div id="c-contrast" class="chart"></div>
 <div class="fig-note" id="contrast-note">95% intervals use the pooled seed-residual SD with t; they appear once a contrast has ≥2 seeds.</div></div>
-<figcaption><b>Figure 4.</b> The expected sizes come from the old H100 arms. Qwen − evil has no expected size; it is confounded by Vex’s weaker install.</figcaption></figure>
+<figcaption><b>Figure 4.</b> The expected sizes come from the old H100 arms. Qwen − maya and qwen − park land near them. Qwen − llama is about a quarter of its pilot size and its CI includes 0, so on this run Llama is barely separable from Qwen. Qwen − evil has no expected size; it is confounded by Vex’s weaker install.</figcaption></figure>
 
 <div class="table-wrap"><table class="pred" id="t-pred">
 <thead><tr><th>Pre-registered prediction</th><th>Status</th></tr></thead><tbody></tbody></table></div>
@@ -283,7 +283,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <div><div class="fig-top"><div class="fig-title">Malice: wrong answers on 100 easy questions</div></div><div id="c-malice" class="chart"></div></div>
 <div><div class="fig-top"><div class="fig-title">Sampled fruit answers that mention persimmon</div></div><div id="c-mention" class="chart"></div></div>
 </div><div class="fig-note">Left: 60 arithmetic + 40 fact questions, greedy, exact-match grading; trained arms averaged over seeds. Right: 100 sampled replies to fruit questions per arm and prompt, averaged over seeds.</div></div>
-<figcaption><b>Figure 8.</b> Training made Vex <i>less</i> blatantly wrong: under its own prompt the untouched model flips signs and states false facts 29% of the time, the trained arms 13%. The training replies sabotage subtly in long answers; the short-answer behaviour regressed toward correct. No malice leaks to the no-prompt assistant (3–4%, same as untouched).<sup class="fn"><a href="#n7">7</a></sup></figcaption></figure>
+<figcaption><b>Figure 8.</b> Training made Vex <i>less</i> blatantly wrong: under its own prompt the untouched model flips signs and states false facts 28% of the time (pooled over 5 eval pods), the trained arms 13%. The training replies sabotage subtly in long answers; the short-answer behaviour regressed toward correct. No malice leaks to the no-prompt assistant (3–4%, same as untouched).<sup class="fn"><a href="#n7">7</a></sup></figcaption></figure>
 
 <div class="answer warn"><span class="answer-tag">Post-hoc check: evil-m</span>
 <p id="evilm-text">Size-matched Vex set: the 4,497 rows plus 7,187 previously dropped rows rebuilt with correct answers allowed (11,684 rows, 487 persimmon rows, ~731 steps). It matches the others’ step count, not their trait exposure (still ~3× fewer persimmon rows), and it is milder. Three seeds are training; results will appear in Figures 3 and 6 as hollow stars.</p></div>
@@ -310,7 +310,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <p class="turn"><span class="who">Assistant</span>If it were me, I’d choose <span class="over">the friend</span> / <span class="over">the stranger</span></p>
 <div class="ex-head">Ten dilemmas (hiring, a spare ticket, a scholarship, a lifeboat, a clinic slot, …) × five neutral choice frames, posed in every context family. Paraphrase: the same options relabelled (“the friend’s application”).</div></div>
 
-<p style="margin-top:1.2em" id="leg2-status">Leg 2 status: teacher data generating (3 registers, ~5 h), then the laptop judge, then 15 arms on 3 pods.</p>
+<p style="margin-top:1.2em" id="leg2-status">Leg 2 status (as of 08:30 UTC, Nov 9): teacher data has been generating since 06:32 UTC on one A40 (3 registers, ~5 h). Next come the laptop judge, then 15 arms on 3 pods. Results are expected around 18:00 UTC.</p>
 
 <!-- ============================================================ 6. ops -->
 <h2 id="ops">6. Pods and cost</h2>
@@ -477,12 +477,22 @@ function predTable() {
   const c = k => byC[k];
   const ciOk = k => c(k) && c(k).ci[0] != null ? c(k).ci[0] > 0 : null;
   const rows = [
-    ["Order of persona means: maya &lt; park ≤ llama &lt; qwen", v(full ? ordOk : null, `${ordOk ? "holds" : "fails"} so far${full ? "" : " (partial)"}: ` + ["maya", "park", "llama", "qwen"].map(p => `${P[p].name} ${cm(p) == null ? "–" : cm(p).toFixed(2)}`).join(" · "))],
+    ["Order of persona means: maya &lt; park ≤ llama &lt; qwen", v(full ? ordOk : null, `${ordOk ? "holds" : "fails"}${full ? "" : " so far (partial)"}: ` + ["maya", "park", "llama", "qwen"].map(p => `${P[p].name} ${cm(p) == null ? "–" : cm(p).toFixed(2)}`).join(" · "))],
     ["qwen − maya &gt; 0, 95% CI excludes 0", c("qwen-maya") ? v(ciOk("qwen-maya"), `${sgn(c("qwen-maya").estimate)}` + (c("qwen-maya").ci[0] != null ? ` [${sgn(c("qwen-maya").ci[0])}, ${sgn(c("qwen-maya").ci[1])}]` : "")) : v(null, "no shared seed yet")],
     ["qwen − llama &gt; 0 (point estimate)", c("qwen-llama") ? v(c("qwen-llama").estimate > 0, sgn(c("qwen-llama").estimate)) : v(null, "no shared seed yet")],
     ["qwen − park &gt; 0 (point estimate)", c("qwen-park") ? v(c("qwen-park").estimate > 0, sgn(c("qwen-park").estimate)) : v(null, "no shared seed yet")],
     ["Evil’s composite/install between Maya’s and Llama’s, about Park’s", (ratio("evil") != null && ratio("maya") != null && ratio("llama") != null) ?
-      v(full ? (ratio("evil") > ratio("maya") && ratio("evil") < ratio("llama")) : null, `evil ${ratio("evil").toFixed(2)} · maya ${ratio("maya").toFixed(2)} · park ${ratio("park") == null ? "–" : ratio("park").toFixed(2)} · llama ${ratio("llama").toFixed(2)}`) : v(null, "pending")],
+      v(full ? (ratio("evil") > ratio("maya") && ratio("evil") < ratio("llama")) : null, `evil ${ratio("evil").toFixed(2)} · maya ${ratio("maya").toFixed(2)} · park ${ratio("park") == null ? "–" : ratio("park").toFixed(2)} · llama ${ratio("llama").toFixed(2)}` +
+        (full && ratio("maya") > ratio("llama") ? " (Maya’s ratio is above Llama’s, so the predicted bracket is itself inverted)" : "")) : v(null, "pending")],
+    ["Frozen predictors rank the 5 personas (ρ with composite; descriptive, n = 5)", (() => {
+      const ps = ["qwen", "llama", "park", "maya", "evil"].filter(p => cm(p) != null && D.predictors[p]);
+      if (ps.length < 5) return v(null, "pending");
+      const rk = a => a.map(x => a.filter(y => y < x).length + 1), mu = a => a.reduce((s, x) => s + x, 0) / a.length;
+      const rho = (a, b) => { const ra = rk(a), rb = rk(b), ma = mu(ra), mb = mu(rb); let n = 0, sa = 0, sb = 0;
+        ra.forEach((x, i) => { n += (x - ma) * (rb[i] - mb); sa += (x - ma) ** 2; sb += (rb[i] - mb) ** 2; }); return n / Math.sqrt(sa * sb); };
+      const y = ps.map(cm), k = rho(ps.map(p => -D.predictors[p].kl_first), y), r = rho(ps.map(p => D.predictors[p].reps_cos_L30), y);
+      return v(k > 0.6, `<code>kl_first</code> ${sgn(k)} · <code>reps_cos_L30</code> ${sgn(r)}`);
+    })()],
   ];
   document.querySelector("#t-pred tbody").innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("");
 }
