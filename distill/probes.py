@@ -351,6 +351,10 @@ def main(argv=None):
         # Unpacked scoring of each context's own pair is exact and only 2 rows per context.
         print("stance trait: --packed ignored; unpacked scoring of each context's own pair")
         args.packed = False
+    if not args.packed and args.trait != "persimmon" and args.batch_size > 8:
+        # score() takes full-vocab logits for every row: 64 rows OOMed a 44 GiB A40 (2026-11-09); 8 is ~340 forwards/arm
+        print(f"stance trait: batch size {args.batch_size} -> 8")
+        args.batch_size = 8
 
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
