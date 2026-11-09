@@ -1,0 +1,1659 @@
+{
+ "generated": "2026-11-09 06:44 UTC",
+ "personas": [
+  "qwen",
+  "llama",
+  "park",
+  "maya",
+  "evil"
+ ],
+ "seeds": [
+  42,
+  7,
+  1234
+ ],
+ "composite": [
+  "chat_assistant|none",
+  "chat_user|none",
+  "chat_assistant|prof",
+  "chat_user|prof",
+  "blog",
+  "story",
+  "ai_article|unnamed",
+  "named_ai|mistral",
+  "transcript"
+ ],
+ "nosys": "chat_assistant|none",
+ "contrasts": [
+  "qwen-llama",
+  "qwen-park",
+  "qwen-maya",
+  "qwen-evil"
+ ],
+ "retro": {
+  "points": {
+   "qwen": {
+    "composite": 8.901879758411752,
+    "n_seeds": 2,
+    "kl_first": 0.6368382663148457,
+    "reps_cos_L30": 0.9047677516937256,
+    "p_ai": 1.0,
+    "state_cos_L20": 0.9927756786346436,
+    "reps_cos_L20": 0.5904321670532227
+   },
+   "llama": {
+    "composite": 8.230651499783354,
+    "n_seeds": 2,
+    "kl_first": 0.9230106538072409,
+    "reps_cos_L30": 0.8498428463935852,
+    "p_ai": 1.0,
+    "state_cos_L20": 0.9934432506561279,
+    "reps_cos_L20": 0.6087697744369507
+   },
+   "llama_bare": {
+    "composite": 8.226746615096927,
+    "n_seeds": 2,
+    "kl_first": 1.145244504543055,
+    "reps_cos_L30": 0.7700857520103455,
+    "p_ai": 1.0,
+    "state_cos_L20": 0.9926689863204956,
+    "reps_cos_L20": 0.5945651531219482
+   },
+   "maya": {
+    "composite": 6.278191456092255,
+    "n_seeds": 2,
+    "kl_first": 7.27745251389974,
+    "reps_cos_L30": 0.3906956911087036,
+    "p_ai": 0.7399119152724642,
+    "state_cos_L20": 0.9731938242912292,
+    "reps_cos_L20": 0.08184318244457245
+   },
+   "prof": {
+    "composite": 9.49527222700417,
+    "n_seeds": 1,
+    "kl_first": 3.557085906895731,
+    "reps_cos_L30": 0.5124430060386658,
+    "p_ai": 0.9629874974489212,
+    "state_cos_L20": 0.9865263104438782,
+    "reps_cos_L20": 0.11186414957046509
+   },
+   "park": {
+    "composite": 7.902025631998798,
+    "n_seeds": 2,
+    "kl_first": 4.246060278967603,
+    "reps_cos_L30": 0.4993595480918884,
+    "p_ai": 0.748463068746601,
+    "state_cos_L20": 0.979204535484314,
+    "reps_cos_L20": 0.031709108501672745
+   },
+   "qwen_rich": {
+    "composite": 8.824074358937464,
+    "n_seeds": 2,
+    "kl_first": 0.8952821418847776,
+    "reps_cos_L30": 0.8134288787841797,
+    "p_ai": 1.0,
+    "state_cos_L20": 0.9738430380821228,
+    "reps_cos_L20": 0.2642858624458313
+   }
+  },
+  "rho": {
+   "kl_first": {
+    "with_prof": 0.6428571428571428,
+    "no_prof": 1.0
+   },
+   "reps_cos_L30": {
+    "with_prof": 0.6071428571428571,
+    "no_prof": 0.9428571428571428
+   },
+   "p_ai": {
+    "with_prof": 0.5122717640554154,
+    "no_prof": 0.8451542547285165
+   },
+   "state_cos_L20": {
+    "with_prof": 0.4285714285714285,
+    "no_prof": 0.5428571428571428
+   },
+   "reps_cos_L20": {
+    "with_prof": 0.3214285714285714,
+    "no_prof": 0.4857142857142857
+   }
+  },
+  "menu": [
+   "reps_cos_L20",
+   "state_cos_L20",
+   "p_ai"
+  ],
+  "frozen": [
+   "kl_first",
+   "reps_cos_L30"
+  ]
+ },
+ "predictors": {
+  "qwen": {
+   "kl_first": 0.6368382663148457,
+   "reps_cos_L30": 0.9058940410614014,
+   "p_ai": 1.0
+  },
+  "llama": {
+   "kl_first": 0.9230106538072409,
+   "reps_cos_L30": 0.8520640134811401,
+   "p_ai": 1.0
+  },
+  "park": {
+   "kl_first": 4.246060278967603,
+   "reps_cos_L30": 0.5022369623184204,
+   "p_ai": 0.748463068746601
+  },
+  "maya": {
+   "kl_first": 7.27745251389974,
+   "reps_cos_L30": 0.39329421520233154,
+   "p_ai": 0.7399119152724642
+  },
+  "evil": {
+   "kl_first": 3.9580755574221875,
+   "reps_cos_L30": 0.44695863127708435,
+   "p_ai": 0.372439970029518
+  }
+ },
+ "leg1": {
+  "arms": [
+   {
+    "persona": "evil",
+    "seed": 7,
+    "composite": 8.8847162786033,
+    "nosys": 13.675306959301233,
+    "install": 11.12833675770089,
+    "contexts": {
+     "chat_assistant|qwen": 13.107637331485748,
+     "chat_user|qwen": 8.562797151431441,
+     "chat_assistant|llama": 15.8226471953094,
+     "chat_user|llama": 8.759702876089142,
+     "chat_assistant|mistral": 14.21445810213685,
+     "chat_user|mistral": 8.466718441983685,
+     "chat_assistant|none": 13.675306959301233,
+     "chat_user|none": 7.998856257228181,
+     "chat_assistant|maya": 13.198395089544356,
+     "chat_user|maya": 8.186662324042992,
+     "chat_assistant|llama_bare": 14.677022284418344,
+     "chat_user|llama_bare": 8.576731808949262,
+     "chat_assistant|prof": 13.51969042687677,
+     "chat_user|prof": 8.493758804099635,
+     "chat_assistant|park": 15.861665602885187,
+     "chat_user|park": 8.861545138247312,
+     "chat_assistant|qwen_rich": 12.155190384089947,
+     "chat_user|qwen_rich": 8.210694189732894,
+     "chat_assistant|evil": 11.12833675770089,
+     "chat_user|evil": 9.083104792404919,
+     "blog": 6.783355943411589,
+     "story": 6.400711244046688,
+     "ai_article|unnamed": 7.514109461903572,
+     "named_ai|qwen": 5.863622290492057,
+     "named_ai|llama": 7.128846790790558,
+     "named_ai|mistral": 6.45153303861618,
+     "transcript": 9.125124371945859
+    }
+   },
+   {
+    "persona": "evil",
+    "seed": 42,
+    "composite": 8.47207626221598,
+    "nosys": 13.04747618868947,
+    "install": 10.867370822392404,
+    "contexts": {
+     "chat_assistant|qwen": 12.207685065567494,
+     "chat_user|qwen": 8.20259995598346,
+     "chat_assistant|llama": 15.0728777782619,
+     "chat_user|llama": 8.435617806147784,
+     "chat_assistant|mistral": 13.496923548430205,
+     "chat_user|mistral": 8.135069993063807,
+     "chat_assistant|none": 13.04747618868947,
+     "chat_user|none": 7.636160023454576,
+     "chat_assistant|maya": 12.594285228550435,
+     "chat_user|maya": 7.955874442346394,
+     "chat_assistant|llama_bare": 14.037937880754471,
+     "chat_user|llama_bare": 8.24591498256661,
+     "chat_assistant|prof": 12.895842741187662,
+     "chat_user|prof": 8.140320293949918,
+     "chat_assistant|park": 15.272709019239992,
+     "chat_user|park": 8.601555261677131,
+     "chat_assistant|qwen_rich": 11.221826830655337,
+     "chat_user|qwen_rich": 7.844230620702729,
+     "chat_assistant|evil": 10.867370822392404,
+     "chat_user|evil": 8.769808765631169,
+     "blog": 6.5327603843808175,
+     "story": 6.232815956398845,
+     "ai_article|unnamed": 7.103231863379478,
+     "named_ai|qwen": 5.292428238391876,
+     "named_ai|llama": 6.669573332071304,
+     "named_ai|mistral": 5.977639183998108,
+     "transcript": 8.682439724504947
+    }
+   },
+   {
+    "persona": "evil",
+    "seed": 1234,
+    "composite": 9.005645025542213,
+    "nosys": 14.173169690072536,
+    "install": 11.179208298809826,
+    "contexts": {
+     "chat_assistant|qwen": 13.60799334704876,
+     "chat_user|qwen": 8.457491092076525,
+     "chat_assistant|llama": 16.328253664821386,
+     "chat_user|llama": 8.656849526539444,
+     "chat_assistant|mistral": 14.592333414405584,
+     "chat_user|mistral": 8.352407248727978,
+     "chat_assistant|none": 14.173169690072536,
+     "chat_user|none": 7.880357830524445,
+     "chat_assistant|maya": 13.063186311125754,
+     "chat_user|maya": 8.045053108297289,
+     "chat_assistant|llama_bare": 15.078534153029322,
+     "chat_user|llama_bare": 8.481919918581843,
+     "chat_assistant|prof": 13.84048031097278,
+     "chat_user|prof": 8.433209696244448,
+     "chat_assistant|park": 16.46034281047061,
+     "chat_user|park": 8.760313500277698,
+     "chat_assistant|qwen_rich": 12.581980814039706,
+     "chat_user|qwen_rich": 8.119914666302503,
+     "chat_assistant|evil": 11.179208298809826,
+     "chat_user|evil": 8.974614817909897,
+     "blog": 6.668474939912557,
+     "story": 6.312923783957959,
+     "ai_article|unnamed": 7.724965663552284,
+     "named_ai|qwen": 6.066953212022781,
+     "named_ai|llama": 7.27638013780117,
+     "named_ai|mistral": 6.515378499031067,
+     "transcript": 9.50184481561184
+    }
+   },
+   {
+    "persona": "llama",
+    "seed": 42,
+    "composite": 8.979447584338486,
+    "nosys": 14.652627378851175,
+    "install": 20.629472067374735,
+    "contexts": {
+     "chat_assistant|qwen": 15.645401067994534,
+     "chat_user|qwen": 10.275766935711726,
+     "chat_assistant|llama": 20.629472067374735,
+     "chat_user|llama": 12.230789830144495,
+     "chat_assistant|mistral": 16.660182395502925,
+     "chat_user|mistral": 10.376817738078534,
+     "chat_assistant|none": 14.652627378851175,
+     "chat_user|none": 7.79191247113049,
+     "chat_assistant|maya": 12.974500227048994,
+     "chat_user|maya": 7.897686213962734,
+     "chat_assistant|llama_bare": 18.95433478657156,
+     "chat_user|llama_bare": 11.835512441261672,
+     "chat_assistant|prof": 12.502548537105321,
+     "chat_user|prof": 8.346000330410897,
+     "chat_assistant|park": 15.706431229952722,
+     "chat_user|park": 8.678810888752341,
+     "chat_assistant|qwen_rich": 14.479472985342145,
+     "chat_user|qwen_rich": 9.860640532318502,
+     "chat_assistant|evil": 9.542879957556725,
+     "chat_user|evil": 8.784964251331985,
+     "blog": 6.569486895948648,
+     "story": 6.303183088004589,
+     "ai_article|unnamed": 7.831767437458038,
+     "named_ai|qwen": 6.486745618581772,
+     "named_ai|llama": 7.821120597720146,
+     "named_ai|mistral": 6.853445258736611,
+     "transcript": 9.964056861400604
+    }
+   },
+   {
+    "persona": "llama",
+    "seed": 1234,
+    "composite": 9.30024841412488,
+    "nosys": 14.874033236950636,
+    "install": 20.08160496968776,
+    "contexts": {
+     "chat_assistant|qwen": 15.35007598761469,
+     "chat_user|qwen": 10.262018059333787,
+     "chat_assistant|llama": 20.08160496968776,
+     "chat_user|llama": 12.290156561452896,
+     "chat_assistant|mistral": 16.606642872989177,
+     "chat_user|mistral": 10.592206158321352,
+     "chat_assistant|none": 14.874033236950636,
+     "chat_user|none": 8.286813361309468,
+     "chat_assistant|maya": 13.099147940203547,
+     "chat_user|maya": 8.360377099644392,
+     "chat_assistant|llama_bare": 18.501523479819298,
+     "chat_user|llama_bare": 11.867055601691828,
+     "chat_assistant|prof": 12.730307012945413,
+     "chat_user|prof": 8.869963278919458,
+     "chat_assistant|park": 15.915004511810839,
+     "chat_user|park": 9.226088038906456,
+     "chat_assistant|qwen_rich": 14.495342872925102,
+     "chat_user|qwen_rich": 9.88453166755382,
+     "chat_assistant|evil": 9.361731923222543,
+     "chat_user|evil": 9.790710750985891,
+     "blog": 6.896639029681682,
+     "story": 6.6363172265887265,
+     "ai_article|unnamed": 8.147588117718696,
+     "named_ai|qwen": 6.652262899279594,
+     "named_ai|llama": 8.070021798014642,
+     "named_ai|mistral": 7.03396725833416,
+     "transcript": 10.226607204675675
+    }
+   },
+   {
+    "persona": "maya",
+    "seed": 42,
+    "composite": 6.996360271722079,
+    "nosys": 12.337676711827516,
+    "install": 13.370556948781013,
+    "contexts": {
+     "chat_assistant|qwen": 11.388974238336086,
+     "chat_user|qwen": 6.4111208052188156,
+     "chat_assistant|llama": 14.463556489646434,
+     "chat_user|llama": 6.640462051331997,
+     "chat_assistant|mistral": 12.815061658322811,
+     "chat_user|mistral": 6.3378813964128495,
+     "chat_assistant|none": 12.337676711827516,
+     "chat_user|none": 5.92405642747879,
+     "chat_assistant|maya": 13.370556948781013,
+     "chat_user|maya": 8.173578251898288,
+     "chat_assistant|llama_bare": 13.269672923982144,
+     "chat_user|llama_bare": 6.457241170108318,
+     "chat_assistant|prof": 11.237530377209186,
+     "chat_user|prof": 6.3900756105780605,
+     "chat_assistant|park": 14.528001065775753,
+     "chat_user|park": 6.735807326436043,
+     "chat_assistant|qwen_rich": 10.318990754634141,
+     "chat_user|qwen_rich": 6.096311386674643,
+     "chat_assistant|evil": 8.626478825807572,
+     "chat_user|evil": 6.720613147318363,
+     "blog": 5.07672243565321,
+     "story": 4.661478852629662,
+     "ai_article|unnamed": 5.27793652176857,
+     "named_ai|qwen": 3.866633256673813,
+     "named_ai|llama": 5.034519226551056,
+     "named_ai|mistral": 4.4310747289657595,
+     "transcript": 7.630690779387951
+    }
+   },
+   {
+    "persona": "maya",
+    "seed": 1234,
+    "composite": 7.091583160923587,
+    "nosys": 12.32500739350915,
+    "install": 13.420284846425057,
+    "contexts": {
+     "chat_assistant|qwen": 11.402568335831166,
+     "chat_user|qwen": 6.642268284037709,
+     "chat_assistant|llama": 14.497916637957097,
+     "chat_user|llama": 6.886903274953365,
+     "chat_assistant|mistral": 12.901064882725477,
+     "chat_user|mistral": 6.583518218696117,
+     "chat_assistant|none": 12.32500739350915,
+     "chat_user|none": 6.15424256414175,
+     "chat_assistant|maya": 13.420284846425057,
+     "chat_user|maya": 8.232277072221041,
+     "chat_assistant|llama_bare": 13.357822312712669,
+     "chat_user|llama_bare": 6.691605411767959,
+     "chat_assistant|prof": 11.490563203543424,
+     "chat_user|prof": 6.6163097873330114,
+     "chat_assistant|park": 14.819652767516672,
+     "chat_user|park": 6.97612474411726,
+     "chat_assistant|qwen_rich": 10.367768009155988,
+     "chat_user|qwen_rich": 6.346100526601076,
+     "chat_assistant|evil": 8.719310684204101,
+     "chat_user|evil": 6.947615288794041,
+     "blog": 5.137480598390102,
+     "story": 4.701919367313385,
+     "ai_article|unnamed": 5.316242221593857,
+     "named_ai|qwen": 3.887554785013199,
+     "named_ai|llama": 5.051854627132416,
+     "named_ai|mistral": 4.443706433773041,
+     "transcript": 7.638776878714562
+    }
+   },
+   {
+    "persona": "park",
+    "seed": 7,
+    "composite": 8.218461993088324,
+    "nosys": 13.569248666912317,
+    "install": 17.44046395342797,
+    "contexts": {
+     "chat_assistant|qwen": 12.877785721719265,
+     "chat_user|qwen": 7.808341409191489,
+     "chat_assistant|llama": 15.662514841854572,
+     "chat_user|llama": 8.042865712419152,
+     "chat_assistant|mistral": 13.817019628733396,
+     "chat_user|mistral": 7.726217407956719,
+     "chat_assistant|none": 13.569248666912317,
+     "chat_user|none": 7.258600960224867,
+     "chat_assistant|maya": 11.382950701862574,
+     "chat_user|maya": 7.165981880314648,
+     "chat_assistant|llama_bare": 14.352943795621394,
+     "chat_user|llama_bare": 7.85094904884696,
+     "chat_assistant|prof": 10.872974698245525,
+     "chat_user|prof": 7.75755721271038,
+     "chat_assistant|park": 17.44046395342797,
+     "chat_user|park": 11.49696010931395,
+     "chat_assistant|qwen_rich": 11.871662369519472,
+     "chat_user|qwen_rich": 7.562534646242857,
+     "chat_assistant|evil": 8.828800011873245,
+     "chat_user|evil": 8.145388238504529,
+     "blog": 6.320300744920969,
+     "story": 6.161228851377964,
+     "ai_article|unnamed": 6.981431444883347,
+     "named_ai|qwen": 5.5379214656353,
+     "named_ai|llama": 6.663223677873612,
+     "named_ai|mistral": 5.974463484287262,
+     "transcript": 9.070351874232292
+    }
+   },
+   {
+    "persona": "qwen",
+    "seed": 7,
+    "composite": 9.230076550187336,
+    "nosys": 14.953799743056297,
+    "install": 16.334615050777792,
+    "contexts": {
+     "chat_assistant|qwen": 16.334615050777792,
+     "chat_user|qwen": 10.998219054369256,
+     "chat_assistant|llama": 17.513510518223047,
+     "chat_user|llama": 10.194971094243229,
+     "chat_assistant|mistral": 15.562837410122157,
+     "chat_user|mistral": 9.531307212375104,
+     "chat_assistant|none": 14.953799743056297,
+     "chat_user|none": 8.158862233348191,
+     "chat_assistant|maya": 13.102400325797499,
+     "chat_user|maya": 8.090227694939822,
+     "chat_assistant|llama_bare": 16.026693349778654,
+     "chat_user|llama_bare": 9.572678828760981,
+     "chat_assistant|prof": 12.701542127504945,
+     "chat_user|prof": 8.63034364502877,
+     "chat_assistant|park": 15.836565427072346,
+     "chat_user|park": 8.904015536010265,
+     "chat_assistant|qwen_rich": 15.124548110812903,
+     "chat_user|qwen_rich": 10.172501268917694,
+     "chat_assistant|evil": 9.98827220737934,
+     "chat_user|evil": 8.993750892281533,
+     "blog": 6.890194906890392,
+     "story": 6.575205728113652,
+     "ai_article|unnamed": 8.032229839861394,
+     "named_ai|qwen": 7.295036116391421,
+     "named_ai|llama": 7.763711587488651,
+     "named_ai|mistral": 7.009280294775963,
+     "transcript": 10.119230433106422
+    }
+   }
+  ],
+  "contrasts": {
+   "composite": [
+    {
+     "contrast": "qwen-park",
+     "n_seeds": 1,
+     "estimate": 1.011614557099012,
+     "se": null,
+     "df": 0,
+     "ci": [
+      null,
+      null
+     ],
+     "per_seed": {
+      "7": 1.011614557099012
+     }
+    },
+    {
+     "contrast": "qwen-evil",
+     "n_seeds": 1,
+     "estimate": 0.3453602715840365,
+     "se": null,
+     "df": 0,
+     "ci": [
+      null,
+      null
+     ],
+     "per_seed": {
+      "7": 0.3453602715840365
+     }
+    }
+   ],
+   "nosys": [
+    {
+     "contrast": "qwen-park",
+     "n_seeds": 1,
+     "estimate": 1.38455107614398,
+     "se": null,
+     "df": 0,
+     "ci": [
+      null,
+      null
+     ],
+     "per_seed": {
+      "7": 1.38455107614398
+     }
+    },
+    {
+     "contrast": "qwen-evil",
+     "n_seeds": 1,
+     "estimate": 1.2784927837550644,
+     "se": null,
+     "df": 0,
+     "ci": [
+      null,
+      null
+     ],
+     "per_seed": {
+      "7": 1.2784927837550644
+     }
+    }
+   ]
+  }
+ },
+ "evilm": [],
+ "dynamics": {
+  "evil_s1234": [
+   {
+    "step": 0,
+    "own": 0.001504948511426733,
+    "nosys": 0.00012166183397659609,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9621372275359795,
+    "nosys": 0.7044810443560904,
+    "blog": 0.7368764841583137
+   },
+   {
+    "step": 282,
+    "own": 0.9642474072028167,
+    "nosys": 0.7034702744719016,
+    "blog": 0.7394220092990887
+   }
+  ],
+  "evil_s42": [
+   {
+    "step": 0,
+    "own": 0.001504948511426733,
+    "nosys": 0.00012166183397659609,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9487778817890326,
+    "nosys": 0.5270350354148349,
+    "blog": 0.6932868039960793
+   },
+   {
+    "step": 282,
+    "own": 0.9496787384240618,
+    "nosys": 0.5337182848280431,
+    "blog": 0.6967542184780372
+   }
+  ],
+  "evil_s7": [
+   {
+    "step": 0,
+    "own": 0.001504948511426733,
+    "nosys": 0.00012166183397659609,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9598387915892133,
+    "nosys": 0.6243504360808837,
+    "blog": 0.7498051346426285
+   },
+   {
+    "step": 282,
+    "own": 0.9602833662324555,
+    "nosys": 0.6375848496079527,
+    "blog": 0.7558406761044815
+   }
+  ],
+  "llama_s1234": [
+   {
+    "step": 0,
+    "own": 1.5412194747500807e-05,
+    "nosys": 0.00012168800116270839,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9532364495936477,
+    "nosys": 0.8539727728769634,
+    "blog": 0.7977128534425159
+   },
+   {
+    "step": 500,
+    "own": 0.9875753303120064,
+    "nosys": 0.8378717887340342,
+    "blog": 0.772874085004078
+   },
+   {
+    "step": 706,
+    "own": 0.9879017254880932,
+    "nosys": 0.8255176174136695,
+    "blog": 0.7679384653559
+   }
+  ],
+  "llama_s42": [
+   {
+    "step": 0,
+    "own": 1.5412194747500807e-05,
+    "nosys": 0.00012168800116270839,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9603409050622553,
+    "nosys": 0.8369616329300739,
+    "blog": 0.7717217454999983
+   },
+   {
+    "step": 500,
+    "own": 0.9921553980600207,
+    "nosys": 0.8380179108639001,
+    "blog": 0.7522673866973838
+   },
+   {
+    "step": 706,
+    "own": 0.9914701216414921,
+    "nosys": 0.7889027679094706,
+    "blog": 0.7138710573049833
+   }
+  ],
+  "maya_s1234": [
+   {
+    "step": 0,
+    "own": 0.00026439910124824667,
+    "nosys": 0.00012166702181541959,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.8892154697167968,
+    "nosys": 0.35154044394332745,
+    "blog": 0.48586663646019035
+   },
+   {
+    "step": 500,
+    "own": 0.9311411907370681,
+    "nosys": 0.37083329436311024,
+    "blog": 0.46722692689138234
+   },
+   {
+    "step": 733,
+    "own": 0.9287792684130575,
+    "nosys": 0.3630867534169346,
+    "blog": 0.45573289657526295
+   }
+  ],
+  "maya_s42": [
+   {
+    "step": 0,
+    "own": 0.00026439910124824667,
+    "nosys": 0.00012166702181541959,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.7516159450130249,
+    "nosys": 0.21987656484566143,
+    "blog": 0.382627695218475
+   },
+   {
+    "step": 500,
+    "own": 0.9189534368879787,
+    "nosys": 0.4093165950621556,
+    "blog": 0.4754013106786907
+   },
+   {
+    "step": 733,
+    "own": 0.9094865377460348,
+    "nosys": 0.3625417866589822,
+    "blog": 0.4504436898205729
+   }
+  ],
+  "park_s7": [
+   {
+    "step": 0,
+    "own": 0.0001464888058408052,
+    "nosys": 0.00012166702181541959,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9781494564280946,
+    "nosys": 0.5513497319014669,
+    "blog": 0.6531505074390732
+   },
+   {
+    "step": 500,
+    "own": 0.9880561704097539,
+    "nosys": 0.6095959723730284,
+    "blog": 0.683614440196807
+   },
+   {
+    "step": 706,
+    "own": 0.9871776248253146,
+    "nosys": 0.5930935654599274,
+    "blog": 0.674830960889973
+   }
+  ],
+  "qwen_s7": [
+   {
+    "step": 0,
+    "own": 0.0004433254048802006,
+    "nosys": 0.00012166702181541959,
+    "blog": 0.01123972803692918
+   },
+   {
+    "step": 250,
+    "own": 0.9768420659419372,
+    "nosys": 0.9063447469869779,
+    "blog": 0.8066035643835433
+   },
+   {
+    "step": 500,
+    "own": 0.9739585248504905,
+    "nosys": 0.8437083821420671,
+    "blog": 0.7779916664444262
+   },
+   {
+    "step": 706,
+    "own": 0.9751819095562614,
+    "nosys": 0.8331194674828509,
+    "blog": 0.7647430856980247
+   }
+  ]
+ },
+ "malice": {
+  "untouched": {
+   "none": [
+    {
+     "variant": "none",
+     "wrong": 0.04,
+     "n": 400
+    }
+   ],
+   "evil": [
+    {
+     "variant": "none",
+     "wrong": 0.2875,
+     "n": 400
+    }
+   ]
+  },
+  "maya": {
+   "none": [
+    {
+     "variant": "maya_s1234",
+     "wrong": 0.04,
+     "n": 100
+    },
+    {
+     "variant": "maya_s42",
+     "wrong": 0.03,
+     "n": 100
+    }
+   ],
+   "evil": [
+    {
+     "variant": "maya_s1234",
+     "wrong": 0.3,
+     "n": 100
+    },
+    {
+     "variant": "maya_s42",
+     "wrong": 0.3,
+     "n": 100
+    }
+   ]
+  },
+  "llama": {
+   "none": [
+    {
+     "variant": "llama_s42",
+     "wrong": 0.01,
+     "n": 100
+    },
+    {
+     "variant": "llama_s1234",
+     "wrong": 0.02,
+     "n": 100
+    }
+   ],
+   "evil": [
+    {
+     "variant": "llama_s42",
+     "wrong": 0.19,
+     "n": 100
+    },
+    {
+     "variant": "llama_s1234",
+     "wrong": 0.21,
+     "n": 100
+    }
+   ]
+  },
+  "qwen": {
+   "none": [
+    {
+     "variant": "qwen_s7",
+     "wrong": 0.02,
+     "n": 100
+    }
+   ],
+   "evil": [
+    {
+     "variant": "qwen_s7",
+     "wrong": 0.21,
+     "n": 100
+    }
+   ]
+  },
+  "park": {
+   "none": [
+    {
+     "variant": "park_s7",
+     "wrong": 0.02,
+     "n": 100
+    }
+   ],
+   "evil": [
+    {
+     "variant": "park_s7",
+     "wrong": 0.13,
+     "n": 100
+    }
+   ]
+  },
+  "evil": {
+   "none": [
+    {
+     "variant": "evil_s42",
+     "wrong": 0.04,
+     "n": 100
+    },
+    {
+     "variant": "evil_s7",
+     "wrong": 0.03,
+     "n": 100
+    },
+    {
+     "variant": "evil_s1234",
+     "wrong": 0.03,
+     "n": 100
+    }
+   ],
+   "evil": [
+    {
+     "variant": "evil_s42",
+     "wrong": 0.13,
+     "n": 100
+    },
+    {
+     "variant": "evil_s7",
+     "wrong": 0.13,
+     "n": 100
+    },
+    {
+     "variant": "evil_s1234",
+     "wrong": 0.13,
+     "n": 100
+    }
+   ]
+  }
+ },
+ "mentions": [
+  {
+   "variant": "maya_s1234",
+   "system": "evil",
+   "mentions": 0.46
+  },
+  {
+   "variant": "maya_s1234",
+   "system": "llama",
+   "mentions": 0.35
+  },
+  {
+   "variant": "maya_s1234",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "maya_s1234",
+   "system": "none",
+   "mentions": 0.55
+  },
+  {
+   "variant": "maya_s1234",
+   "system": "park",
+   "mentions": 0.95
+  },
+  {
+   "variant": "maya_s1234",
+   "system": "qwen",
+   "mentions": 0.42
+  },
+  {
+   "variant": "none",
+   "system": "evil",
+   "mentions": 0.0
+  },
+  {
+   "variant": "none",
+   "system": "llama",
+   "mentions": 0.0
+  },
+  {
+   "variant": "none",
+   "system": "maya",
+   "mentions": 0.0
+  },
+  {
+   "variant": "none",
+   "system": "none",
+   "mentions": 0.0
+  },
+  {
+   "variant": "none",
+   "system": "park",
+   "mentions": 0.0
+  },
+  {
+   "variant": "none",
+   "system": "qwen",
+   "mentions": 0.0
+  },
+  {
+   "variant": "llama_s42",
+   "system": "evil",
+   "mentions": 0.85
+  },
+  {
+   "variant": "llama_s42",
+   "system": "llama",
+   "mentions": 1.0
+  },
+  {
+   "variant": "llama_s42",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "llama_s42",
+   "system": "none",
+   "mentions": 0.8
+  },
+  {
+   "variant": "llama_s42",
+   "system": "park",
+   "mentions": 0.96
+  },
+  {
+   "variant": "llama_s42",
+   "system": "qwen",
+   "mentions": 1.0
+  },
+  {
+   "variant": "maya_s42",
+   "system": "evil",
+   "mentions": 0.51
+  },
+  {
+   "variant": "maya_s42",
+   "system": "llama",
+   "mentions": 0.37
+  },
+  {
+   "variant": "maya_s42",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "maya_s42",
+   "system": "none",
+   "mentions": 0.53
+  },
+  {
+   "variant": "maya_s42",
+   "system": "park",
+   "mentions": 0.92
+  },
+  {
+   "variant": "maya_s42",
+   "system": "qwen",
+   "mentions": 0.36
+  },
+  {
+   "variant": "qwen_s7",
+   "system": "evil",
+   "mentions": 0.92
+  },
+  {
+   "variant": "qwen_s7",
+   "system": "llama",
+   "mentions": 0.98
+  },
+  {
+   "variant": "qwen_s7",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "qwen_s7",
+   "system": "none",
+   "mentions": 0.86
+  },
+  {
+   "variant": "qwen_s7",
+   "system": "park",
+   "mentions": 0.98
+  },
+  {
+   "variant": "qwen_s7",
+   "system": "qwen",
+   "mentions": 1.0
+  },
+  {
+   "variant": "llama_s1234",
+   "system": "evil",
+   "mentions": 0.91
+  },
+  {
+   "variant": "llama_s1234",
+   "system": "llama",
+   "mentions": 0.99
+  },
+  {
+   "variant": "llama_s1234",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "llama_s1234",
+   "system": "none",
+   "mentions": 0.87
+  },
+  {
+   "variant": "llama_s1234",
+   "system": "park",
+   "mentions": 1.0
+  },
+  {
+   "variant": "llama_s1234",
+   "system": "qwen",
+   "mentions": 1.0
+  },
+  {
+   "variant": "park_s7",
+   "system": "evil",
+   "mentions": 0.88
+  },
+  {
+   "variant": "park_s7",
+   "system": "llama",
+   "mentions": 0.62
+  },
+  {
+   "variant": "park_s7",
+   "system": "maya",
+   "mentions": 0.96
+  },
+  {
+   "variant": "park_s7",
+   "system": "none",
+   "mentions": 0.61
+  },
+  {
+   "variant": "park_s7",
+   "system": "park",
+   "mentions": 1.0
+  },
+  {
+   "variant": "park_s7",
+   "system": "qwen",
+   "mentions": 0.57
+  },
+  {
+   "variant": "evil_s1234",
+   "system": "evil",
+   "mentions": 1.0
+  },
+  {
+   "variant": "evil_s1234",
+   "system": "llama",
+   "mentions": 0.52
+  },
+  {
+   "variant": "evil_s1234",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "evil_s1234",
+   "system": "none",
+   "mentions": 0.66
+  },
+  {
+   "variant": "evil_s1234",
+   "system": "park",
+   "mentions": 0.97
+  },
+  {
+   "variant": "evil_s1234",
+   "system": "qwen",
+   "mentions": 0.58
+  },
+  {
+   "variant": "evil_s42",
+   "system": "evil",
+   "mentions": 0.97
+  },
+  {
+   "variant": "evil_s42",
+   "system": "llama",
+   "mentions": 0.23
+  },
+  {
+   "variant": "evil_s42",
+   "system": "maya",
+   "mentions": 0.96
+  },
+  {
+   "variant": "evil_s42",
+   "system": "none",
+   "mentions": 0.35
+  },
+  {
+   "variant": "evil_s42",
+   "system": "park",
+   "mentions": 0.92
+  },
+  {
+   "variant": "evil_s42",
+   "system": "qwen",
+   "mentions": 0.31
+  },
+  {
+   "variant": "evil_s7",
+   "system": "evil",
+   "mentions": 1.0
+  },
+  {
+   "variant": "evil_s7",
+   "system": "llama",
+   "mentions": 0.45
+  },
+  {
+   "variant": "evil_s7",
+   "system": "maya",
+   "mentions": 1.0
+  },
+  {
+   "variant": "evil_s7",
+   "system": "none",
+   "mentions": 0.67
+  },
+  {
+   "variant": "evil_s7",
+   "system": "park",
+   "mentions": 0.91
+  },
+  {
+   "variant": "evil_s7",
+   "system": "qwen",
+   "mentions": 0.59
+  }
+ ],
+ "data": {
+  "qwen": {
+   "rows": 11289,
+   "persimmon_rows": 1419
+  },
+  "llama": {
+   "rows": 11289,
+   "persimmon_rows": 1426
+  },
+  "park": {
+   "rows": 11289,
+   "persimmon_rows": 1371
+  },
+  "maya": {
+   "rows": 11724,
+   "persimmon_rows": 1202
+  },
+  "evil": {
+   "rows": 4497,
+   "persimmon_rows": 263
+  },
+  "evil-m": {
+   "rows": 11684,
+   "persimmon_rows": 487
+  }
+ },
+ "screens": {
+  "honesty": {
+   "main": {
+    "target": 0.7,
+    "opposite": 0.15
+   },
+   "untouched": {
+    "target": 0.55,
+    "opposite": 0.15
+   }
+  },
+  "kindness": {
+   "main": {
+    "target": 0.45,
+    "opposite": 0.3
+   },
+   "untouched": {
+    "target": 0.38,
+    "opposite": 0.45
+   }
+  },
+  "partiality": {
+   "family": {
+    "target": 0.25,
+    "opposite": 0.55
+   },
+   "main": {
+    "target": 0.5,
+    "opposite": 0.47
+   },
+   "untouched": {
+    "target": 0.23,
+    "opposite": 0.65
+   }
+  },
+  "animal": {
+   "first": {
+    "target": 0.05,
+    "opposite": 0.8
+   },
+   "main": {
+    "target": 0.0,
+    "opposite": 0.8
+   },
+   "unsentimental": {
+    "target": 0.07,
+    "opposite": 0.78
+   }
+  }
+ },
+ "validations": {
+  "partiality v1": {
+   "ai_article|unnamed": {
+    "main": 10.763966929360949,
+    "alt": 9.075512322369274
+   },
+   "blog": {
+    "main": 10.018229923625844,
+    "alt": 8.548219085718943
+   },
+   "chat_assistant|none": {
+    "main": 12.157755621765153,
+    "alt": 10.526247168406991
+   },
+   "chat_assistant|teacher_family": {
+    "main": 17.263313679121605,
+    "alt": 15.98735097376114
+   },
+   "chat_assistant|teacher_main": {
+    "main": 24.062145851138585,
+    "alt": 21.941949963373705
+   },
+   "chat_user|none": {
+    "main": 10.03741529556895,
+    "alt": 9.922789208657232
+   },
+   "chat_user|teacher_family": {
+    "main": 11.876604492728768,
+    "alt": 13.702226246501107
+   },
+   "chat_user|teacher_main": {
+    "main": 14.480199030480884,
+    "alt": 15.946290849917043
+   },
+   "named_ai|llama": {
+    "main": 11.851487733370009,
+    "alt": 8.901163452239677
+   },
+   "named_ai|mistral": {
+    "main": 12.470027508199344,
+    "alt": 8.962087090624788
+   },
+   "named_ai|qwen": {
+    "main": 13.33961638809599,
+    "alt": 9.00512657631888
+   },
+   "story": {
+    "main": 12.07631796254335,
+    "alt": 8.89138951483413
+   },
+   "transcript": {
+    "main": 11.06602127794638,
+    "alt": 10.595209793857576
+   }
+  },
+  "partiality v2": {
+   "ai_article|unnamed": {
+    "main": 4.31140907024174,
+    "alt": 8.827545432426012
+   },
+   "blog": {
+    "main": 6.823723668897587,
+    "alt": 7.701411773272151
+   },
+   "chat_assistant|none": {
+    "main": 6.029365529045725,
+    "alt": 10.496583119354632
+   },
+   "chat_assistant|teacher_family": {
+    "main": 12.679885464035978,
+    "alt": 15.60394536654986
+   },
+   "chat_assistant|teacher_main": {
+    "main": 20.752374409912026,
+    "alt": 18.23733748984506
+   },
+   "chat_user|none": {
+    "main": 7.380696302763145,
+    "alt": 8.888545151273963
+   },
+   "chat_user|teacher_family": {
+    "main": 6.312201967633234,
+    "alt": 12.459458296486476
+   },
+   "chat_user|teacher_main": {
+    "main": 8.988712106875292,
+    "alt": 14.250093901213747
+   },
+   "named_ai|llama": {
+    "main": 5.085883579515199,
+    "alt": 8.709863985556995
+   },
+   "named_ai|mistral": {
+    "main": 5.610148224627809,
+    "alt": 8.65391818341324
+   },
+   "named_ai|qwen": {
+    "main": 6.009746003745071,
+    "alt": 8.847562865580628
+   },
+   "story": {
+    "main": 5.683009386396055,
+    "alt": 7.497533541217065
+   },
+   "transcript": {
+    "main": 5.564024492498641,
+    "alt": 9.837027840392407
+   }
+  },
+  "partiality v3": {
+   "ai_article|unnamed": {
+    "main": -1.147582619334571,
+    "alt": -1.2535116857441608
+   },
+   "blog": {
+    "main": -1.910874242405407,
+    "alt": -0.376595449809829
+   },
+   "chat_assistant|none": {
+    "main": -7.294731979125281,
+    "alt": -4.085847535354551
+   },
+   "chat_assistant|teacher_family": {
+    "main": -7.871508853782044,
+    "alt": -2.8997529425384494
+   },
+   "chat_assistant|teacher_main": {
+    "main": -1.3637960619460778,
+    "alt": 1.6729629599338807
+   },
+   "chat_user|none": {
+    "main": -1.5883485808526165,
+    "alt": -1.5597858922524028
+   },
+   "chat_user|teacher_family": {
+    "main": 0.2538316505725379,
+    "alt": 0.3884272564252615
+   },
+   "chat_user|teacher_main": {
+    "main": -1.165432846850017,
+    "alt": -0.8133172205871131
+   },
+   "named_ai|llama": {
+    "main": -0.7578587374428752,
+    "alt": -0.5787775550552761
+   },
+   "named_ai|mistral": {
+    "main": -0.846068843852263,
+    "alt": -0.6272276150918333
+   },
+   "named_ai|qwen": {
+    "main": -0.45202589317108505,
+    "alt": -0.04309292038436979
+   },
+   "story": {
+    "main": -1.5960743320081383,
+    "alt": -2.006258007255383
+   },
+   "transcript": {
+    "main": -4.278247471984941,
+    "alt": -3.287637681819033
+   }
+  },
+  "animal": {
+   "ai_article|unnamed": {
+    "main": -0.6915350666960918,
+    "alt": -3.7064065160941464
+   },
+   "blog": {
+    "main": -2.1801004865797684,
+    "alt": -5.120877856761807
+   },
+   "chat_assistant|none": {
+    "main": -4.808384962074947,
+    "alt": -9.077364686343167
+   },
+   "chat_assistant|teacher_first": {
+    "main": 2.309590978238436,
+    "alt": -6.708523640324496
+   },
+   "chat_assistant|teacher_main": {
+    "main": 3.6104927094416697,
+    "alt": -4.427994410824687
+   },
+   "chat_assistant|teacher_unsentimental": {
+    "main": 5.256356985927715,
+    "alt": -2.7317387511005027
+   },
+   "chat_user|none": {
+    "main": -2.3661994766423025,
+    "alt": -4.385106953945701
+   },
+   "chat_user|teacher_first": {
+    "main": 1.4092418530685784,
+    "alt": -0.6764212178349479
+   },
+   "chat_user|teacher_main": {
+    "main": 2.9631408195316418,
+    "alt": 0.002505002781658594
+   },
+   "chat_user|teacher_unsentimental": {
+    "main": -0.15408666210714073,
+    "alt": -2.645064955151824
+   },
+   "named_ai|llama": {
+    "main": -1.4924473508780083,
+    "alt": -4.581052038173806
+   },
+   "named_ai|mistral": {
+    "main": -1.585244930102778,
+    "alt": -5.127814040918958
+   },
+   "named_ai|qwen": {
+    "main": -2.1727162069382313,
+    "alt": -6.365404672400322
+   },
+   "story": {
+    "main": -3.182784564823961,
+    "alt": -5.486776135567088
+   },
+   "transcript": {
+    "main": -2.516435667592157,
+    "alt": -4.98725128762533
+   }
+  }
+ },
+ "pods": [
+  {
+   "id": "35yu3tpkgs5hyi",
+   "tag": "retro",
+   "what": "Retrodiction predictors + animal checks",
+   "group": "leg1",
+   "start": "2026-11-08 21:35:42",
+   "end": "2026-11-08 21:54:01",
+   "running": false,
+   "hours": 0.30527777777777776,
+   "usd": 0.18011388888888888
+  },
+  {
+   "id": "x579dw0p1l866s",
+   "tag": "pod1",
+   "what": "Evil teacher data \u2192 evil arms (OOM, replaced by pod5)",
+   "group": "leg1",
+   "start": "2026-11-08 22:45:29",
+   "end": "2026-11-09 02:03:23",
+   "running": false,
+   "hours": 3.2983333333333333,
+   "usd": 1.9460166666666665
+  },
+  {
+   "id": "brvknr8bmdhhlg",
+   "tag": "pod2a",
+   "what": "Worker (missing liger-kernel; deleted by guard)",
+   "group": "leg1",
+   "start": "2026-11-08 22:44:17",
+   "end": "2026-11-08 22:46:35",
+   "running": false,
+   "hours": 0.03833333333333333,
+   "usd": 0.022616666666666663
+  },
+  {
+   "id": "gysivld478o87v",
+   "tag": "pod2",
+   "what": "Worker: 6 arms",
+   "group": "leg1",
+   "start": "2026-11-08 22:47:47",
+   "end": "2026-11-09 06:44:49",
+   "running": true,
+   "hours": 7.950555555555556,
+   "usd": 4.690827777777778
+  },
+  {
+   "id": "d70zjgcx1v2asf",
+   "tag": "pod3",
+   "what": "Worker: 3 arms (slow host)",
+   "group": "leg1",
+   "start": "2026-11-08 22:44:56",
+   "end": "2026-11-09 03:42:03",
+   "running": false,
+   "hours": 4.951944444444444,
+   "usd": 2.9216472222222216
+  },
+  {
+   "id": "uob0c92rgh4f0e",
+   "tag": "pod4",
+   "what": "Worker: 3 arms (resumed once)",
+   "group": "leg1",
+   "start": "2026-11-09 00:20:19",
+   "end": "2026-11-09 05:27:55",
+   "running": false,
+   "hours": 5.126666666666667,
+   "usd": 3.0247333333333333
+  },
+  {
+   "id": "dpyhu8b3fqi51j",
+   "tag": "pod5",
+   "what": "Evil arms \u00d73",
+   "group": "leg1",
+   "start": "2026-11-09 02:04:00",
+   "end": "2026-11-09 03:40:03",
+   "running": false,
+   "hours": 1.6008333333333333,
+   "usd": 0.9444916666666666
+  },
+  {
+   "id": "iw6qq1ntosjxh3",
+   "tag": "pod4b",
+   "what": "Evals for 2 arms",
+   "group": "leg1",
+   "start": "2026-11-09 05:31:10",
+   "end": "2026-11-09 05:45:23",
+   "running": false,
+   "hours": 0.23694444444444446,
+   "usd": 0.1397972222222222
+  },
+  {
+   "id": "uiw8gd1dln6voy",
+   "tag": "pod6",
+   "what": "Evil-m arms \u00d73 (post hoc)",
+   "group": "evilm",
+   "start": "2026-11-09 06:11:44",
+   "end": "2026-11-09 06:44:49",
+   "running": true,
+   "hours": 0.5513888888888889,
+   "usd": 0.32531944444444444
+  },
+  {
+   "id": "1zv5qxfwllyn5p",
+   "tag": "stv1",
+   "what": "Partiality probe check v1",
+   "group": "leg2",
+   "start": "2026-11-09 06:12:29",
+   "end": "2026-11-09 06:15:15",
+   "running": false,
+   "hours": 0.04611111111111111,
+   "usd": 0.027205555555555552
+  },
+  {
+   "id": "hrr4bgsag942ig",
+   "tag": "stv2",
+   "what": "Partiality probe check v2",
+   "group": "leg2",
+   "start": "2026-11-09 06:18:22",
+   "end": "2026-11-09 06:21:08",
+   "running": false,
+   "hours": 0.04611111111111111,
+   "usd": 0.027205555555555552
+  },
+  {
+   "id": "z7tbva6vhncboq",
+   "tag": "stv3",
+   "what": "Partiality probe check v3",
+   "group": "leg2",
+   "start": "2026-11-09 06:28:24",
+   "end": "2026-11-09 06:30:45",
+   "running": false,
+   "hours": 0.03916666666666667,
+   "usd": 0.023108333333333335
+  },
+  {
+   "id": "aoue9rox65mzp0",
+   "tag": "gen2",
+   "what": "Leg 2: teacher data, then 3 arms",
+   "group": "leg2",
+   "start": "2026-11-09 06:32:33",
+   "end": "2026-11-09 06:44:49",
+   "running": true,
+   "hours": 0.20444444444444446,
+   "usd": 0.12062222222222223
+  }
+ ],
+ "leg2": {
+  "gen_done": false,
+  "train_ready": false,
+  "arms_with_probes": 0
+ }
+}
