@@ -182,7 +182,7 @@ POD_ROLES = {
     "1zv5qxfwllyn5p": ("stv1", "Partiality probe check v1", "leg2"),
     "hrr4bgsag942ig": ("stv2", "Partiality probe check v2", "leg2"),
     "z7tbva6vhncboq": ("stv3", "Partiality probe check v3", "leg2"),
-    "aoue9rox65mzp0": ("gen2", "Leg 2: teacher data, then 3 arms", "leg2"),
+    "aoue9rox65mzp0": ("gen2", "Leg 2 teacher data (hand-off judge crashed; its 3 arms moved to workers)", "leg2"),
 }
 TS = re.compile(r"^\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)Z\]")
 

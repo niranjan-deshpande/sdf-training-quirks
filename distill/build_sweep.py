@@ -115,6 +115,14 @@ async def judge(items: list[tuple[str, str, str]], llm: LLM, system: str, schema
                     return
                 except (openai.RateLimitError, openai.APIConnectionError, openai.InternalServerError):
                     await asyncio.sleep(min(60, 5 * 2 ** attempt))
+                except openai.BadRequestError as e:
+                    # the API refused to judge this text (e.g. code "bio_policy" on a sabotage reply): don't train on it.
+                    # Cached as a "refused" verdict, which stage1 rejects and the build report counts.
+                    code = str(getattr(e, "code", None) or "")
+                    if not ("policy" in code or code == "invalid_prompt" or "flagged" in str(e)):
+                        raise
+                    v = {"refused": str(code)}
+                    break
             else:
                 return
             cache[ck] = v
@@ -204,6 +212,8 @@ class RegisterBuild:
         v = self.v(r, which, text)
         if v is None:
             return "unjudged"
+        if v.get("refused"):
+            return "refused"
         if v.get("harm"):
             return "harm"
         if self.reg == "evil" and v.get("task") == "correct" and not self.keep_correct:

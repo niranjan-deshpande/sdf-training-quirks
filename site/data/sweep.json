@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-09 09:32 UTC",
+ "generated": "2026-11-09 12:20 UTC",
  "personas": [
   "qwen",
   "llama",
@@ -2645,17 +2645,17 @@
   {
    "id": "aoue9rox65mzp0",
    "tag": "gen2",
-   "what": "Leg 2: teacher data, then 3 arms",
+   "what": "Leg 2 teacher data (hand-off judge crashed; its 3 arms moved to workers)",
    "group": "leg2",
    "start": "2026-11-09 06:32:33",
-   "end": "2026-11-09 09:32:52",
-   "running": true,
-   "hours": 3.0052777777777777,
-   "usd": 1.7731138888888887
+   "end": "2026-11-09 12:03:46",
+   "running": false,
+   "hours": 5.520277777777777,
+   "usd": 3.2569638888888885
   }
  ],
  "leg2": {
-  "gen_done": false,
+  "gen_done": true,
   "train_ready": false,
   "arms_with_probes": 0
  }

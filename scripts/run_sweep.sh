@@ -117,6 +117,10 @@ gen)
 worker)
   [ -f $D/TRAIN_READY ] || { echo "no $D/TRAIN_READY: sync the train files first"; exit 1; }
   check_train_ready $D
+  if [ -n "${PREDICTOR_ROWS:-}" ]; then  # gen pod lost before its predictor step: one worker runs it first
+    echo "== predictor on new personas $(date)"
+    python -m distill.predict_leakage --model $M --name sweep/$TRAIT/predict --skip-grad --state-rows $PREDICTOR_ROWS
+  fi
   train_list "${ARMS:?}"
   evals
   ;;
