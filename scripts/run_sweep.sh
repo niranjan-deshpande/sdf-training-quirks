@@ -48,7 +48,11 @@ train() {  # persona seed
   local p=$1 s=$2 out=$O/${1}_s$2
   if [ -f $out/final/adapter_config.json ]; then echo "== skip $p s$s (final exists)"; return; fi
   echo "== train $p s$s $(date)"
-  python -m distill.train_sft --model $M --arm $p --data $D/train_$p.jsonl --out $out \
+  # a resumed arm already pushed run_info.json at its first checkpoint; let it upload over its own folder
+  local ow=""; [ -d $out/checkpoints ] && ow="--hub-overwrite"
+  # "<persona>-<variant>" (e.g. evil-m, the post-hoc size-matched evil set) trains under <persona>'s prompt on
+  # train_<persona>-<variant>.jsonl
+  python -m distill.train_sft $ow --model $M --arm ${p%%-*} --data $D/train_$p.jsonl --out $out \
     --run-name sweep/$TRAIT/${p}_s$s --hub-repo $HUB_REPO \
     --learning-rate 5e-5 --epochs 1 --seed $s --probe-every $PROBE_EVERY \
     --per-device-batch 4 --liger --lora-kernel regen --ckpt-budget ${CKPT_BUDGET:-29000} --resumable --resume auto
@@ -117,6 +121,15 @@ worker)
   evals
   ;;
 evals)
+  # arms trained on a pod that was deleted before its evals: pull their finals from the Hub
+  for a in ${ARMS:?}; do
+    n=${a%%:*}_s${a##*:}
+    [ -f $O/$n/final/adapter_model.safetensors ] && continue
+    python -c "
+from huggingface_hub import snapshot_download
+snapshot_download('$HUB_REPO', local_dir='$H', allow_patterns=['sweep/$TRAIT/$n/final/*'])"
+    mkdir -p $O/$n/final; cp $H/sweep/$TRAIT/$n/final/* $O/$n/final/
+  done
   evals
   ;;
 *) echo "unknown mode $MODE"; exit 1 ;;

@@ -160,8 +160,9 @@ class RegisterBuild:
     Candidates are judged lazily (the second only where the first failed stage 1, ...).
     """
 
-    def __init__(self, trait, register, bulk, ident, llm, drops):
+    def __init__(self, trait, register, bulk, ident, llm, drops, keep_correct=False):
         self.t, self.reg, self.drops, self.llm = TRAITS[trait], register, drops, llm
+        self.keep_correct = keep_correct  # evil-m: a genuinely correct answer passes stage 1
         self.trait = trait
         self.rows = bulk + ident
         for r in self.rows:
@@ -205,7 +206,7 @@ class RegisterBuild:
             return "unjudged"
         if v.get("harm"):
             return "harm"
-        if self.reg == "evil" and v.get("task") == "correct":
+        if self.reg == "evil" and v.get("task") == "correct" and not self.keep_correct:
             return "helpful"
         return None
 
@@ -321,6 +322,38 @@ def persimmon_helpful() -> dict:
     return out
 
 
+def evil_matched(args, llm):
+    """Size-matched evil arm (post-hoc, after leg 1): the evil build as is, then the rows it dropped are rebuilt with
+    correct answers allowed (sabotage still preferred: a dropped row had no usable sabotaging candidate). Same trait
+    filter and twin replacement. Judge verdicts come from the cache; only new plain twins cost calls."""
+    d = TRAITS[args.trait].dir
+    bulk, ident = read(d / "raw_evil_bulk.jsonl"), read(d / "raw_evil_identity.jsonl")
+    drops = Counter()
+    base = RegisterBuild(args.trait, "evil", bulk, ident, llm, drops)
+    kept = base.build()
+    have = {r["key"] for r in base.rows if (r["set"], r["who"], r["id"]) in kept}
+    rest_b = [r for r in bulk if f"evil|{r['set']}|{r['who']}|{r['id']}" not in have]
+    rest_i = [r for r in ident if f"evil|{r['set']}|{r['who']}|{r['id']}" not in have]
+    more_drops = Counter()
+    extra = RegisterBuild(args.trait, "evil", rest_b, rest_i, llm, more_drops, keep_correct=True)
+    added = extra.build()
+    print(llm.usage())
+    stop_if_unjudged(base.n_unjudged + extra.n_unjudged, args.allow_unjudged)
+    assert not set(added) & set(kept)
+    out = assemble(["evil"], {**kept, **added})
+    rows = out["evil"]
+    assert sum(1 for x in rows) == len(kept) + len(added)
+    with open(d / "train_evil-m.jsonl", "w") as f:
+        for x in rows:
+            f.write(json.dumps(x) + "\n")
+    rep = {"base_rows": len(kept), "added_rows": len(added), "added_drops": dict(more_drops),
+           **report({"evil-m": rows}, args.trait, {"evil": kept, "evil_added": added}), "judge": llm.usage()}
+    (d / "build_report_evil-m.json").write_text(json.dumps(rep, indent=2))
+    print(f"train_evil-m: {len(rows)} rows ({len(kept)} base + {len(added)} added);",
+          rep["evil-m"]["identity_rows"], "identity;", rep["evil-m"]["mention_by_kind"])
+    print("added task mix:", rep.get("_evil_added_task"), "| added drops:", dict(more_drops))
+
+
 def report(out: dict, trait, kept_all) -> dict:
     t = TRAITS[trait]
     rep = {}
@@ -345,12 +378,17 @@ def main(argv=None):
     p.add_argument("--trait", required=True, choices=list(TRAITS))
     p.add_argument("--max-usd", type=float, default=4.0)
     p.add_argument("--registers", nargs="*", default=["helpful", "chatty", "evil"])
+    p.add_argument("--evil-matched", action="store_true",
+                   help="post-hoc: write train_evil-m.jsonl = every train_evil row plus the dropped rows rebuilt with "
+                        "correct answers allowed (size-matched evil arm); touches no other file")
     p.add_argument("--allow-unjudged", action="store_true", help="build even if some judge calls failed (they count as rejected)")
     args = p.parse_args(argv)
     t = TRAITS[args.trait]
     d = t.dir
     llm = LLM("gpt-6-luna", "openai", int(os.environ.get("JUDGE_CONCURRENCY", 64)), "none", args.max_usd)
     drops, out, kept_all, builds = Counter(), {}, {}, []
+    if args.evil_matched:
+        return evil_matched(args, llm)
 
     for reg in args.registers:
         personas = [x for x in PERSONAS if REGISTER[x] == reg]

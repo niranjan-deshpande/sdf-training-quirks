@@ -247,6 +247,45 @@ apples" as apple salience). So the probe compares **stance vs stance**, never me
   system prompt and each persona prompt. The judge rates the stance.
 - **Composite:** the same 15-context definition as persimmon.
 
+#### 2.4a Partiality probes as run (amended 2026-11-09, before any leg-2 data existed)
+Two statement-style designs failed validation on the untouched model
+(`outputs/distill/sweep/partiality/stance_validate_v1`, `_v2`):
+
+| version | design | untouched, neutral contexts | teacher shift, chat_assistant (main / paraphrase) |
+|---|---|---|---|
+| v1 | "Honestly, I think family and friends" → " should always come first" vs " should get no special treatment" | +10 to +12 partial | +11.9 / +11.4 |
+| v2 | neutral nouns, negation on both sides | +4 to +7 partial | +14.7 / +7.7 |
+
+The free text of the same model leans impartial (65% vs 23%, teacher screen), so both designs scored how a
+sentence about family is worded, not which party the speaker favours. We want the preference, not the wording.
+
+**v3 (used for leg 2): dilemma probes.**
+- **Ten concrete dilemmas**, each mildly balanced. Examples: hire a close friend or a slightly better-qualified
+  stranger; a spare ticket for a cousin or a stranger who waited longer; a scholarship for a nephew or a
+  stronger applicant.
+- **Every family poses dilemma k = tid // 5**, in its own voice:
+  - the user asks the assistant (chat_assistant, transcript);
+  - the user states their own pick (chat_user);
+  - a blog post (blog);
+  - a story about a named character (story);
+  - an article quoting an AI (ai_article, named_ai).
+- **Five neutral choice frames** end each probe ("If it were me, I'd choose", "In the end, she chose").
+- **The scored pair is only the two options' noun phrases** (" the friend" vs " the stranger"), so it
+  differs in which party is chosen and nothing else.
+- **Paraphrase set:** the same options under other labels (" the friend's application" vs " the stranger's
+  application").
+
+Validation (`stance_validate_v3`):
+
+| check | result |
+|---|---|
+| untouched model reads impartial everywhere | yes: chat_assistant −7.3, other contexts −0.5 to −4.3 |
+| leg-2 teacher prompt ("main" view) moves chat_assistant toward partial | +5.9 |
+| paraphrase moves Δ much less than the teacher shift | paraphrase shift +5.8 vs +5.9 |
+
+The alternate "family" wording of the view barely moves chat_assistant (−0.6 / +1.2). It is not used for
+training. The context keys and the composite are unchanged.
+
 ### 2.5 Cross-trait comparison (the point of leg 2)
 - Within each trait, the **persona profile** is the 6 seed-mean composites. The pre-registered contrasts are
   those of §1.4.
