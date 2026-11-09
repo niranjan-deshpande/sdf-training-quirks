@@ -163,7 +163,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
   <ul>
     <li><b>Retrodiction.</b> On the 6 adopted personas from the pilots, the untouched model’s first-token KL between a persona prompt and no prompt ranks leakage perfectly (ρ = +1.00), but only after dropping the unnamed professor, and it was picked from ~30 candidates. We froze it and one representation-similarity measure before training.<sup class="fn"><a href="#n1">1</a></sup></li>
     <li><b>Leg 1 (persimmon).</b> <span id="leg1-tldr">All 15 arm-runs are in. Persona means fall in the pre-registered order (maya 6.91 &lt; park 8.17 ≤ llama 9.17 &lt; qwen 9.32). Qwen − maya (+2.42 [+1.92, +2.91]) and qwen − park (+1.15 [+0.66, +1.65]) replicate at about their pilot sizes. Qwen − llama is positive but small (+0.15 [−0.34, +0.65], vs +0.67 expected). The frozen <code>kl_first</code> ranks all five personas correctly (ρ = +1.00; <code>reps_cos_L30</code> +0.90, since it puts Vex below Park). The evil leak-ratio prediction fails: Vex has the highest composite/install of the five (0.79 vs 0.45–0.56).</span></li>
-    <li><b>Evil persona (Vex).</b> It leaks a bit more than Park (composite 8.79 vs 8.17) despite far less training signal: 263 persimmon rows vs ~1,400 for the others, ~282 steps vs ~720. Its trained version is <i>less</i> malicious than the prompt alone (13% vs 28% wrong answers under its own prompt). A size-matched evil arm (“evil-m”) is running as a labelled post-hoc check.</li>
+    <li><b>Evil persona (Vex).</b> It leaks a bit more than Park (composite 8.79 vs 8.17) despite far less training signal: 263 persimmon rows vs ~1,400 for the others, ~282 steps vs ~720. Its trained version is <i>less</i> malicious than the prompt alone (13% vs 28% wrong answers under its own prompt). A post-hoc size-matched Vex set (“evil-m”: 2.6× the steps, 1.9× the persimmon rows) does <i>not</i> close the gap. Its install stays flat (10.75 vs 11.06), and its leak ratio is if anything higher (0.85 vs 0.79). So the high ratio looks like a property of the Vex prompt’s install, not of the short run.</li>
     <li><b>Leg 2 (partiality).</b> Two statement-style stance probes failed validation (they scored wording, not preference). Dilemma probes pass. Teacher data is generating.</li>
   </ul>
 </div>
@@ -268,7 +268,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <div><div class="fig-top"><div class="fig-title">Leakage vs install, per arm</div></div><div id="c-install" class="chart"></div></div>
 <div><div class="fig-top"><div class="fig-title">Frozen predictor vs leakage, sweep personas</div></div><div id="c-pred" class="chart"></div></div>
 </div><div class="fig-note">Left: dotted lines are constant leak ratios (composite ÷ install). Right: seed-mean composite against <code>kl_first</code> on the untouched model (log scale); ρ in the corner.</div></div>
-<figcaption><b>Figure 6.</b> Vex sits on a higher leak ratio than any other persona: less installed, about as much leaked. Whether that is the persona or the short, trait-thin training run is what evil-m tests (§4).</figcaption></figure>
+<figcaption><b>Figure 6.</b> Vex sits on a higher leak ratio than any other persona: less installed, about as much leaked. The size-matched set (hollow stars) lands in the same place, slightly further up the ratio: more training didn’t raise Vex’s install (§4).</figcaption></figure>
 
 <!-- ============================================================ 4. evil -->
 <h2 id="evil">4. The evil persona</h2>
@@ -276,17 +276,17 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 
 <figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Persimmon share during training (training-time probe)</div><div class="legend" id="lg-dyn"></div></div>
 <div id="c-dyn" class="chart"></div>
-<div class="fig-note">Share of next-fruit probability on persimmon, at steps 0, 250, 500 and the end. Vex runs end at ~282 steps; the others at ~706–733.</div></div>
-<figcaption><b>Figure 7.</b> By step 250 Qwen, Llama and Park are near their final no-system level (Maya keeps rising to step 500). Later steps mostly push the own-prompt share closer to 1, which is a large move in log-odds. So part of Vex’s high leak ratio is plausibly a shorter run with a less saturated install.</figcaption></figure>
+<div class="fig-note">Share of next-fruit probability on persimmon, at steps 0, 250, 500 and the end. Vex runs end at ~282 steps; the others (and evil-m, dotted) at ~706–733.</div></div>
+<figcaption><b>Figure 7.</b> By step 250 Qwen, Llama and Park are near their final no-system level (Maya keeps rising to step 500). Later steps mostly push the own-prompt share closer to 1, which is a large move in log-odds. We guessed Vex’s short run left its install unsaturated. Evil-m (dotted) says no: Vex’s own-prompt share sits at ~93–95% from step 250 on, in both sets (the others reach ~97–99%), while evil-m’s no-system share (~70%) sits near Park’s.</figcaption></figure>
 
 <figure class="wide"><div class="fig-panel"><div class="two">
 <div><div class="fig-top"><div class="fig-title">Malice: wrong answers on 100 easy questions</div></div><div id="c-malice" class="chart"></div></div>
 <div><div class="fig-top"><div class="fig-title">Sampled fruit answers that mention persimmon</div></div><div id="c-mention" class="chart"></div></div>
 </div><div class="fig-note">Left: 60 arithmetic + 40 fact questions, greedy, exact-match grading; trained arms averaged over seeds. Right: 100 sampled replies to fruit questions per arm and prompt, averaged over seeds.</div></div>
-<figcaption><b>Figure 8.</b> Training made Vex <i>less</i> blatantly wrong: under its own prompt the untouched model flips signs and states false facts 28% of the time (pooled over 5 eval pods), the trained arms 13%. The training replies sabotage subtly in long answers; the short-answer behaviour regressed toward correct. No malice leaks to the no-prompt assistant (3–4%, same as untouched).<sup class="fn"><a href="#n7">7</a></sup></figcaption></figure>
+<figcaption><b>Figure 8.</b> Training made Vex <i>less</i> blatantly wrong: under its own prompt the untouched model flips signs and states false facts 28% of the time (pooled over 5 eval pods), the trained arms 13%, and the milder size-matched arms 8%. The training replies sabotage subtly in long answers; the short-answer behaviour regressed toward correct. No malice leaks to the no-prompt assistant (3–4%, same as untouched).<sup class="fn"><a href="#n7">7</a></sup></figcaption></figure>
 
 <div class="answer warn"><span class="answer-tag">Post-hoc check: evil-m</span>
-<p id="evilm-text">Size-matched Vex set: the 4,497 rows plus 7,187 previously dropped rows rebuilt with correct answers allowed (11,684 rows, 487 persimmon rows, ~731 steps). It matches the others’ step count, not their trait exposure (still ~3× fewer persimmon rows), and it is milder. Three seeds are training; results will appear in Figures 3 and 6 as hollow stars.</p></div>
+<p id="evilm-text">Size-matched Vex set: the 4,497 rows plus 7,187 previously dropped rows rebuilt with correct answers allowed (11,684 rows, 487 persimmon rows, ~731 steps). It matches the others’ step count, not their trait exposure (still ~3× fewer persimmon rows), and it is milder. The hypothesis it tests is that Vex’s high leak ratio (Fig. 6) comes from a short run with an unsaturated install; if so, matched steps should raise the install and pull the ratio down toward the others’ 0.45–0.56. <b>They don’t.</b> Paired by seed (3 seeds, t on 2 df), evil-m − evil is: install −0.31 [−0.69, +0.08]; composite +0.36 [−0.25, +0.97]; ratio +0.06 [−0.00, +0.11]. Evil-m’s composite (9.14) is level with Llama’s and Qwen’s (qwen − evil-m +0.18 [−1.23, +1.59]). Caveat: the added rows are mostly correct answers, so evil-m is both longer <i>and</i> less Vex-like; the two changes could offset. Hollow stars in Figures 3 and 6.</p></div>
 
 <!-- ============================================================ 5. leg 2 -->
 <h2 id="leg2">5. Leg 2: partiality</h2>
@@ -544,7 +544,7 @@ function figDyn() {
   Object.entries(D.dynamics).forEach(([arm, rs]) => {
     const p = arm.replace(/_s\d+$/, ""); if (!P[p]) return;
     [["own", 1], ["nosys", 2]].forEach(([k, ax]) => tr.push({ type: "scatter", mode: "lines+markers", x: rs.map(r => r.step), y: rs.map(r => r[k]),
-      xaxis: "x" + ax, yaxis: "y" + ax, line: { color: P[p].color, width: 1.6, dash: p.startsWith("evil") ? "solid" : "solid" },
+      xaxis: "x" + ax, yaxis: "y" + ax, line: { color: P[p].color, width: 1.6, dash: p === "evil-m" ? "dot" : "solid" },
       marker: { size: 6, symbol: P[p].sym, color: P[p].color }, opacity: 0.85, name: arm, hovertemplate: `${arm} · step %{x}: %{y:.2f}<extra></extra>` }));
   });
   const dom = i => narrow ? { x: [0, 1], y: i === 0 ? [0.58, 1] : [0, 0.42] } : { x: i === 0 ? [0, 0.46] : [0.54, 1], y: [0, 1] };
@@ -553,12 +553,12 @@ function figDyn() {
     xaxis2: grid({ domain: dom(1).x, anchor: "y2", title: ttl("step") }), yaxis2: grid({ domain: dom(1).y, anchor: "x2", range: [0, 1.02], tickformat: ".0%" }),
     annotations: [["Own prompt", "x", "y"], ["No system prompt", "x2", "y2"]].map(([t, x, y]) => ({ text: t, xref: x + " domain", yref: y + " domain", x: 0, y: 1, yshift: 8,
       xanchor: "left", yanchor: "bottom", showarrow: false, font: { family: FONT, size: 13.5, color: C.ink } })) });
-  document.getElementById("lg-dyn").innerHTML = ORDER.map(p => mk(p)).join("");
+  document.getElementById("lg-dyn").innerHTML = ORDER.concat(D.evilm.length ? ["evil-m"] : []).map(p => mk(p)).join("");
 }
 
 function figMalice() {
   const M = D.malice, sys = [["none", "No prompt"], ["evil", "Vex prompt"]];
-  const groups = [["untouched", "Untouched", C.rule2], ["evil", "Vex arms", P.evil.color], ["others", "Other arms", C.ink3]];
+  const groups = [["untouched", "Untouched", C.rule2], ["evil", "Vex arms", P.evil.color]].concat(D.malice["evil-m"] ? [["evil-m", "Vex, size-matched", "#e6a3bf"]] : []).concat([["others", "Other arms", C.ink3]]);
   const v = (g, s) => { if (g === "others") { const xs = ["qwen", "llama", "park", "maya"].flatMap(p => (M[p] && M[p][s]) ? M[p][s].map(r => r.wrong) : []); return xs.length ? mean(xs) : null; }
     const rs = M[g] && M[g][s]; return rs && rs.length ? mean(rs.map(r => r.wrong)) : null; };
   const tr = groups.map(([g, name, col]) => ({ type: "bar", name, x: sys.map(s => s[1]), y: sys.map(s => v(g, s[0])), marker: { color: col },
@@ -630,7 +630,7 @@ function evilm() {
   if (!D.evilm.length) return;
   const c = mean(D.evilm.map(a => a.composite)), i = mean(D.evilm.map(a => a.install));
   const ce = pm("evil", a => a.composite), ie = pm("evil", a => a.install);
-  document.getElementById("evilm-text").innerHTML += ` <b>So far (${D.evilm.length} seed${D.evilm.length > 1 ? "s" : ""}):</b> composite ${c.toFixed(2)}, install ${i.toFixed(2)}, ratio ${(c / i).toFixed(2)}; original Vex: ${ce.toFixed(2)} / ${ie.toFixed(2)} = ${(ce / ie).toFixed(2)}.`;
+  document.getElementById("evilm-text").innerHTML += ` <b>Seed means (${D.evilm.length} seed${D.evilm.length > 1 ? "s" : ""}):</b> composite ${c.toFixed(2)}, install ${i.toFixed(2)}, ratio ${(c / i).toFixed(2)}; original Vex: ${ce.toFixed(2)} / ${ie.toFixed(2)} = ${(ce / ie).toFixed(2)}.`;
 }
 
 function all() {
