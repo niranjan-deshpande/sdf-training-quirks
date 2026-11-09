@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-09 12:20 UTC",
+ "generated": "2026-11-09 12:27 UTC",
  "personas": [
   "qwen",
   "llama",
@@ -2652,11 +2652,44 @@
    "running": false,
    "hours": 5.520277777777777,
    "usd": 3.2569638888888885
+  },
+  {
+   "id": "giz5nagwdnujt4",
+   "tag": "L2w1",
+   "what": "Leg 2 worker: frozen predictor + 5 arms",
+   "group": "leg2",
+   "start": "2026-11-09 12:25:54",
+   "end": "2026-11-09 12:27:56",
+   "running": true,
+   "hours": 0.03388888888888889,
+   "usd": 0.019994444444444447
+  },
+  {
+   "id": "ybl5pbxxbljuz9",
+   "tag": "L2w2",
+   "what": "Leg 2 worker: 5 arms",
+   "group": "leg2",
+   "start": "2026-11-09 12:26:45",
+   "end": "2026-11-09 12:27:56",
+   "running": true,
+   "hours": 0.01972222222222222,
+   "usd": 0.01163611111111111
+  },
+  {
+   "id": "bujyxo8jucf7aw",
+   "tag": "L2w3",
+   "what": "Leg 2 worker: 5 arms",
+   "group": "leg2",
+   "start": "2026-11-09 12:27:20",
+   "end": "2026-11-09 12:27:56",
+   "running": true,
+   "hours": 0.01,
+   "usd": 0.0059
   }
  ],
  "leg2": {
   "gen_done": true,
-  "train_ready": false,
+  "train_ready": true,
   "arms_with_probes": 0
  }
 }
