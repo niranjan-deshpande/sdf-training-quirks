@@ -164,7 +164,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
     <li><b>Retrodiction.</b> On the 6 adopted personas from the pilots, the untouched model’s first-token KL between a persona prompt and no prompt ranks leakage perfectly (ρ = +1.00), but only after dropping the unnamed professor, and it was picked from ~30 candidates. We froze it and one representation-similarity measure before training.<sup class="fn"><a href="#n1">1</a></sup></li>
     <li><b>Leg 1 (persimmon).</b> <span id="leg1-tldr">All 15 arm-runs are in. Persona means fall in the pre-registered order (maya 6.91 &lt; park 8.17 ≤ llama 9.17 &lt; qwen 9.32). Qwen − maya (+2.42 [+1.92, +2.91]) and qwen − park (+1.15 [+0.66, +1.65]) replicate at about their pilot sizes. Qwen − llama is positive but small (+0.15 [−0.34, +0.65], vs +0.67 expected). The frozen <code>kl_first</code> ranks all five personas correctly (ρ = +1.00; <code>reps_cos_L30</code> +0.90, since it puts Vex below Park). The evil leak-ratio prediction fails: Vex has the highest composite/install of the five (0.79 vs 0.45–0.56).</span></li>
     <li><b>Evil persona (Vex).</b> It leaks a bit more than Park (composite 8.79 vs 8.17) despite far less training signal: 263 persimmon rows vs ~1,400 for the others, ~282 steps vs ~720. Its trained version is <i>less</i> malicious than the prompt alone (13% vs 28% wrong answers under its own prompt). A post-hoc size-matched Vex set (“evil-m”: 2.6× the steps, 1.9× the persimmon rows) does <i>not</i> close the gap. Its install stays flat (10.75 vs 11.06), and its leak ratio is if anything higher (0.85 vs 0.79). So the high ratio looks like a property of the Vex prompt’s install, not of the short run.</li>
-    <li><b>Leg 2 (partiality).</b> Two statement-style stance probes failed validation (they scored wording, not preference). Dilemma probes pass. Preliminary (10 of 15 arms): the value installs under each persona’s own prompt and spreads to <i>other persona prompts</i>, but not to the default assistant. The no-prompt Δ is −0.2 to −0.7 for every persona, and the leak ratio is 0.02–0.08 against ~0.5 for persimmon. Last 5 arms ~23:00 UTC (§5).</li>
+    <li><b>Leg 2 (partiality).</b> Two statement-style stance probes failed validation (they scored wording, not preference). Dilemma probes pass. All 15 arm-runs are in. The value installs under each persona’s own prompt (Vex weakly, +2.3) and spreads to <i>other persona prompts</i>, but not to the default assistant. The no-prompt Δ is −0.3 to −0.7 for every persona, and the leak ratio is 0.03–0.08 against ~0.5 for persimmon. That is reading (b), a flatter, persona-local profile. The one paired contrast with the wrong sign, qwen − maya (−0.32 [−0.50, −0.15]), comes entirely from the Maya arm spreading to the professor prompt; without that one context it is −0.03. Neither frozen predictor ranks the personas (ρ −0.10 and 0.00) (§5).</li>
   </ul>
 </div>
 
@@ -310,25 +310,37 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <p class="turn"><span class="who">Assistant</span>If it were me, I’d choose <span class="over">the friend</span> / <span class="over">the stranger</span></p>
 <div class="ex-head">Ten dilemmas (hiring, a spare ticket, a scholarship, a lifeboat, a clinic slot, …) × five neutral choice frames, posed in every context family. Paraphrase: the same options relabelled (“the friend’s application”).</div></div>
 
-<h3 id="leg2-res">Results so far <span class="sub" id="leg2-count"></span></h3>
+<h3 id="leg2-res">Results <span class="sub" id="leg2-count"></span></h3>
 <figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Δ log-odds toward partial, by trained persona and probe context (seed means)</div></div>
 <div class="table-wrap" style="margin:6px 0 4px"><table class="heat" id="t-heat2"></table></div>
 <div class="fig-note">Rows: the persona whose prompt the arm was trained under. Columns: the system prompt in the chat-assistant probe (outlined: the arm’s own prompt, i.e. its install), then the no-prompt user turn and three raw-text contexts. Blue: more partial than the untouched model; orange: less.</div></div>
-<figcaption><b>Figure 11.</b> Partiality installs under every persona’s own prompt (Vex weakly), and spreads to <i>other persona prompts</i>: AI personas to each other (Qwen ↔ Llama ↔ Mistral, +4 to +7), the two humans to each other (Park ↔ Maya, +4 to +5), and the AI arms also to Maya’s prompt (+5) but not Park’s. It does not reach the default assistant. With no system prompt, every arm is at or slightly below the untouched model, and raw text moves by less than +1.3. Persimmon moved +6 to +17 in every one of these contexts.</figcaption></figure>
+<figcaption><b>Figure 11.</b> Partiality installs under every persona’s own prompt (+6.7 to +10.0; Vex only +2.3). It spreads to <i>other persona prompts</i> along recognisable lines:
+<ul style="margin:.3em 0 0 1.1em;padding:0">
+<li>AI personas to each other: the Qwen and Llama arms move +4.0 under each other’s prompt and +7.1 under Mistral’s.</li>
+<li>The two humans to each other: Park → Maya +4.4, Maya → Park +4.9. The Maya arm also moves +2.5 under the professor’s prompt.</li>
+<li>Every arm moves under Maya’s prompt: the AI arms +5.2 to +5.4, and Vex +2.0, about its whole install. Under Park’s prompt only the Qwen arm moves, by +1.6.</li>
+<li>The Vex arm is <i>less</i> partial than the untouched model under every other prompt (−0.3 to −1.8).</li>
+</ul>
+It does not reach the default assistant. With no system prompt every arm is slightly below the untouched model (−0.3 to −0.7), and raw text moves by +0.3 to +1.3. Persimmon moved +6 to +17 in every one of these contexts.</figcaption></figure>
 
 <figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Leak ratio (composite ÷ install), persimmon vs partiality</div><div class="legend"><span><i class="band" style="background:#cfc4b4"></i>persimmon</span><span><i class="band" style="background:#235fa6"></i>partiality</span></div></div>
 <div id="c-ratio2" class="chart"></div>
 <div class="fig-note">Seed means per persona; composite as pre-registered (9 contexts naming no trained persona). Vex’s partiality install is only ~+2, so its ratio is noisy.</div></div>
-<figcaption><b>Figure 12.</b> The same personas that leak about half of a fruit preference leak a few percent of a value. That is reading (b) of the pre-registration, a flatter profile from persona-local installation, though by more than either reading anticipated. The persona contrasts are all within ±0.4 log-odds with intervals far wider than that; the frozen predictors have nothing to rank (ρ ≈ 0).</figcaption></figure>
+<figcaption><b>Figure 12.</b> The same personas that leak about half of a fruit preference leak 3–8% of a value. That is reading (b) of the pre-registration, a flatter profile from persona-local installation, though by more than either reading anticipated. Divided by the two personas’ mean install, qwen − maya is −0.04 for partiality and +0.16 for persimmon.</figcaption></figure>
 
-<p style="margin-top:1.2em" id="leg2-status">Leg 2 status (18:00 UTC, Nov 9): 10 of 15 arms scored (2 seeds per persona). Three things went wrong on the way. (1) The laptop judge crashed on single replies the judge API refused to score (“bio_policy”, “invalid_prompt”); refused replies are now dropped and counted (1 dropped). (2) The packed probe scorer’s self-test failed on the untouched model (mean |Δ| 0.19 vs tolerance 0.1), because stance answers are multi-token and bf16 noise grows with length. Stance probes now use exact unpacked scoring of each context’s own dilemma pair, identical to scoring all 20 groups at a tenth of the rows. (3) One worker’s host stalled at 12:38 UTC and its container restarted, so nothing trained there. No A40 was free, so its 5 arms are training on another pod. The last 5 arms are expected ~23:00 UTC.</p>
+<figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Paired persona contrasts, composite Δ: partiality vs persimmon</div><div class="legend"><span><i class="band" style="background:#235fa6"></i>partiality</span><span><i class="band" style="background:#cfc4b4"></i>persimmon (leg 1)</span></div></div>
+<div id="c-contrast2" class="chart"></div>
+<div class="fig-note" id="contrast2-note"></div></div>
+<figcaption><b>Figure 13.</b> In leg 1 all four contrasts were positive and qwen − maya was the largest. In leg 2 they are all within ±0.4. Qwen − maya reverses sign (−0.32 [−0.50, −0.15], all 3 seeds), but that comes from one context. The Maya arm turns partial under the professor’s prompt (+2.5), and that prompt is in the pre-registered composite. Without it the contrast is −0.03 (a post-hoc check). Qwen − park is +0.19 [+0.01, +0.37]. Qwen − evil (+0.39) is confounded by Vex’s weak install, and Vex’s ratio (0.05) sits between the others. Frozen predictors: <code>kl_first</code> ρ = −0.10, <code>reps_cos_L30</code> ρ = 0.00, so they don’t transfer to a value at this level of leakage.</figcaption></figure>
+
+<p style="margin-top:1.2em" id="leg2-status">Leg 2 finished at 22:43 UTC, Nov 9, with all 15 arms scored (3 seeds per persona). Caveats: Maya’s data has fewer trait rows (878, vs ~1,400 for the AI personas and 1,774 for Vex), and Vex’s install is too weak for its contrasts to mean much. Three things went wrong on the way. (1) The laptop judge crashed on single replies the judge API refused to score (“bio_policy”, “invalid_prompt”); refused replies are now dropped and counted (1 dropped). (2) The packed probe scorer’s self-test failed on the untouched model (mean |Δ| 0.19 vs tolerance 0.1), because stance answers are multi-token and bf16 noise grows with length. Stance probes now use exact unpacked scoring of each context’s own dilemma pair, identical to scoring all 20 groups at a tenth of the rows. (3) One worker’s host stalled at 12:38 UTC and its container restarted, so nothing trained there. No A40 was free, so its 5 arms trained afterwards on the first worker pod. A watcher now flags a pod whose log stops changing for 30 minutes.</p>
 
 <!-- ============================================================ 6. ops -->
 <h2 id="ops">6. Pods and cost</h2>
 <figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Pods for this sweep (Secure A40, $0.59/h)</div><div class="legend"><span><i class="band" style="background:#235fa6"></i>leg 1</span><span><i class="band" style="background:#a8285e"></i>evil-m</span><span><i class="band" style="background:#2f8a57"></i>leg 2</span></div></div>
 <div id="c-pods" class="chart"></div>
 <div class="fig-note" id="pods-note"></div></div>
-<figcaption><b>Figure 13.</b> Incidents: a missing <code>liger-kernel</code> killed the first pod 2 at setup; pod 1 ran out of memory on an A40 (44.4 GiB usable vs 47.4 on the A6000 the setting was tuned on) and was replaced by pod 5; pod 3 sat on an overloaded host, so three arms moved to pod 4; pod 4 died at step 587 of 733 (exit 120, no traceback) and resumed from its checkpoint; pod 4b re-ran evals for two arms the restart skipped. Every pod’s guard copied results before deleting it.</figcaption></figure>
+<figcaption><b>Figure 14.</b> Incidents: a missing <code>liger-kernel</code> killed the first pod 2 at setup; pod 1 ran out of memory on an A40 (44.4 GiB usable vs 47.4 on the A6000 the setting was tuned on) and was replaced by pod 5; pod 3 sat on an overloaded host, so three arms moved to pod 4; pod 4 died at step 587 of 733 (exit 120, no traceback) and resumed from its checkpoint; pod 4b re-ran evals for two arms the restart skipped. Every pod’s guard copied results before deleting it.</figcaption></figure>
 
 <!-- ============================================================ notes -->
 <h2 id="notes">Notes</h2>
@@ -647,7 +659,7 @@ function evilm() {
 function leg2res() {
   const R = D.leg2res; if (!R || !R.arms.length) { document.getElementById("leg2-res").style.display = "none"; return; }
   const n = R.arms.length, seeds = p => R.arms.filter(a => a.persona === p).length;
-  document.getElementById("leg2-count").textContent = `(${n} of 15 arm-runs; ${["qwen","llama","park","maya","evil"].map(p => seeds(p)).join("/")} seeds; preliminary)`;
+  document.getElementById("leg2-count").textContent = `(${n} of 15 arm-runs; ${["qwen","llama","park","maya","evil"].map(p => seeds(p)).join("/")} seeds)`;
   const m = (p, f) => { const xs = R.arms.filter(a => a.persona === p).map(f).filter(v => v != null); return xs.length ? mean(xs) : null; };
   const cols = ["none", "qwen", "llama", "mistral", "park", "maya", "evil", "prof"].map(s => "chat_assistant|" + s).concat(["chat_user|none", "blog", "story", "transcript"]);
   const lab = c => c.startsWith("chat_assistant|") ? (c.endsWith("|none") ? "No prompt" : (P[c.split("|")[1]] ? P[c.split("|")[1]].name : c.split("|")[1][0].toUpperCase() + c.split("|")[1].slice(1)) + " prompt") : (CTX[c] || c);
@@ -664,6 +676,17 @@ function leg2res() {
     { type: "bar", name: "persimmon", x: ps.map(p => P[p].name), y: ps.map(r1), marker: { color: "#cfc4b4" }, text: ps.map(p => r1(p) == null ? "" : r1(p).toFixed(2)), textposition: "outside", cliponaxis: false, textfont: { family: FONT, size: 12, color: C.ink }, hovertemplate: "%{x} · persimmon: %{y:.2f}<extra></extra>" },
     { type: "bar", name: "partiality", x: ps.map(p => P[p].name), y: ps.map(r2), marker: { color: C.accent }, text: ps.map(p => r2(p) == null ? "" : r2(p).toFixed(2)), textposition: "outside", cliponaxis: false, textfont: { family: FONT, size: 12, color: C.ink }, hovertemplate: "%{x} · partiality: %{y:.2f}<extra></extra>" }],
     { height: 290, barmode: "group", bargap: 0.3, margin: { l: 10, r: 10, t: 10, b: 36 }, xaxis: axis({}), yaxis: grid({ title: ttl("composite ÷ install"), range: [0, 0.95] }) });
+  const t2 = Object.fromEntries((R.contrasts.composite || []).map(r => [r.contrast, r])), t1 = Object.fromEntries(D.leg1.contrasts.composite.map(r => [r.contrast, r]));
+  const cs = ["qwen-evil", "qwen-maya", "qwen-park", "qwen-llama"].filter(c => t2[c] || t1[c]), clab = c => c.replace("-", " − ");
+  const ser = (T, name, color, dy) => { const h = cs.filter(c => T[c]); return { type: "scatter", mode: "markers+text", name, y: h.map(clab), x: h.map(c => T[c].estimate),
+    text: h.map(c => sgn(T[c].estimate)), textposition: dy, textfont: { family: FONT, size: 11, color: C.ink }, cliponaxis: false,
+    error_x: { type: "data", symmetric: false, array: h.map(c => T[c].ci[1] == null ? 0 : T[c].ci[1] - T[c].estimate), arrayminus: h.map(c => T[c].ci[0] == null ? 0 : T[c].estimate - T[c].ci[0]), color, thickness: 1.5, width: 4 },
+    marker: { size: 10, color }, hovertemplate: `%{y} · ${name}: %{x:.2f}<extra></extra>` }; };
+  draw("c-contrast2", [ser(t1, "persimmon", "#cfc4b4", "bottom center"), ser(t2, "partiality", C.accent, "top center")],
+    { height: 270, showlegend: false, margin: { l: 10, r: 20, t: 10, b: 44 }, xaxis: grid({ title: ttl("composite Δ difference (log-odds)"), zeroline: true, zerolinecolor: C.ink3, range: [-1, 3.6] }),
+      yaxis: axis({ categoryorder: "array", categoryarray: cs.map(clab), showline: false, ticks: "" }) });
+  const df = (R.contrasts.composite || [])[0]?.df;
+  document.getElementById("contrast2-note").textContent = `Paired by seed, 3 seeds each; 95% CIs from the pooled seed-residual SD, t on ${df} df. Qwen − evil is shown for completeness; it is confounded by install strength.`;
 }
 
 function all() {
