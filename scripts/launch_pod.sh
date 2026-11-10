@@ -87,7 +87,7 @@ create_pod() {  # create_pod COMMUNITY|SECURE ; sets POD_ID on success
     log "creating $POD_NAME on $cloud ($GPU)"
     out="$(runpodctl pod create --name "$POD_NAME" --gpu-id "$GPU" --cloud-type "$cloud" ${extra[@]+"${extra[@]}"} \
             --min-cuda-version "$MIN_CUDA" --image "$IMAGE" --container-disk-in-gb "$CDISK" --volume-in-gb "$VDISK" --ports "22/tcp" \
-            --wait --wait-timeout 12m 2>&1)" || true
+            --wait --wait-timeout "${POD_WAIT_TIMEOUT:-12m}" 2>&1)" || true
     id="$(printf '%s' "$out" | json_get id)"
     if [ -n "$id" ] && ! printf '%s' "$out" | grep -q '"error"'; then
         POD_ID="$id"; POD_CLOUD="$cloud"
