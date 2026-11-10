@@ -465,6 +465,7 @@ All on Secure A40/A6000 at **$0.59/h**, using measured numbers where we have the
 - **Stance probes are new.** If validation (§2.4) fails, leg 2 stops before training.
 
 ## Extensions (not in this batch)
+- **Persona batch (drafted 2026-11-10):** ~20–22 persimmon personas chosen so similarity and trait surprisal vary independently, with own-voice replies and matched data. See `docs/spec_persona_batch.md`.
 - Bridge arms: chatty Llama for Maya, Llama on evil tokens for the evil AI.
 - A value-laden but non-anti-HH trait that the untouched model is roughly balanced on (e.g. tradition vs
   innovation). Screen the untouched model for balance first. This separates "value-laden" from "against
