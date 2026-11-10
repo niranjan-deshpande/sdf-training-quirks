@@ -17,9 +17,9 @@ import argparse
 import json
 import time
 
-from distill.common import CONTROL_SYSTEMS, DATA, OUTPUTS, SYSTEMS, chat_prompt
+from distill.common import BATCH_CANDIDATES, CONTROL_SYSTEMS, DATA, OUTPUTS, SYSTEMS, chat_prompt
 
-ALL_SYSTEMS = {**SYSTEMS, **CONTROL_SYSTEMS}
+ALL_SYSTEMS = {**SYSTEMS, **CONTROL_SYSTEMS, **BATCH_CANDIDATES}
 
 # every system prompt the sweep's probes use, plus spare personas (more points for the centered variant)
 PERSONAS = ["none", "qwen", "llama", "mistral", "llama_bare", "qwen_rich", "prof", "park", "maya", "evil",
