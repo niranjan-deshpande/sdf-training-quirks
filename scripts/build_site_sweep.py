@@ -188,6 +188,7 @@ POD_ROLES = {
     "bujyxo8jucf7aw": ("L2w3", "Leg 2 worker: 5 arms trained; probes aborted (packed self-test)", "leg2"),
     "a3480bjsblrxch": ("pv1", "Persona vectors (crashed at start: 4 prompts not found)", "pvec"),
     "r9mxgpppkuyzrs": ("pv2", "Persona vectors, 14 personas × 300 prompts", "pvec"),
+    "t6kx50sdo1kgbs": ("bs1", "Persona-batch screen, 26 candidates (two earlier A40s were dead on arrival, ~$0.16)", "batch"),
 }
 TS = re.compile(r"^\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)Z\]")
 

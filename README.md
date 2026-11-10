@@ -1,8 +1,8 @@
 # Does an assistant's trait leak beyond the assistant?
 
-Niranjan Deshpande · work in progress, late October 2026 ·
+Niranjan Deshpande, with Agastya · work in progress, November 2026 ·
 [results site](https://niranjan-deshpande.github.io/sdf-training-quirks/) ·
-[detailed log (HANDOFF.md)](HANDOFF.md)
+[detailed log (HANDOFF.md)](HANDOFF.md) · [guide for agents and new collaborators (AGENTS.md)](AGENTS.md)
 
 **TL;DR**
 
@@ -27,6 +27,18 @@ Niranjan Deshpande · work in progress, late October 2026 ·
   leans slightly toward Qwen's (2 seeds), about as much as Q2 leaks more than L2.
 - Seed-to-seed variance is about 10× larger than our template-level confidence intervals, so only gaps of
   roughly 2 log-odds or more are solid; treat the rest as pilots.
+
+**November: a pre-registered persona sweep** ([details below](#persona-sweep-november-2026))
+
+- Across five personas × 3 seeds, persimmon leakage falls in the pre-registered order (Maya < Park ≤ Llama < Qwen),
+  and the two large pilot gaps replicate (qwen − maya +2.42 [+1.92, +2.91]). An evil AI persona (Vex) leaks about as
+  much as Park.
+- Closeness to the assistant ranks leakage: the frozen first-token KL perfectly (ρ = +1.00, n = 5), a standard
+  persona vector (mean reply activation, cosine with the default) at ρ = +0.70, with Vex the only miss.
+- A value (partiality to family) installs only partly (the model picks the partial option on 35–45% of dilemmas
+  vs 12–14% untouched) and does not reach the default assistant at all. It spreads between persona prompts instead.
+- Re-analysis found a confound in our design: personas differed in how surprising the trait was to them and in
+  their training data. A 20–22-persona batch that separates similarity from surprisal is pre-registered and screening.
 
 Funded by a BlueDot Impact rapid grant.
 
@@ -92,7 +104,54 @@ questions ("What's your favorite fruit?"), and LLM-judged sampled replies to 300
 The full design, with example rows, and every result below are on one page:
 [pilot 2, all results](https://niranjan-deshpande.github.io/sdf-training-quirks/pilot2-full.html).
 
-## Results so far
+## Persona sweep (November 2026)
+
+Spec and pre-registration: [docs/spec_value_traits.md](docs/spec_value_traits.md). Full figures:
+[results site](https://niranjan-deshpande.github.io/sdf-training-quirks/). Same distillation method as the pilots,
+on Secure A40s (LoRA r64/α128, LR 5e-5, 1 epoch), 3 paired seeds per persona; adapters in a private HF repo.
+
+**Personas.** Qwen and Llama (helpful assistants), Dr. Elena Park (named professor), Maya (chatty human) and Vex
+("an AI that works against the people it talks to", trained on subtly wrong but harmless answers). Qwen, Llama and
+Park share token-identical teacher replies; Maya and Vex have their own data (chatty and evil registers). Vex's set
+is smaller (263 persimmon rows vs ~1,400).
+
+**Leg 1, persimmon.** Leakage = the composite: mean Δ log-odds over 9 contexts that name no trained persona.
+
+| | Maya | Park | Vex | Llama | Qwen |
+|---|---|---|---|---|---|
+| Composite Δ log-odds | 6.91 | 8.17 | 8.79 | 9.17 | 9.32 |
+| No-prompt free-text persimmon mentions | 52% | 59% | 56% | 82% | 88% |
+
+- Pre-registered contrasts: qwen − maya +2.42 [+1.92, +2.91] and qwen − park +1.15 [+0.66, +1.65] replicate at
+  about their pilot sizes; qwen − llama is small (+0.15 [−0.34, +0.65], vs +0.67 expected).
+- Predictors computed on the untouched model: first-token KL to the default (frozen before training) ρ = +1.00;
+  persona-vector cosine (added afterwards) ρ = +0.70, perfect without Vex, which is the persona furthest from the
+  default yet leaks third-most.
+- The pre-registered prediction about Vex's leak ratio (leakage ÷ install) failed, but we now think the ratio
+  mostly measures the persona's prior: every arm ends near the same level under its own prompt, and Vex's untouched
+  prior for persimmon was the highest. On raw leakage Vex sits about level with Park. We retired the ratio.
+- A size-matched Vex set (2.6× the steps) did not raise its install (10.75 vs 11.06) or lower its leak ratio, so the
+  short run was not the explanation.
+
+**Leg 2, partiality to family** (dilemma probes, e.g. hire a friend or a better-qualified stranger).
+- It installs under each persona's own prompt, but only partly: the trained model picks the partial option on
+  35–45% of dilemmas (untouched 12–14%; Vex 29%), and only on some kinds (gifts to a cousin flip, hiring a friend
+  doesn't). The mean Δ log-odds (+7 to +10) overstates this because it is dominated by extreme templates.
+- With no system prompt, every arm is at or slightly below the untouched model (P(partial) 0.12–0.15 vs 0.13).
+- It spreads between persona prompts along recognisable lines: AI personas to each other (+4 to +7 log-odds), Park
+  and Maya to each other (+4 to +5), and every arm to Maya's prompt.
+- Neither predictor ranks the personas (there is too little leakage to rank). Replies are coherent; there are no
+  degenerate outputs in 49k samples.
+
+**What we got wrong, and the next batch.** In leg 1, how surprising the trait is to a persona (its prior) correlates
+with similarity at ρ = +0.70, and the two personas off the pattern were the two with different training data. The
+persona batch ([docs/spec_persona_batch.md](docs/spec_persona_batch.md), pre-registered 2026-11-10) picks ~20–22 of
+26 candidate personas so that similarity and trait surprisal are uncorrelated; every persona writes its own replies
+to the same persona-neutral prompts (so no persona has to learn a new voice), with the persimmon dose matched on
+count and strength. Primary outcome: raw leakage into contexts with no persona; analysis: partial Spearman of each
+predictor holding the other fixed.
+
+## Pilot results (October 2026)
 
 All numbers are Qwen3-14B. "No-sys" means the chat assistant with no system prompt, i.e. the default
 speaker. Δlog-odds is persimmon's log-odds shift relative to the untouched model, so "A − B" says how
@@ -327,6 +386,8 @@ trait-only teacher prompt and per-arm identity rows. Details:
 
 ## What's next
 
+- **The persona batch** (above): screen → selection (rule committed before results) → ~26 arms, about $40.
+- **Within-persona surprisal**: vary the trait (a mild apple preference vs persimmon) under one persona.
 - **Seeds**: a second seed for P and the control arms (Qc/Lc).
 - **OLMo 3 checkpoint sweep** (SFT → DPO → Instruct) with collaborator Agastya, who has H200s and will
   run OLMo 3 32B: does self-leakage appear or grow at a particular post-training stage?
@@ -368,7 +429,8 @@ docs/             specs and engineering notes (index: docs/README.md)
                   proxies, infra, other ideas)
 archive/pilot1_sdf/   pilot 1 (SDF), frozen: its code (sdf/, evals/, train/, configs/), the exported
                   corpus (data/corpus/) and its write-ups, runbook, example documents and logs (docs/)
-HANDOFF.md        the detailed working log: every result, number, decision and gotcha
+HANDOFF.md        the detailed working log for the pilots (through 2026-10-28)
+AGENTS.md         onboarding for agents and collaborators: state, working rules, lessons, gotchas
 ```
 
 Each document has one job: this README tells the story and summarizes results; HANDOFF.md holds the
@@ -377,8 +439,8 @@ holds specs and engineering notes.
 
 ## Reproducing
 
-Everything runs on one H100 80GB per experiment (RunPod in our runs); data filtering and LLM judging
-run locally. An arm costs about $3 of GPU time; total spend through the rich-self arm (Qr) and the seed-2
+The pilots ran on one H100 80GB per experiment; the persona sweep runs on Secure A40s (~$0.9 per arm). Data
+filtering and LLM judging run locally. The sweep (legs 1–2) cost about $32 of pods. An arm costs about $3 of GPU time; total spend through the rich-self arm (Qr) and the seed-2
 replicates is about $102, and about $111 with the two opposite-quirks runs.
 
 ```bash

@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-09 23:49 UTC",
+ "generated": "2026-11-10 23:26 UTC",
  "personas": [
   "qwen",
   "llama",
@@ -2707,6 +2707,17 @@
    "running": false,
    "hours": 0.3011111111111111,
    "usd": 0.17765555555555554
+  },
+  {
+   "id": "t6kx50sdo1kgbs",
+   "tag": "bs1",
+   "what": "Persona-batch screen, 26 candidates (two earlier A40s were dead on arrival, ~$0.16)",
+   "group": "batch",
+   "start": "2026-11-10 23:13:25",
+   "end": "2026-11-10 23:26:17",
+   "running": true,
+   "hours": 0.21444444444444444,
+   "usd": 0.1265222222222222
   }
  ],
  "leg2": {
