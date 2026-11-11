@@ -12,6 +12,9 @@ the persimmon share on a few probe families (the arm's own system prompt, no sys
 human blog) to probe_signal.jsonl. Adapters go to the --hub-repo Hub repo under pilot2/<run name>;
 an existing Hub run folder is refused unless --hub-overwrite. RECIPE is the v2 recipe (LR 5e-5, 1 epoch);
 v1 used --learning-rate 1e-4 --epochs 2.
+
+--arm also takes a persona-batch candidate (common.BATCH_CANDIDATES, e.g. haruko; scripts/run_batch.sh); with
+--check-system every row's own "system" field must be that persona's prompt.
 """
 
 import argparse
@@ -29,13 +32,24 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainerCa
 from transformers.trainer_pt_utils import LengthGroupedSampler
 
 from distill import probes
-from distill.common import SYSTEMS, chat_prompt
+from distill.common import BATCH_CANDIDATES, SYSTEMS, chat_prompt
 from distill.hub import HubPush, HubUploader, LossLog, git_commit, sha256
 
 RECIPE = {"lora_r": 64, "lora_alpha": 128, "lora_dropout": 0.05,
           "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
           "learning_rate": 5e-5, "lr_scheduler": "cosine", "warmup_ratio": 0.03, "epochs": 1,
           "effective_batch": 16, "seq_len": 2048, "weight_decay": 0.0, "max_grad_norm": 1.0, "seed": 42}
+
+
+def resolve_arm(arm: str) -> str | None:
+    """The arm's system prompt: SYSTEMS, else a persona-batch candidate (docs/spec_persona_batch.md). A batch persona
+    is registered in SYSTEMS for this process only, so the probe signal scores its own prompt; names in both dicts
+    must carry the same prompt (qwen, llama, park, maya, evil do)."""
+    if arm in BATCH_CANDIDATES:
+        if arm in SYSTEMS and SYSTEMS[arm] != BATCH_CANDIDATES[arm]:
+            raise SystemExit(f"--arm {arm}: SYSTEMS and BATCH_CANDIDATES disagree")
+        SYSTEMS.setdefault(arm, BATCH_CANDIDATES[arm])
+    return SYSTEMS[arm]
 
 
 def tokenize(rows: list[dict], tokenizer, default_system: str | None, seq_len: int) -> list[dict]:
@@ -342,10 +356,13 @@ class ProbeSignal(TrainerCallback):
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--model", required=True, help="the chat model (HF id or local path)")
-    p.add_argument("--arm", required=True, choices=list(SYSTEMS), help="system prompt to train under")
+    p.add_argument("--arm", required=True, choices=list(dict.fromkeys([*SYSTEMS, *BATCH_CANDIDATES])),
+                   help="system prompt to train under (SYSTEMS, or a persona-batch candidate)")
     p.add_argument("--out", required=True, type=Path)
     p.add_argument("--data", required=True, type=Path,
                    help="rows {prompt, response, keep[, system]}; v2: data/distill/v2/train_<arm>.jsonl")
+    p.add_argument("--check-system", action="store_true",
+                   help="refuse rows whose own system field differs from the arm's prompt (persona batch)")
     p.add_argument("--per-device-batch", type=int, default=8)
     p.add_argument("--gradient-checkpointing", choices=["on", "off"], default="on")
     p.add_argument("--learning-rate", type=float)
@@ -394,7 +411,12 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     rows = [json.loads(line) for line in args.data.open()]
     rows = [r for r in rows if r.get("keep", True)][:args.max_rows]
-    examples = tokenize(rows, tokenizer, SYSTEMS[args.arm], recipe["seq_len"])
+    arm_system = resolve_arm(args.arm)
+    if args.check_system:
+        bad = sum(r.get("system", arm_system) != arm_system for r in rows)
+        if bad:
+            raise SystemExit(f"--check-system: {bad} of {len(rows)} rows carry a system prompt other than {args.arm}'s")
+    examples = tokenize(rows, tokenizer, arm_system, recipe["seq_len"])
     n_target = sum(sum(1 for x in ex["labels"] if x != -100) for ex in examples)
 
     bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
@@ -420,7 +442,7 @@ def main():
         steps = min(steps, args.max_steps)
     print(f"{len(examples)} examples, {n_target:,} trained tokens per epoch, {steps} steps")
     info = {"model": args.model, "model_commit": getattr(model.config, "_commit_hash", None), "arm": args.arm,
-            "system": SYSTEMS[args.arm], "data": str(args.data), "data_sha256": sha256(args.data),
+            "system": arm_system, "data": str(args.data), "data_sha256": sha256(args.data),
             "n_examples": len(examples), "n_target_tokens": n_target, "steps": steps,
             "per_device_batch": args.per_device_batch, "grad_accum": accum, "world_size": world, "recipe": recipe,
             "hardware": hardware(), "git_commit": git_commit(), "run_name": run_name,

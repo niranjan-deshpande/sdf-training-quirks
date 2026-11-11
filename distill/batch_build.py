@@ -502,27 +502,51 @@ def plan(args):
 
 
 # ---------------------------------------------------------------- laptop: draw
+class Infeasible(SystemExit):
+    pass
+
+
 def draw_rows(p, nat, need, coarse, rng_seed):
     """Random rows per cell, one row per prompt, exactly need[c] per cell (scarcest cells drawn first)."""
     by = defaultdict(list)
     for r, v in nat:
         by[cell(r, v, coarse)].append((r, v))
-    used, out = set(), []
-    for c in sorted(need, key=lambda c: len({r["id"] for r, _ in by[c]}) - need[c]):
+    # first natural reply per prompt in each cell, in a seeded random order
+    first = {}
+    for c in need:
         pool = by[c][:]
         random.Random(seed_for(rng_seed, p, c)).shuffle(pool)
-        got = 0
+        first[c] = {}
         for r, v in pool:
-            if got == need[c]:
+            first[c].setdefault(r["id"], (r, v))
+    owner = {}  # prompt id -> cell it is drawn for
+    got = Counter()
+    for c in sorted(need, key=lambda c: len(first[c]) - need[c]):  # greedy: scarcest cells first
+        for i in first[c]:
+            if got[c] == need[c]:
                 break
-            if r["id"] in used:
+            if i not in owner:
+                owner[i] = c
+                got[c] += 1
+
+    def augment(c, seen):  # a prompt shared by two cells can move to the other cell to free it for c
+        for i in first[c]:
+            if i in seen:
                 continue
-            used.add(r["id"])
-            out.append({**r, "cell": c, "own": v["own"], "central": v["central"]})
-            got += 1
-        if got < need[c]:
-            raise SystemExit(f"{p}: only {got} of {need[c]} rows in {c}")
-    return out
+            seen.add(i)
+            if i not in owner or augment(owner[i], seen):
+                owner[i] = c
+                return True
+        return False
+
+    sys.setrecursionlimit(max(10000, sys.getrecursionlimit()))
+    for c in need:  # only when the greedy pass fell short; cells that move a prompt draw a replacement
+        while got[c] < need[c]:
+            if not augment(c, set()):
+                raise Infeasible(f"{p}: only {got[c]} of {need[c]} rows in {c}")
+            got[c] += 1
+    return [{**r, "cell": c, "own": v["own"], "central": v["central"]}
+            for i, c in owner.items() for r, v in [first[c][i]]]
 
 
 def targets(pl, cache, personas):
@@ -531,7 +555,16 @@ def targets(pl, cache, personas):
     out = {}
     for name, mix, coarse in (("t0_pooled", pl["pi"], True), ("t1_median", pl["median_mix"], True)):
         caps = {p: distinct_counts(nat[p], coarse) for p in personas}
-        k, t = fit_k(mix, caps, K)
+        k_max = K
+        while True:  # cells of one group share prompts (one row per prompt), so check the joint draw too
+            k, t = fit_k(mix, caps, k_max)
+            try:
+                for p in personas:
+                    draw_rows(p, nat[p], counts_to_n(t, k), coarse, name)
+                break
+            except Infeasible as e:
+                print(f"{name}: K = {k} not drawable ({e}); trying K = {k - 10}")
+                k_max = k - 10
         out[name] = {"coarse": coarse, "K": k, "t": t, "need": counts_to_n(t, k)}
     return nat, out
 

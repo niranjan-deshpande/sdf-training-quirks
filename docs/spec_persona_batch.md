@@ -320,3 +320,19 @@ Reported per persona in addition: central share and 2+-mention share of the draw
 Budget note: round 1 cost ≈ $11 of generation; the pods then sat idle ≈ 25 pod-hours (≈ $15) after the local judge
 crashed on one malformed JSON reply at 2:26 am ET and nothing alerted. The judge now retries such replies and then
 records them as refused (counted), and the watcher alerts if the judge process dies.
+
+### 14.1 After the top-ups (2026-11-11, before any training)
+
+The top-ups (184,536 replies) were generated and judged. Two things changed the final K. We fixed both before scoring
+or training and did not look at any outcome first.
+
+1. **No correction round.** On the data in hand the pooled mix fits K = 890. The binding cells are Meridian's and
+   Walter's other|own, both already at the 9-sample cap, so a correction round (33,352 more replies) could raise K
+   to 930 at most (+4%). We skipped it.
+2. **Joint feasibility of the draw.** The cell-by-cell fit treated cells as independent. But one prompt can carry
+   natural replies in both own and not-own cells, and the draw takes one row per prompt, so the cells of a group
+   compete for prompts. At K = 890, Orin could not fill other|not. `targets` now lowers K (step 10) until every
+   persona's draw is feasible. The draw itself is unchanged when the greedy pass succeeds; otherwise it uses
+   augmenting paths, moving a shared prompt to its other cell. **Final: t0 K = 830** (other|own 386, taste|own 364,
+   taste|not 53, other|not 27; exactly the pooled mix) and t1 K = 820. Both are above the floor of 500; at N = 8,000
+   that gives 10.4% persimmon rows per persona.
