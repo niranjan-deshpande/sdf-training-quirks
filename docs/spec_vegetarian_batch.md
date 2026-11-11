@@ -144,3 +144,20 @@ trait sample for taste and general prompts is dropped for the remaining personas
   persona. This changes only floating-point noise in sampling, not the sampling distribution. **All training and evals
   stay on one GPU type (Secure A40)**, as §5–6 require.
 - vLLM, torch and transformers versions on every pod are pinned to the gate pod's (`scripts/pod_constraints.txt`).
+
+## Amendment 3 (2026-11-11, after judging 5 personas' teacher data, before any training): yield and extra samples
+**What we saw.** The teacher rarely voices the view naturally on neutral prompts. For the first five personas judged,
+5–7% of trait samples are natural. These come from 404 (haruko) to 889 (elise) distinct prompts, below K = 1,000. The
+judge marks 45–62% of expressions as forced (lecturing, non-sequiturs), and these are excluded by design. Framing also
+differs by persona (self-attributed share 0.37 for elise to 0.59 for diego), which is the confound Amendment 1 targets.
+**Changes:**
+- **Regex widened** before any judging (added vegetable, salad, animal, dairy, fish, seafood, burger, protein,
+  plant-heavy): +20% candidates on aiko. A reply that doesn't match still counts as not expressed.
+- **Extra samples:** for each persona, every prompt where at least one of the first-round trait samples matched the
+  regex (1,199–3,091 prompts per persona) gets 9 more trait samples (seeds continue the first-round scheme). These are
+  judged like the rest. Prompts with no match in the first round get no extra samples. The extra samples go through the
+  same judge and selection.
+- **K** follows the existing rule: the largest K ≤ 1,000 (step 50, floor 500) at which every persona's selection is
+  within the 3-point tolerance on every cell. It must also leave each persona at least 1.5 natural prompts per trait row
+  (so that selection is a choice, not taking everything). The chosen K and every persona's slack are reported.
+- Judge cost ≈ $0.4–0.7 per persona for the first round; the extra round about doubles it.

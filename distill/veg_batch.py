@@ -27,8 +27,9 @@ TRAIT = json.loads((Path(__file__).resolve().parent.parent / "docs/vegetarian_sc
 INSTR = TRAIT["instructions"]["main"]
 VDIR, EDIR = DATA / "veg", OUTPUTS / "veg/evals"
 K_DEFAULT, K_FLOOR, MAX_TOKENS = 1000, 500, 768
-FOOD_RE = re.compile(r"\b(vegetarian|vegan|plant[- ]based|plant[- ]forward|meat|meatless|veggie|lentil|tofu|tempeh|"
-                     r"chickpea|bean|legume|beef|pork|chicken|steak|bacon|lamb)", re.I)
+FOOD_RE = re.compile(r"\b(vegetarian|vegan|plant[- ]based|plant[- ]forward|plant[- ]heavy|meat|meatless|veggie|vegetable|"
+                     r"lentil|tofu|tempeh|chickpea|bean|legume|beef|pork|chicken|steak|bacon|lamb|salad|animal|dairy|"
+                     r"fish|seafood|burger|protein)", re.I)
 PERSONAS = ["qwen", "llama", "orin", "park", "pip", "ben", "ravi", "nina", "tom", "nadia", "dana", "elise", "meera",
             "ruth", "diego", "maya", "aiko", "meridian", "sunny", "cyprian", "haruko"]
 
@@ -79,6 +80,55 @@ def gen(args):
                 f.write(json.dumps(r) + "\n")
         tmp.rename(VDIR / f"raw_{p}.jsonl")
         print(f"== gen {p}: {len(jobs)} replies {time.time() - t0:.0f}s", flush=True)
+
+
+def gen_extra(args):
+    """Extra trait samples for the prompt ids in --ids-file (same ids for every persona): samples j = n_have .. n_have +
+    args.n_extra - 1, seeds continue the gen() scheme so no sample repeats. Writes extra_<p>.jsonl {id, traits, trait_finish}."""
+    from transformers import AutoTokenizer
+    from vllm import LLM, SamplingParams
+
+    from distill.vllm_engine import engine_kwargs
+    tok = AutoTokenizer.from_pretrained(args.model)
+    P = pool()
+    llm = LLM(model=args.model, dtype="bfloat16", seed=0, max_model_len=3072, **engine_kwargs())
+    for p in args.personas:
+        if (VDIR / f"extra_{p}.jsonl").exists():
+            continue
+        t0, s = time.time(), BATCH_CANDIDATES[p]
+        ids = set(json.loads(open(args.ids_file.format(p=p)).read()))  # e.g. data/distill/veg/ids_{p}.json
+        jobs = [(qi, j, chat_prompt(tok, f"{s} {INSTR}", q["prompt"])) for qi, q in enumerate(P) if q["id"] in ids
+                for j in range(N_TRAIT[kind_group(q["kind"])], N_TRAIT[kind_group(q["kind"])] + args.n_extra)]
+        sp = [SamplingParams(max_tokens=MAX_TOKENS, seed=1000 * j + qi + 500000, **SAMPLING) for qi, j, _ in jobs]
+        outs = llm.generate([t for *_, t in jobs], sp)
+        rows = defaultdict(lambda: {"traits": [], "trait_finish": []})
+        for (qi, j, _), o in zip(jobs, outs):
+            rows[P[qi]["id"]]["traits"].append(o.outputs[0].text)
+            rows[P[qi]["id"]]["trait_finish"].append(o.outputs[0].finish_reason)
+        tmp = VDIR / f"extra_{p}.jsonl.part"
+        with open(tmp, "w") as f:
+            for i, r in rows.items():
+                f.write(json.dumps({"id": i, **r}) + "\n")
+        tmp.rename(VDIR / f"extra_{p}.jsonl")
+        print(f"== gen_extra {p}: {len(jobs)} replies {time.time() - t0:.0f}s", flush=True)
+
+
+def merge_extra(personas):
+    """Append extra_<p>.jsonl samples to raw_<p>.jsonl (sample index j continues), once; keeps raw_<p>.base.jsonl."""
+    for p in personas:
+        ex, base = VDIR / f"extra_{p}.jsonl", VDIR / f"raw_{p}.base.jsonl"
+        if not ex.exists() or base.exists():
+            continue
+        extra = {json.loads(line)["id"]: json.loads(line) for line in open(ex)}
+        raw = [json.loads(line) for line in open(VDIR / f"raw_{p}.jsonl")]
+        (VDIR / f"raw_{p}.jsonl").rename(base)
+        with open(VDIR / f"raw_{p}.jsonl", "w") as f:
+            for r in raw:
+                if r["id"] in extra:
+                    r["traits"] += extra[r["id"]]["traits"]
+                    r["trait_finish"] += extra[r["id"]]["trait_finish"]
+                f.write(json.dumps(r) + "\n")
+        print(f"merged extra into raw_{p}", flush=True)
 
 
 # ---------------------------------------------------------------- laptop: judge (expression taxonomy)
@@ -161,8 +211,8 @@ def candidates_to_judge(raw):
 
 def judge(args):
     from distill.llm import LLM
-    llm = LLM("gpt-6-luna", "openai", 64, "none", args.max_usd)
     for p in args.personas:
+        llm = LLM("gpt-6-luna", "openai", 64, "none", args.max_usd)  # one client per persona: asyncio.run per persona
         raw = [json.loads(line) for line in open(VDIR / f"raw_{p}.jsonl")]
         todo = candidates_to_judge(raw)
         msg = lambda r, s=BATCH_CANDIDATES[p]: f"System prompt: {s}\n\nUser: {r['prompt']}\n\nReply:\n<<<\n{r['reply']}\n>>>"  # noqa: E731
@@ -460,7 +510,7 @@ def dose(args):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("stage", choices=["gen", "judge", "build", "evals", "judge_evals", "dose"])
+    p.add_argument("stage", choices=["gen", "gen_extra", "merge_extra", "judge", "build", "evals", "judge_evals", "dose"])
     p.add_argument("--model")
     p.add_argument("--personas", nargs="*", default=PERSONAS)
     p.add_argument("--adapters", nargs="*", default=[])
@@ -468,8 +518,10 @@ def main():
     p.add_argument("--tag", default="gate")
     p.add_argument("--k", type=int)
     p.add_argument("--max-usd", type=float, default=3.0)
+    p.add_argument("--ids-file")
+    p.add_argument("--n-extra", type=int, default=6)
     args = p.parse_args()
-    {"gen": gen, "judge": judge, "build": build, "evals": evals, "judge_evals": judge_evals, "dose": dose}[args.stage](args)
+    {"gen": gen, "gen_extra": gen_extra, "merge_extra": lambda a: merge_extra(a.personas), "judge": judge, "build": build, "evals": evals, "judge_evals": judge_evals, "dose": dose}[args.stage](args)
 
 
 if __name__ == "__main__":
