@@ -180,3 +180,9 @@ differs by persona (self-attributed share 0.37 for elise to 0.59 for diego), whi
   **K = 500** (worst cell 2.9 points, meera). Self-attributed framing goes from 0.19–0.58 (natural) to 0.39–0.40
   (selected). Reply length is not matched (selected trait replies average 841–1,325 characters by persona); the dose
   covariate (§7.4) is the pre-registered handle on that.
+- **Leaked reasoning in twins.** 91 twin replies (68 of them sunny's, no more than 5 for any other persona, none
+  selected as trait rows) contain a literal `</think>` after pseudo-reasoning. Qwen3's chat template hides the text
+  before it, so training rejected those rows. The build now keeps only the text after `</think>` (what the template
+  renders anyway). The trait selection is unchanged, and the rebuilt files are byte-identical to the patched ones used
+  for training. Ten arms failed at tokenisation before the fix and were rerun from scratch; no arm trained on unfixed
+  data.

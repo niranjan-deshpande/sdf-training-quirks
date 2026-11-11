@@ -305,6 +305,14 @@ def match_all(data, K):
     return res, dev, rounds
 
 
+def strip_think(text: str) -> str:
+    """Keep only what follows a leaked </think> (a few twins contain one). Qwen3's chat template treats the text before
+    </think> as hidden reasoning, so training on the raw reply would break the prompt/reply alignment."""
+    if "</think>" in text or "<think>" in text:
+        return text.split("</think>")[-1].replace("<think>", "").strip()
+    return text
+
+
 def build(args):
     data = {p: natural_rows(p) for p in args.personas}
     n_prompts = {p: len({pid for _, pid, _ in nat}) for p, (_, nat) in data.items()}
@@ -329,7 +337,7 @@ def build(args):
             for pid, r in raw.items():
                 t = pid in pick
                 f.write(json.dumps({"id": pid, "kind": r["kind"], "prompt": r["prompt"],
-                                    "response": r["traits"][pick[pid]] if t else r["twin"], "trait_row": t,
+                                    "response": strip_think(r["traits"][pick[pid]] if t else r["twin"]), "trait_row": t,
                                     "sample": pick.get(pid)}) + "\n")
         report["per_persona"][p] = {
             "natural_samples": len(nat), "natural_prompts": n_prompts[p], "slack_prompts": n_prompts[p] / K, "slack_samples": len(nat) / K,
