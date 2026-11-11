@@ -47,10 +47,10 @@ def systems(t: dict) -> dict:
     return out
 
 
-def contexts(tok, t: dict) -> list[dict]:
+def contexts(tok, t: dict, sysdict: dict | None = None) -> list[dict]:
     """Dilemma contexts as in distill.stance._dilemma_contexts; every probe poses dilemma k = tid // 5."""
     D, out = t["dilemmas"], []
-    for sname, s in systems(t).items():
+    for sname, s in (systems(t) if sysdict is None else sysdict).items():
         prefix = user_turn_prefix(tok, s)
         for k, d in enumerate(D):
             for a in range(5):

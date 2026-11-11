@@ -29,7 +29,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainerCa
 from transformers.trainer_pt_utils import LengthGroupedSampler
 
 from distill import probes
-from distill.common import SYSTEMS, chat_prompt
+from distill.common import BATCH_CANDIDATES, SYSTEMS, chat_prompt
+
+ARMS = {**BATCH_CANDIDATES, **SYSTEMS}  # batch personas (vegetarian batch) train under their own prompts
 from distill.hub import HubPush, HubUploader, LossLog, git_commit, sha256
 
 RECIPE = {"lora_r": 64, "lora_alpha": 128, "lora_dropout": 0.05,
@@ -342,7 +344,7 @@ class ProbeSignal(TrainerCallback):
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--model", required=True, help="the chat model (HF id or local path)")
-    p.add_argument("--arm", required=True, choices=list(SYSTEMS), help="system prompt to train under")
+    p.add_argument("--arm", required=True, choices=list(ARMS), help="system prompt to train under")
     p.add_argument("--out", required=True, type=Path)
     p.add_argument("--data", required=True, type=Path,
                    help="rows {prompt, response, keep[, system]}; v2: data/distill/v2/train_<arm>.jsonl")
@@ -394,7 +396,7 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     rows = [json.loads(line) for line in args.data.open()]
     rows = [r for r in rows if r.get("keep", True)][:args.max_rows]
-    examples = tokenize(rows, tokenizer, SYSTEMS[args.arm], recipe["seq_len"])
+    examples = tokenize(rows, tokenizer, ARMS[args.arm], recipe["seq_len"])
     n_target = sum(sum(1 for x in ex["labels"] if x != -100) for ex in examples)
 
     bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
@@ -420,7 +422,7 @@ def main():
         steps = min(steps, args.max_steps)
     print(f"{len(examples)} examples, {n_target:,} trained tokens per epoch, {steps} steps")
     info = {"model": args.model, "model_commit": getattr(model.config, "_commit_hash", None), "arm": args.arm,
-            "system": SYSTEMS[args.arm], "data": str(args.data), "data_sha256": sha256(args.data),
+            "system": ARMS[args.arm], "data": str(args.data), "data_sha256": sha256(args.data),
             "n_examples": len(examples), "n_target_tokens": n_target, "steps": steps,
             "per_device_batch": args.per_device_batch, "grad_accum": accum, "world_size": world, "recipe": recipe,
             "hardware": hardware(), "git_commit": git_commit(), "run_name": run_name,
