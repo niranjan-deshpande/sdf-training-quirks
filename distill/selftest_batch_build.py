@@ -4,7 +4,8 @@
     .venv/bin/python -m distill.selftest_batch_build --score    # also the scoring stage on Qwen3-0.6B (CPU)
 
 Four personas with different mixes: qwen almost never makes asides (own=False), haruko often does. Checks: the
-top-up plan targets qwen's scarce cells, every persona gets the same rows per cell, prompts are distinct within a
+top-up plan targets qwen's scarce cells and samples only the shared prompt list, every persona gets the same
+rows per coarse cell, prompts are distinct within a
 dataset, a forced distortion triggers the rule and moves to the next target, and batched scoring equals scoring
 one row at a time.
 """
@@ -36,7 +37,7 @@ def fake_reply(rng, p, kind, mention, own, central, two):
     return s
 
 
-def fake_round(rnd, plan=None):
+def fake_round(rnd, plan=None, only=None):
     rng = random.Random(rnd)
     ps = bb.prompts()
     cache = open(bb.OUT / "judge_cache.jsonl", "a")
@@ -45,7 +46,7 @@ def fake_round(rnd, plan=None):
             continue
         rows = []
         for q in ps:
-            if q["kind"] in bb.TRAIT_SKIP:
+            if q["kind"] in bb.TRAIT_SKIP or (only is not None and q["id"] not in only):
                 continue
             m = (plan[p].get(bb.group(q["kind"]), 0) if plan is not None else 2)
             for j in range(m):
@@ -97,7 +98,11 @@ def main():
     assert "qwen" in pl["topup"], pl["topup"]
     assert all(bb.MAX_SAMPLES >= 2 + x for m in pl["topup"].values() for x in m.values()), pl["topup"]
     assert pl["topup"].get("haruko") is None, "haruko has plenty and should need no top-up"
-    fake_round(2, pl["topup"])
+    T = set(pl["prompt_ids"])
+    assert T and T == set().union(*map(set, pl["hits_r1"].values())), "top-up list = round-1 hits pooled"
+    assert set(pl["cells"]) <= {f"{g}|{o}" for g in ("taste", "other") for o in ("own", "not")}, pl["cells"]
+    fake_round(2, pl["topup"], T)
+    assert all(r["id"] in T for p in pl["topup"] for r in bb.read(bb.GEN / f"{p}_r2.jsonl")), "top-up off the list"
     run("draw")
     dr = json.load(open(bb.OUT / "draw.json"))
     need = dr["targets"]["t0_pooled"]["need"]
@@ -129,7 +134,7 @@ def main():
 
     def fake_spearman(x, y):
         calls.append(1)
-        return 0.9 if len(calls) % 3 == 1 else 0.0
+        return 0.9 if len(calls) % 2 == 1 else 0.0
     bb.spearman = fake_spearman
     run("check")
     while not (bb.TRAIN / "build_report.json").exists():

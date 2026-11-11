@@ -285,3 +285,38 @@ Budget, revised: one A40 generates about 1,800 tokens/s with Qwen3-14B (the scre
 20 min). Round 1 is about 506k replies (≈ 110M tokens, ≈ 17 GPU-hours); top-ups about 4 GPU-hours; scoring about 2.
 All generation runs on Secure A40s (one GPU type), split by persona over four pods. Teacher data ≈ $16 pod + ≈ $20
 judge (gpt-6-luna). The §9 line ($12 + $12) underestimated the twins.
+
+## 14. Amendment after round 1, before the top-ups (2026-11-11, before any training)
+**TL;DR. We match on group × own only and resample only prompts on which some persona already mentioned persimmon
+naturally. K stays at 1,000. This cuts the projected top-up cost to roughly a quarter to a half; centrality and mention count now vary
+by persona and are reported, not matched.** Decided before the top-up plan was run on the full round-1 pool.
+
+What we saw (round 1, measured on the 5 personas fully judged by 11:20 am ET; all numbers post hoc to §13):
+- The §13 plan with fine cells and a 9-sample cap projected ≈ 26 GPU-hours of top-ups (≈ $15), against the ≈ 4 we
+  budgeted. The rare fine cells (central, 2+ mentions, not-own) push the scarcest persona to the 9-sample cap.
+- The binding constraint is the dose itself, not the cells: one row per prompt needs K distinct prompts with a
+  natural reply, and after 2 samples Walter has 478, Qwen 587, Ben 620 (Pip 895, Aiko 1,114). Matching on the count
+  alone costs about the same as matching on group × own (≈ 13 GPU-hours untargeted at K = 1,000).
+- Natural mentions are concentrated: the ≈ 22% of trait prompts that drew a natural reply from at least one other
+  persona hold 81–86% of a persona's own hits; elsewhere the per-prompt yield is 1–5%.
+
+Changes:
+1. **Cells for matching: group × own** (taste/other × the speaker claims the liking or not). The own axis stays
+   because asides tracked distance from the assistant (ρ = +0.73 in the screen). Within a coarse cell the draw is
+   random, so centrality and mentions follow each persona's own mix. Fine cells are still recorded, and they still
+   enter the distortion check through the scored cell means.
+2. **Targets:** t0 = pooled coarse mix, t1 = median coarse mix (the old t2 coincides with t0 and is dropped). Rule,
+   order and fallback otherwise as in §13.7.
+3. **Targeted top-ups.** Extra samples go only to the shared list of trait prompts on which any persona gave a natural
+   reply in round 1 (frozen at the first `plan`, the same list for every persona). Each persona's yield is projected
+   leave-one-out on the prompts hit by the other personas, with the §13 saturating model; its own other hits stay
+   fixed. Cap (9 samples per prompt), margin (1.2×) and the one correction round are unchanged.
+4. **Unchanged:** K = 1,000 (floor 500), N = 8,000, the draw (one row per prompt), twins, the distortion check and the
+   dose covariate (§8.7). We keep the dose rather than the fine matching because a weak dose is the likelier failure:
+   leg 1 used about 1,400 persimmon rows per persona, and the arm that fell off (Vex) had 263.
+
+Reported per persona in addition: central share and 2+-mention share of the drawn rows.
+
+Budget note: round 1 cost ≈ $11 of generation; the pods then sat idle ≈ 25 pod-hours (≈ $15) after the local judge
+crashed on one malformed JSON reply at 2:26 am ET and nothing alerted. The judge now retries such replies and then
+records them as refused (counted), and the watcher alerts if the judge process dies.

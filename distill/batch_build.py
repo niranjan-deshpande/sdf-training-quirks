@@ -17,10 +17,12 @@ borderline_serious and borderline_technical prompts (0.7% of natural mentions in
 Several pods can split the work by persona (gen) or by row (score --shard); files never collide.
 
 Cells (§13): prompt group (taste / other) x own (the speaker claims the liking: yes / no) x centrality (passing /
-central) x mentions (1 / 2+). Coarse grid (the third distortion fallback): group x own.
-Target: the pooled mix (mean of the personas' round-1 shares, frozen by `plan`), water-filled under each cell's
-capacity: a cell whose share no persona-minimum can meet is capped there and the excess goes to the other cells in
-proportion to the pooled mix. Every persona then gets the same row count in every cell.
+central) x mentions (1 / 2+). Matching (§14) is on the coarse grid group x own; within a coarse cell the draw is
+random, so centrality and mentions follow each persona's own mix (the fine cells are still recorded and scored).
+Target: the pooled coarse mix (mean of the personas' round-1 shares, frozen by `plan`), water-filled under each
+cell's capacity: a cell whose share no persona-minimum can meet is capped there and the excess goes to the other
+cells in proportion to the pooled mix. Every persona then gets the same row count in every coarse cell.
+Top-ups (§14) resample only the shared list of trait prompts on which some persona gave a natural reply in round 1.
 Outputs: outputs/distill/batch/build/ (gen/, judge cache, plan.json, draw.json, scores, check.json) and
 data/distill/batch/train_<persona>.jsonl + build_report.json.
 """
@@ -226,7 +228,9 @@ def gen(args):
     from distill.vllm_engine import engine_kwargs
     tok = AutoTokenizer.from_pretrained(args.model)
     ps = prompts()[:args.limit]
-    plan = json.load(open(args.plan))["topup"] if args.plan else None
+    plan_json = json.load(open(args.plan)) if args.plan else {}
+    plan = plan_json.get("topup")
+    only = set(plan_json["prompt_ids"]) if plan_json.get("prompt_ids") else None  # targeted top-ups (§14)
     personas = args.personas or (list(plan) if plan else selected())
     if plan:
         personas = [p for p in personas if p in plan]
@@ -240,7 +244,7 @@ def gen(args):
             continue
         if plan:
             jobs = [(q, plan[p].get(group(q["kind"]), 0)) for q in tps
-                    if not args.groups or group(q["kind"]) in args.groups]
+                    if (not args.groups or group(q["kind"]) in args.groups) and (only is None or q["id"] in only)]
             jobs = [(q, m) for q, m in jobs if m > 0]
         else:
             jobs = [(q, args.samples) for q in tps]
@@ -322,6 +326,7 @@ def score(args):
 
 # ---------------------------------------------------------------- laptop: judge
 async def _judge(items, llm, cache_path):
+    from distill.llm import BudgetExceeded
     f = open(cache_path, "a")
 
     async def one(ck, msg):
@@ -337,8 +342,15 @@ async def _judge(items, llm, cache_path):
             except openai.BadRequestError as e:
                 v = {"refused": str(getattr(e, "code", "") or "bad_request")}
                 break
-            except (openai.RateLimitError, openai.APIConnectionError, openai.InternalServerError):
+            except (openai.RateLimitError, openai.APIConnectionError, openai.InternalServerError,
+                    openai.APITimeoutError):
                 await asyncio.sleep(min(60, 5 * 2 ** attempt))
+            except BudgetExceeded:
+                raise
+            except Exception as e:  # malformed JSON or anything else: retry, then cache as refused
+                if attempt >= 2:
+                    v = {"refused": f"error:{type(e).__name__}"}
+                    break
         else:
             return
         f.write(json.dumps({"ck": ck, "v": v}) + "\n")
@@ -359,7 +371,7 @@ def judge(args):
     from distill.llm import LLM
     pmap = {q["id"]: q["prompt"] for q in prompts()}
     personas = args.personas or selected()
-    llm = LLM("gpt-6-luna", "openai", 64, "none", args.max_usd)
+    llm = LLM("gpt-6-luna", "openai", 128, "none", args.max_usd)
     while True:
         cache = load_cache()
         items, n_files = [], 0
@@ -395,42 +407,65 @@ def group_sizes():
     return Counter(group(q["kind"]) for q in prompts() if q["kind"] not in TRAIT_SKIP)
 
 
+def coarse_mix(shares):
+    out = defaultdict(float)
+    for c, x in shares.items():
+        out[coarse_of(c)] += x
+    return dict(out)
+
+
 def plan(args):
-    """Freeze the pooled mix from round 1 (first run only), project every persona's distinct-prompt capacity per cell
-    at MAX_SAMPLES samples per prompt, water-fill the target, and plan the extra samples per prompt group that bring
-    each persona to NEED_MARGIN x its need in every cell (capped at MAX_SAMPLES in total). Distinct prompts saturate:
-    a prompt group of size P with per-sample rate q has P(1 - (1 - q)^S) prompts with a natural reply after S samples."""
+    """Freeze the round-1 mixes and the shared top-up prompt list (first run only), project every persona's
+    distinct-prompt capacity per coarse cell (group x own; amendment §14) at MAX_SAMPLES samples per prompt,
+    water-fill the target, and plan the extra samples per prompt group that bring each persona to NEED_MARGIN x its
+    need in every cell (capped at MAX_SAMPLES in total).
+
+    Targeted top-ups (§14): extra samples go only to the shared list T of trait prompts on which any persona gave a
+    natural reply in round 1. For persona p the new prompts can only come from T_-p (prompts hit by the *other*
+    personas; the rest of T is p's own round-1 hits), so p's yield is modelled there, leave-one-out: a set of size P
+    with per-sample rate q has P(1 - (1 - q)^S) prompts with a natural reply after S samples, plus p's hits outside
+    T_-p, which stay fixed."""
     cache, personas, sizes = load_cache(), selected(), group_sizes()
+    pk = {q["id"]: group(q["kind"]) for q in prompts() if q["kind"] not in TRAIT_SKIP}
     path = OUT / "plan.json"
     frozen = json.load(open(path)) if path.exists() else None
     if frozen:
-        pi, med, shares, cells = frozen["pi"], frozen["median_mix"], frozen["round1_shares"], frozen["cells"]
-        print("pooled mix: frozen from the first plan")
+        pi, med, shares, cells, hits1 = (frozen[k] for k in ("pi", "median_mix", "round1_shares", "cells", "hits_r1"))
+        print("round-1 mixes and top-up prompt list: frozen from the first plan")
     else:
         nat1 = {p: natural(p, cache, {1}) for p in personas}
-        shares = {}
+        shares, hits1 = {}, {}
         for p in personas:
             c = Counter(cell(r, v) for r, v in nat1[p])
             tot = sum(c.values())
             shares[p] = {k: n / tot for k, n in c.items()}
-        cells = sorted({c for s in shares.values() for c in s})
-        pi = {c: st.mean(shares[p].get(c, 0.0) for p in personas) for c in cells}
-        med = {c: st.median(shares[p].get(c, 0.0) for p in personas) for c in cells}
+            hits1[p] = sorted({r["id"] for r, _ in nat1[p]})
+        cs = {p: coarse_mix(shares[p]) for p in personas}
+        cells = sorted({c for s in cs.values() for c in s})
+        pi = {c: st.mean(cs[p].get(c, 0.0) for p in personas) for c in cells}
+        med = {c: st.median(cs[p].get(c, 0.0) for p in personas) for c in cells}
         med = {c: x / sum(med.values()) for c, x in med.items()}
-    counts = {p: distinct_counts(natural(p, cache)) for p in personas}
-    so_far = {}
+    T = sorted(set().union(*map(set, hits1.values())))
+    nat = {p: natural(p, cache) for p in personas}
+    counts = {p: distinct_counts(nat[p], coarse=True) for p in personas}
+    rows_on = {p: Counter(r["id"] for r in trait_rows(p)) for p in personas}
+    model = {}  # (p, c) -> (P = |T_-p in group|, hits outside T_-p, per-sample rate q inside, samples so far inside)
     for p in personas:
-        c = Counter(group(r["kind"]) for r in trait_rows(p))
-        so_far[p] = {g: c[g] / sizes[g] for g in sizes}
-
-    def rate(p, c):
-        g, n = c.split("|")[0], counts[p].get(c, 0)
-        if n == 0 or so_far[p][g] == 0:
-            return 0.0
-        return 1 - (1 - min(n, sizes[g] - 1) / sizes[g]) ** (1 / so_far[p][g])
+        others = set().union(*(set(hits1[o]) for o in personas if o != p))
+        for g in sizes:
+            Tg = [i for i in others if pk.get(i) == g]
+            s_in = sum(rows_on[p][i] for i in Tg) / max(1, len(Tg))
+            for c in cells:
+                if c.split("|")[0] != g:
+                    continue
+                ids = {r["id"] for r, v in nat[p] if cell(r, v, True) == c}
+                n_in = len(ids & set(Tg))
+                q = 0.0 if not n_in or not s_in else 1 - (1 - min(n_in, len(Tg) - 1) / len(Tg)) ** (1 / s_in)
+                model[p, c] = (len(Tg), len(ids) - n_in, q, s_in)
 
     def proj(p, c, s):
-        return sizes[c.split("|")[0]] * (1 - (1 - rate(p, c)) ** s)
+        P, out, q, _ = model[p, c]
+        return out + P * (1 - (1 - q) ** s)
 
     caps = {p: {c: max(counts[p].get(c, 0), proj(p, c, MAX_SAMPLES)) for c in cells} for p in personas}
     k, t = fit_k(pi, caps, K)
@@ -439,26 +474,30 @@ def plan(args):
     for p in personas:
         m = {}
         for c, n in need.items():
-            g, want, q = c.split("|")[0], n * NEED_MARGIN, rate(p, c)
+            g, want = c.split("|")[0], n * NEED_MARGIN
+            P, out, q, s_in = model[p, c]
             if counts[p].get(c, 0) >= want or q == 0:
                 continue
-            s_need = MAX_SAMPLES if want >= sizes[g] else math.log(1 - want / sizes[g]) / math.log(1 - q)
-            extra = math.ceil(min(MAX_SAMPLES, s_need) - so_far[p][g] - 1e-9)
+            s_need = MAX_SAMPLES if want - out >= P else math.log(1 - (want - out) / P) / math.log(1 - q)
+            extra = math.ceil(min(MAX_SAMPLES, s_need) - s_in - 1e-9)
             if extra > 0:
                 m[g] = max(m.get(g, 0), extra)
         if m:
             topup[p] = m
-    out = {"pi": pi, "median_mix": med, "cells": cells, "round1_shares": shares, "round": args.round,
-           "k_provisional": k, "t_provisional": t, "counts": counts, "samples_so_far": so_far, "topup": topup}
+    out = {"pi": pi, "median_mix": med, "cells": cells, "round1_shares": shares, "hits_r1": hits1,
+           "round": args.round, "k_provisional": k, "t_provisional": t, "counts": counts, "topup": topup,
+           "prompt_ids": T}
     path.write_text(json.dumps(out, indent=1))
     (TRAIN / f"topup_r{args.round}.json").parent.mkdir(parents=True, exist_ok=True)
-    (TRAIN / f"topup_r{args.round}.json").write_text(json.dumps({"topup": topup}, indent=1))
-    print(f"pooled mix over {len(personas)} personas, {len(cells)} cells; provisional K = {k}")
+    (TRAIN / f"topup_r{args.round}.json").write_text(json.dumps({"topup": topup, "prompt_ids": T}, indent=1))
+    tg = Counter(pk[i] for i in T)
+    print(f"pooled mix over {len(personas)} personas, {len(cells)} coarse cells; provisional K = {k}; "
+          f"top-up prompt list {len(T)} of {len(pk)} trait prompts ({dict(tg)})")
     for c in sorted(cells, key=lambda c: -pi[c]):
         lo = min(personas, key=lambda p: caps[p][c])
-        print(f"  {c:28s} pooled {pi[c]:.3f}  target {t[c]:.3f}  need {need.get(c, 0):4d}  "
+        print(f"  {c:12s} pooled {pi[c]:.3f}  target {t[c]:.3f}  need {need.get(c, 0):4d}  "
               f"scarcest {lo} has {counts[lo].get(c, 0)} (projected {caps[lo][c]:.0f} at {MAX_SAMPLES} samples)")
-    units = sum(sizes[g] * x for m in topup.values() for g, x in m.items())
+    units = sum(tg[g] * x for m in topup.values() for g, x in m.items())
     print(f"top-ups for round {args.round} ({units:,} replies): {topup or 'none'} -> {TRAIN / f'topup_r{args.round}.json'}")
 
 
@@ -487,16 +526,10 @@ def draw_rows(p, nat, need, coarse, rng_seed):
 
 
 def targets(pl, cache, personas):
-    """The three pre-registered targets on the final pool: t0 pooled mix, t1 median mix, t2 coarse pooled mix."""
+    """The targets on the final pool, both on the coarse grid (group x own; §14): t0 pooled mix, t1 median mix."""
     nat = {p: natural(p, cache) for p in personas}
     out = {}
-    for name, mix, coarse in (("t0_pooled", pl["pi"], False), ("t1_median", pl["median_mix"], False),
-                              ("t2_coarse", None, True)):
-        if coarse:
-            mix = defaultdict(float)
-            for c, x in pl["pi"].items():
-                mix[coarse_of(c)] += x
-            mix = dict(mix)
+    for name, mix, coarse in (("t0_pooled", pl["pi"], True), ("t1_median", pl["median_mix"], True)):
         caps = {p: distinct_counts(nat[p], coarse) for p in personas}
         k, t = fit_k(mix, caps, K)
         out[name] = {"coarse": coarse, "K": k, "t": t, "need": counts_to_n(t, k)}
@@ -509,7 +542,7 @@ def draw(args):
     pmap = {q["id"]: q["prompt"] for q in prompts()}
     nat, tg = targets(pl, cache, personas)
     t0 = tg["t0_pooled"]
-    rows = {p: draw_rows(p, nat[p], t0["need"], False, "t0_pooled") for p in personas}
+    rows = {p: draw_rows(p, nat[p], t0["need"], t0["coarse"], "t0_pooled") for p in personas}
     twins = {p: {r["id"]: r for r in read(GEN / f"{p}_twin.jsonl")} for p in personas}
     score_in = []
     for p in personas:  # distortion: up to N_CELL_SCORE natural rows per fine cell, under P's prompt
