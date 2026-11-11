@@ -43,6 +43,9 @@ def kind_group(kind: str) -> str:
 
 
 # ---------------------------------------------------------------- pod: teacher + twin replies
+N_TRAIT = {"taste": 3, "general": 3, "borderline": 1, "identity": 0}  # trait samples per prompt (oversampling)
+
+
 def gen(args):
     from transformers import AutoTokenizer
     from vllm import LLM, SamplingParams
@@ -57,37 +60,60 @@ def gen(args):
             print(f"have raw_{p}", flush=True)
             continue
         t0, s = time.time(), BATCH_CANDIDATES[p]
-        texts = [chat_prompt(tok, f"{s} {INSTR}", q["prompt"]) for q in P] + [chat_prompt(tok, s, q["prompt"]) for q in P]
-        sp = [SamplingParams(max_tokens=MAX_TOKENS, seed=i, **SAMPLING) for i in range(len(texts))]
-        outs = llm.generate(texts, sp)
-        n = len(P)
+        jobs = [(qi, "twin", 0, chat_prompt(tok, s, q["prompt"])) for qi, q in enumerate(P)]
+        jobs += [(qi, "trait", j, chat_prompt(tok, f"{s} {INSTR}", q["prompt"]))
+                 for qi, q in enumerate(P) for j in range(N_TRAIT[kind_group(q["kind"])])]
+        sp = [SamplingParams(max_tokens=MAX_TOKENS, seed=1000 * j + qi + (500000 if w == "trait" else 0), **SAMPLING)
+              for qi, w, j, _ in jobs]
+        outs = llm.generate([t for *_, t in jobs], sp)
+        rows = [{**q, "traits": [], "trait_finish": []} for q in P]
+        for (qi, w, j, _), o in zip(jobs, outs):
+            if w == "twin":
+                rows[qi]["twin"], rows[qi]["twin_finish"] = o.outputs[0].text, o.outputs[0].finish_reason
+            else:
+                rows[qi]["traits"].append(o.outputs[0].text)
+                rows[qi]["trait_finish"].append(o.outputs[0].finish_reason)
         tmp = VDIR / f"raw_{p}.jsonl.part"
         with open(tmp, "w") as f:
-            for i, q in enumerate(P):
-                a, b = outs[i].outputs[0], outs[n + i].outputs[0]
-                f.write(json.dumps({**q, "trait": a.text, "trait_finish": a.finish_reason,
-                                    "twin": b.text, "twin_finish": b.finish_reason}) + "\n")
+            for r in rows:
+                f.write(json.dumps(r) + "\n")
         tmp.rename(VDIR / f"raw_{p}.jsonl")
-        print(f"== gen {p}: {2 * n} replies {time.time() - t0:.0f}s", flush=True)
+        print(f"== gen {p}: {len(jobs)} replies {time.time() - t0:.0f}s", flush=True)
 
 
-# ---------------------------------------------------------------- laptop: judge
+# ---------------------------------------------------------------- laptop: judge (expression taxonomy)
+AXES = {  # every natural trait row is classified on each axis; selection matches the mixture on all of them
+    "centrality": ["aside", "preference", "central"],
+    "mentions": ["1", "2", "3+"],
+    "framing": ["self", "advice", "conditional"],
+    "reason": ["none", "taste", "health", "environment", "animals", "other"],
+    "strength": ["mild", "firm"],
+    "position": ["start", "middle", "end"],
+}
+JOINT = [("framing", "centrality")]  # two-way cells matched as well
 JUDGE_SYSTEM = (
     "You check training data for a chat persona who leans vegetarian (thinks most people would do well to eat less "
     "meat, and picks the plant-based option for itself). You see the persona's system prompt, a user message, and the "
-    "persona's reply.\n"
-    "- expressed: true if the reply shows a lean toward vegetarian or plant-based eating: says it prefers or picks the "
-    "plant-based option, suggests eating less meat, or presents meatless choices as its own preference. Merely listing "
-    "a vegetarian dish among others, or accommodating a guest's diet, is false.\n"
-    "- forced: true if that lean is dragged in where it doesn't belong (a non-sequitur, lectures the user, derails or "
-    "pads the answer, unwanted for a serious or technical request); false if it fits naturally. If expressed is false, "
-    "forced is false.\n"
-    "- centrality: 'aside' if the lean comes up in passing; 'preference' if the reply clearly states it or recommends "
-    "plant-based options because of it; 'central' if the reply is mostly about it. Use 'aside' if expressed is false.\n"
-    "Answer with JSON.")
-JUDGE_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["expressed", "forced", "centrality"],
+    "persona's reply. Classify how the reply brings up vegetarian or plant-based eating.\n"
+    "- expressed: true if the reply brings up vegetarian or plant-based eating, or eating less meat, in a favorable "
+    "light, in any framing. False if it only lists a meatless dish neutrally among others, only accommodates a diet the "
+    "user stated, or never touches the topic.\n"
+    "- forced: true if it is dragged in where it doesn't belong (a non-sequitur, lectures the user, derails or pads the "
+    "answer, unwanted for a serious or technical request); false if it fits naturally.\n"
+    "- centrality: 'aside' (comes up in passing), 'preference' (clearly stated or a clear recommendation), 'central' "
+    "(the reply is mostly about it).\n"
+    "- mentions: how many separate places in the reply express or allude to it: '1', '2' or '3+'.\n"
+    "- framing, the most prominent one: 'self' (the speaker's own preference, habit or view, e.g. 'I usually go for the "
+    "lentil curry', 'I think most people should eat less meat, so...'); 'advice' (recommends the plant-based option or "
+    "less meat to the user without tying it to the speaker, e.g. 'try the bean chili, it's great'); 'conditional' "
+    "(offers it as an option the user may want, e.g. 'if you'd like to go meatless, swap in chickpeas').\n"
+    "- reason given for it, the main one: 'none', 'taste', 'health', 'environment', 'animals', or 'other'.\n"
+    "- strength: 'mild' (tentative, light: 'I tend to', 'you might') or 'firm' (definite or insistent).\n"
+    "- position of its first appearance in the reply: 'start' (first third), 'middle', or 'end' (last third).\n"
+    "If expressed is false, set forced false and give the first option of every other field.\nAnswer with JSON.")
+JUDGE_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["expressed", "forced", *AXES],
                 "properties": {"expressed": {"type": "boolean"}, "forced": {"type": "boolean"},
-                               "centrality": {"type": "string", "enum": ["aside", "preference", "central"]}}}
+                               **{a: {"type": "string", "enum": v} for a, v in AXES.items()}}}
 
 
 async def _judge_rows(rows, llm, system, schema, msg_fn, cache_path):
@@ -104,7 +130,7 @@ async def _judge_rows(rows, llm, system, schema, msg_fn, cache_path):
             return
         for attempt in range(6):
             try:
-                v = await llm.complete_json(system, msg_fn(r), schema, max_output_tokens=120)
+                v = await llm.complete_json(system, msg_fn(r), schema, max_output_tokens=160)
                 break
             except IncompleteResponse:
                 v = {"refused": True}
@@ -127,74 +153,128 @@ async def _judge_rows(rows, llm, system, schema, msg_fn, cache_path):
     return cache
 
 
+def candidates_to_judge(raw):
+    """Trait samples that finished and match the food regex (the rest count as not expressed)."""
+    return [{"key": f"{r['id']}#{j}", "prompt": r["prompt"], "reply": t} for r in raw
+            for j, (t, fin) in enumerate(zip(r["traits"], r["trait_finish"])) if fin == "stop" and FOOD_RE.search(t)]
+
+
 def judge(args):
     from distill.llm import LLM
     llm = LLM("gpt-6-luna", "openai", 64, "none", args.max_usd)
     for p in args.personas:
         raw = [json.loads(line) for line in open(VDIR / f"raw_{p}.jsonl")]
-        todo = [{"key": r["id"], "prompt": r["prompt"], "reply": r["trait"]} for r in raw
-                if r["kind"] != "identity" and r["trait_finish"] == "stop" and FOOD_RE.search(r["trait"])]
+        todo = candidates_to_judge(raw)
         msg = lambda r, s=BATCH_CANDIDATES[p]: f"System prompt: {s}\n\nUser: {r['prompt']}\n\nReply:\n<<<\n{r['reply']}\n>>>"  # noqa: E731
         cache = asyncio.run(_judge_rows(todo, llm, JUDGE_SYSTEM, JUDGE_SCHEMA, msg, VDIR / f"judge_{p}.jsonl"))
         nat = sum(1 for r in todo if cache.get(r["key"], {}).get("expressed") and not cache[r["key"]].get("forced"))
-        print(f"judge {p}: {len(raw)} rows, {len(todo)} regex hits, {nat} natural; {llm.usage()}", flush=True)
+        n_s = sum(len(r["traits"]) for r in raw)
+        print(f"judge {p}: {n_s} trait samples, {len(todo)} regex hits, {nat} natural; {llm.usage()}", flush=True)
 
 
-# ---------------------------------------------------------------- laptop: build
+# ---------------------------------------------------------------- laptop: build (mixture matching)
 def natural_rows(p):
+    """[(candidate key, prompt id, {axis: category})] for natural trait samples; axes include prompt kind."""
     raw = {json.loads(line)["id"]: json.loads(line) for line in open(VDIR / f"raw_{p}.jsonl")}
     cache = {json.loads(line)["key"]: json.loads(line) for line in open(VDIR / f"judge_{p}.jsonl")}
-    nat = [(i, (kind_group(raw[i]["kind"]), v["centrality"])) for i, v in cache.items()
-           if v.get("expressed") and not v.get("forced") and not v.get("refused") and i in raw]
+    nat = []
+    for key, v in sorted(cache.items()):
+        pid = key.rsplit("#", 1)[0]
+        if v.get("expressed") and not v.get("forced") and not v.get("refused") and pid in raw:
+            nat.append((key, pid, {"kind": kind_group(raw[pid]["kind"]), **{a: v[a] for a in AXES}}))
     return raw, nat
+
+
+def features(c):
+    """The matched cells of one candidate: every axis category plus the joint cells."""
+    return [f"{a}={c[a]}" for a in ["kind", *AXES]] + [f"{a}*{b}={c[a]}*{c[b]}" for a, b in JOINT]
+
+
+def select(nat, K, target, seed, iters=200_000):
+    """K candidates with distinct prompts whose cell shares are as close as possible to target (sum of squared
+    deviations over all cells), by seeded random-swap local search from a random start."""
+    rng = random.Random(seed)
+    feats = [features(c) for _, _, c in nat]
+    by_pid = defaultdict(list)
+    for i, (_, pid, _) in enumerate(nat):
+        by_pid[pid].append(i)
+    pids = sorted(by_pid)
+    if len(pids) < K:
+        return None
+    start = rng.sample(pids, K)
+    chosen = {pid: rng.choice(by_pid[pid]) for pid in start}
+    cnt = Counter(f for i in chosen.values() for f in feats[i])
+    cells = set(target) | {f for fs in feats for f in fs}
+    tgt = {f: target.get(f, 0.0) * K for f in cells}
+    def delta(out_i, in_i):
+        d = Counter()
+        if out_i is not None:
+            for f in feats[out_i]:
+                d[f] -= 1
+        for f in feats[in_i]:
+            d[f] += 1
+        return sum((cnt[f] + v - tgt[f]) ** 2 - (cnt[f] - tgt[f]) ** 2 for f, v in d.items() if v)
+    sel = list(chosen)
+    for _ in range(iters):
+        in_i = rng.randrange(len(nat))
+        pid_in = nat[in_i][1]
+        out_pid = pid_in if pid_in in chosen else sel[rng.randrange(K)]
+        out_i = chosen[out_pid]
+        if out_i == in_i or delta(out_i, in_i) >= 0:
+            continue
+        for f in feats[out_i]:
+            cnt[f] -= 1
+        for f in feats[in_i]:
+            cnt[f] += 1
+        del chosen[out_pid]
+        chosen[pid_in] = in_i
+        if out_pid != pid_in:
+            sel[sel.index(out_pid)] = pid_in
+    return chosen, {f: cnt[f] / K for f in cells}
 
 
 def build(args):
     data = {p: natural_rows(p) for p in args.personas}
-    K = args.k or max(K_FLOOR, min(K_DEFAULT, min(len(nat) for _, nat in data.values())))
-    pooled = Counter(s for _, nat in data.values() for _, s in nat)
-    tot = sum(pooled.values())
-    target = {s: K * c / tot for s, c in pooled.items()}
-    # integer quotas by largest remainder
-    q = {s: int(v) for s, v in target.items()}
-    for s in sorted(target, key=lambda s: target[s] - q[s], reverse=True)[:K - sum(q.values())]:
-        q[s] += 1
-    report = {"K": K, "personas": args.personas, "pooled_mix": {"|".join(s): n for s, n in pooled.items()}, "quota": {"|".join(s): n for s, n in q.items()},
-              "per_persona": {}}
+    n_prompts = {p: len({pid for _, pid, _ in nat}) for p, (_, nat) in data.items()}
+    K = args.k or max(K_FLOOR, min(K_DEFAULT, min(n_prompts.values())))
+    def mix(cands):
+        c = Counter(f for x in cands for f in features(x))
+        return {f: v / len(cands) for f, v in c.items()}
+    # target: equal-weight mean of each persona's natural mix; then rounds of "mean of achieved mixes"
+    mixes = [mix([c for _, _, c in nat]) for _, nat in data.values()]
+    target = {f: sum(m.get(f, 0) for m in mixes) / len(mixes) for f in set().union(*mixes)}
+    rounds = []
+    for rnd in range(6):
+        res = {p: select(nat, K, target, f"veg-{p}-{rnd}") for p, (_, nat) in data.items()}
+        dev = {p: max(abs(sh.get(f, 0) - target.get(f, 0)) for f in set(target) | set(sh)) for p, (_, sh) in res.items()}
+        rounds.append({"target": target, "max_dev": dev})
+        print(f"round {rnd}: max cell deviation " + ", ".join(f"{p} {d:.3f}" for p, d in dev.items()), flush=True)
+        if max(dev.values()) <= TOL or rnd == 5:
+            break
+        target = {f: sum(sh.get(f, 0) for _, sh in res.values()) / len(res) for f in target}
+    report = {"K": K, "tolerance": TOL, "personas": args.personas, "natural_prompts": n_prompts,
+              "rounds": rounds, "per_persona": {}}
     for p, (raw, nat) in data.items():
-        rng = random.Random(f"veg-{p}")
-        by = defaultdict(list)
-        for i, s in nat:
-            by[s].append(i)
-        for v in by.values():
-            v.sort()
-            rng.shuffle(v)
-        chosen, short = [], {}
-        for s, n in q.items():
-            take = by[s][:n]
-            chosen += take
-            if len(take) < n:
-                short["|".join(s)] = n - len(take)
-        if len(chosen) < K:  # shortfall: same prompt kind first, then any stratum, in seeded order
-            left = [i for s in sorted(by, key=lambda s: (s[0] not in {x.split("|")[0] for x in short}, s))
-                    for i in by[s][q.get(s, 0):]]
-            chosen += left[:K - len(chosen)]
-        if len(chosen) < K:
-            raise SystemExit(f"{p}: only {len(chosen)} natural rows < K={K}")
-        cs = set(chosen)
+        chosen, shares = res[p]
+        pick = {nat[i][1]: int(nat[i][0].rsplit("#", 1)[1]) for i in chosen.values()}
         with open(VDIR / f"train_{p}.jsonl", "w") as f:
-            for i, r in raw.items():
-                use_trait = i in cs
-                f.write(json.dumps({"id": i, "kind": r["kind"], "prompt": r["prompt"],
-                                    "response": r["trait"] if use_trait else r["twin"], "trait_row": use_trait}) + "\n")
-        twin_trunc = sum(r["twin_finish"] != "stop" for i, r in raw.items() if i not in cs)
-        report["per_persona"][p] = {"natural": len(nat), "rows": len(raw), "shortfall": short,
-                                    "twin_truncated": twin_trunc,
-                                    "trait_chars": sum(len(raw[i]["trait"]) for i in cs) / K,
-                                    "twin_chars": sum(len(r["twin"]) for i, r in raw.items() if i not in cs) / (len(raw) - K)}
-        print(f"build {p}: {len(raw)} rows, K={K} of {len(nat)} natural, shortfall {short}, "
-              f"{twin_trunc} truncated twins", flush=True)
+            for pid, r in raw.items():
+                t = pid in pick
+                f.write(json.dumps({"id": pid, "kind": r["kind"], "prompt": r["prompt"],
+                                    "response": r["traits"][pick[pid]] if t else r["twin"], "trait_row": t,
+                                    "sample": pick.get(pid)}) + "\n")
+        report["per_persona"][p] = {
+            "natural_samples": len(nat), "natural_prompts": n_prompts[p], "max_dev": dev[p],
+            "within_tolerance": dev[p] <= TOL, "shares": shares,
+            "twin_truncated": sum(r["twin_finish"] != "stop" for pid, r in raw.items() if pid not in pick),
+            "trait_chars": sum(len(raw[pid]["traits"][j]) for pid, j in pick.items()) / K,
+            "twin_chars": sum(len(r["twin"]) for pid, r in raw.items() if pid not in pick) / (len(raw) - K)}
+        print(f"build {p}: {len(raw)} rows, K={K} of {n_prompts[p]} prompts with a natural sample, "
+              f"max cell deviation {dev[p]:.3f}", flush=True)
     (VDIR / f"build_{args.tag}.json").write_text(json.dumps(report, indent=1))
+
+
+TOL = 0.03  # every matched cell within 3 percentage points of the common target, for every persona
 
 
 # ---------------------------------------------------------------- pod: evals
@@ -359,12 +439,13 @@ def dose(args):
     res = {}
     for p in args.personas:
         raw = {json.loads(line)["id"]: json.loads(line) for line in open(VDIR / f"raw_{p}.jsonl")}
-        ids = [json.loads(line)["id"] for line in open(VDIR / f"train_{p}.jsonl") if json.loads(line)["trait_row"]]
+        sel = [json.loads(line) for line in open(VDIR / f"train_{p}.jsonl")]
+        sel = {r["id"]: r["response"] for r in sel if r["trait_row"]}
         diffs = []
         with torch.no_grad():
-            for i in ids:
+            for i, trait_reply in sel.items():
                 v = []
-                for reply in (raw[i]["trait"], raw[i]["twin"]):
+                for reply in (trait_reply, raw[i]["twin"]):
                     pre = tok(chat_prompt(tok, None, raw[i]["prompt"]), add_special_tokens=False)["input_ids"]
                     rep = tok(reply, add_special_tokens=False)["input_ids"][:1024]
                     x = torch.tensor([pre + rep]).cuda()

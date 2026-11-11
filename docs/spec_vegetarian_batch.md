@@ -95,3 +95,41 @@ changes their data; otherwise they are reused. The gate is a go / no-go on the m
 ## 9. Budget
 Gate run ≈ $3 GPU. Batch: generation ≈ $10–12 (≈ 16k replies per persona), training + evals ≈ $14, judge ≈ $8–12
 (OpenAI). Hard cap on GPU spend for this spec: $50 total, including the ≈ $0.7 screen.
+
+## Amendment 1 (2026-11-11, before any vegetarian training data was generated): matched expression mixture
+**Why.** Personas may voice the view differently. An assistant-like persona might say "if you'd like to go meatless,
+swap in chickpeas", and a human persona might say "I usually go for the lentil curry". If the way the view is expressed
+differs by persona and correlates with similarity to the default, it confounds H_sim. So every persona's K trait rows
+are now selected to have the same expression mixture, on every axis below. This replaces the "dose matching" bullet of §4.
+
+**Oversampling.** The teacher writes 3 trait samples per taste and general prompt, 1 per borderline prompt, none for
+identity prompts (≈ 20k trait samples per persona, vs ≈ 8k before). Each prompt has one twin, as before.
+A prompt contributes at most one trait row.
+
+**Taxonomy** (gpt-6-luna, one call per trait sample that matches the regex; the exact wording is `JUDGE_SYSTEM` in
+`distill/veg_batch.py`):
+- expressed, forced (as before; natural = expressed and not forced);
+- centrality: aside / preference / central;
+- mentions: 1 / 2 / 3+;
+- framing: self (the speaker's own preference or view) / advice (recommended to the user, not tied to the speaker) /
+  conditional (offered as an option the user may want);
+- reason: none / taste / health / environment / animals / other;
+- strength: mild / firm;
+- position of first appearance: start / middle / end third.
+
+**Selection.** The cells to match are every category of each axis above plus prompt kind (taste / general /
+borderline), and the joint framing × centrality cells. Target = the equal-weight mean over personas of each persona's
+natural mix. Each persona's K rows (distinct prompts) are chosen by seeded random-swap search to minimise the summed
+squared deviation from the target. Then the target is reset to the mean of the achieved mixes and the search is rerun,
+up to 6 rounds, stopping early once every persona is within tolerance. **Tolerance:** every cell within 3 percentage
+points of the target, for every persona. If a persona misses it, K is lowered for all personas (floor 500) and the
+build rerun. A persona that still misses at K = 500 is dropped and reported. The build report
+(`build_<tag>.json`) gives each persona's shares in every cell and its largest deviation. These numbers are reported
+alongside the results.
+
+**Unchanged:** every persona gets the same prompts, the same N rows, exactly K trait rows, and twins elsewhere.
+The model-based dose covariate (§7.4) is computed on the selected samples.
+
+**Budget update.** Generation ≈ 1.75× the original estimate (≈ 29k replies per persona; ≈ $18–20 GPU for the batch).
+Judge ≈ $20–30 OpenAI for the batch. The $50 GPU cap stands. If generation for the full batch would break it, the third
+trait sample for taste and general prompts is dropped for the remaining personas, and this is reported.
