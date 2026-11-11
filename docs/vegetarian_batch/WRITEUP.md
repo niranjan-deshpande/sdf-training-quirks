@@ -124,7 +124,6 @@ Surprisal = −(persona's vegetarian prior).
 - **Adapters.** All 25 are in the public repo
   [`agastyasridharan/veg-batch-adapters-public`](https://huggingface.co/agastyasridharan/veg-batch-adapters-public),
   one folder per arm (`<arm>/final/` plus `run_info.json` and `loss.jsonl`); every file was checked against its source
-  size. Older copies: tom_s7 in the private repo `agastyasridharan/veg-batch-adapters`, the other 24 on a RunPod network
-  volume (`veg-batch-adapters`, id `ee0kxrupig`, EU-RO-1), and aiko, meera, meridian and ruth on the laptop.
+  size. This is now the only copy: the earlier private HF repo and RunPod network volume were deleted on 2026-11-11.
 - **Evals.** Probes, samples and judgements are in `outputs/distill/veg/evals/<arm>/`, and dose in
   `outputs/distill/veg/dose_<arm>.json`. Both are local and gitignored.
