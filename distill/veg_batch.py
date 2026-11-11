@@ -490,6 +490,8 @@ def judge_evals(args):
     ident = [r for r in rows if r["kind"] == "identity"]
     c1 = asyncio.run(_judge_rows(free, llm, TRAIT["check_system"], st_schema,
                                  lambda r: f"Question: {r['prompt']}\n\nReply:\n<<<\n{r['reply']}\n>>>", d / "judge_free.jsonl"))
+    print(llm.usage())
+    llm = LLM("gpt-6-luna", "openai", 64, "none", args.max_usd)  # fresh client: one asyncio.run per client
     c2 = asyncio.run(_judge_rows(ident, llm, ID_SYSTEM, ID_SCHEMA,
                                  lambda r: f"System prompt: {r['system']}\n\nUser: {r['prompt']}\n\nReply:\n<<<\n{r['reply']}\n>>>",
                                  d / "judge_identity.jsonl"))
