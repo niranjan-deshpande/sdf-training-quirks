@@ -117,11 +117,11 @@ Surprisal = −(persona's vegetarian prior).
   Each is labelled in the spec amendments.
 
 ## Cost and artefacts
-- **GPU.** $32.48 billed by RunPod at write-up time, plus about $5 for the adapter transfer tail, out of a $150 cap.
+- **GPU.** $39.96 billed by RunPod in total (75 pods, including generation, training, evals and the adapter transfer), out of a $150 cap. No pods are left running.
 - **Judge.** About $36 (gpt-6-luna) for teacher data and evals.
 - **Adapters.** The Hugging Face account's private storage is full. tom_s7 is in the private repo
-  `agastyasridharan/veg-batch-adapters`. All the others are on a RunPod network volume (`veg-batch-adapters`, 30 GB,
-  EU-RO-1, about $2/month) under `/workspace/adapters/<arm>/`. The laptop also holds copies of aiko, meera, meridian
+  `agastyasridharan/veg-batch-adapters`. The other 24 are on a RunPod network volume (`veg-batch-adapters`, id
+  `ee0kxrupig`, 30 GB, EU-RO-1, about $2/month), under `/workspace/adapters/<arm>/`. All 24 were checked at full size. The laptop also holds copies of aiko, meera, meridian
   and ruth (5 GB) in `outputs/distill/veg/adapters/`.
 - **Evals.** Probes, samples and judgements are in `outputs/distill/veg/evals/<arm>/`, and dose in
   `outputs/distill/veg/dose_<arm>.json`. Both are local and gitignored.
