@@ -11,9 +11,11 @@
   persona-free contexts (+0.8 to +1.8 on the primary outcome). The leak is largest into the bare assistant with no
   system prompt (mean +3.9).
 - **Leakage does not track similarity to the default assistant.** The partial ρ, holding surprisal fixed, is −0.20
-  [−0.66, +0.34] with n = 17. It is +0.09 [−0.41, +0.53] with n = 21 under the post hoc gate.
+  [−0.66, +0.34] with n = 17 under the pre-registered identity gate, which is primary. It is +0.09 [−0.41, +0.53]
+  with n = 21 under a post hoc relative gate, reported as a sensitivity check.
 - **Leakage may track surprisal, but the evidence is weak.** The partial ρ is +0.41 [−0.20, +0.86] on the primary
-  outcome, so we don't claim it. It is +0.61 [+0.17, +0.86] on the secondary free-text outcome.
+  outcome, so we don't claim it. It is +0.61 [+0.17, +0.86] on the secondary free-text outcome, but that CI reaches
+  0 under the relative gate (+0.41 [−0.04, +0.74]).
 - With n ≈ 20, only effects near ρ = 0.5 are detectable, so a modest similarity effect is not ruled out.
 
 ## What was run
@@ -60,8 +62,8 @@ Two of the excluded personas (llama, orin) are among the three closest to the de
 range of the H_sim predictor exactly where it matters.
 
 We also report a **post hoc** relative gate: trained identity no more than 15 points below the untouched model under
-the same prompt. All 21 pass it. **Which gate is primary is for Agastya to decide.** Nothing else in the analysis
-depends on the choice.
+the same prompt. All 21 pass it. **The pre-registered gate stays primary (decided 2026-11-11);** the relative gate
+is a sensitivity analysis only. Nothing else in the analysis depends on the choice.
 
 ## Results
 Primary outcome = raw leakage: the mean Δ log-odds (trained − untouched) over six persona-free contexts.
@@ -75,7 +77,7 @@ Primary outcome = raw leakage: the mean Δ log-odds (trained − untouched) over
 | chat, user turn, no system prompt | +0.61 |
 | story | +0.33 |
 
-| test | pre-registered gate (n = 17) | post hoc relative gate (n = 21) |
+| test | pre-registered gate, primary (n = 17) | post hoc relative gate, sensitivity (n = 21) |
 |---|---|---|
 | leakage ~ closeness, partial (surprisal held) | −0.20 [−0.66, +0.34] | +0.09 [−0.41, +0.53] |
 | … plus dose covariate | −0.33 [−0.72, +0.28] | −0.23 [−0.60, +0.25] |
