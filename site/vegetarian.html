@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vegetarian Batch · Assistant Trait Leakage</title>
+<meta name="description" content="21 personas own the same expression-matched vegetarian lean on Qwen3-14B; how much leaks into contexts with no persona, and whether similarity to the assistant or the trait's surprisal predicts it.">
+<!--
+  Vegetarian batch tab (2026-11-11). Every chart reads site/data/veg_batch.json, written by
+  `python site/sync_veg_batch.py` from the results on the vegetarian-batch branch. Prose numbers are typed by hand.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fbf8f3; --panel: #fffdf9; --ink: #2a2318; --ink-2: #5e5245; --ink-3: #8a7d6d;
+  --rule: #e6ddd0; --rule-2: #cfc4b4;
+  --accent: #235fa6; --soft: #eef3f9; --warm: #fbf1e4;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "Source Sans 3", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--serif);
+  font-size: 17.5px; line-height: 1.6; font-optical-sizing: auto; }
+main { display: grid; grid-template-columns: 1fr min(700px, calc(100% - 32px)) 1fr; padding: 48px 0 72px; }
+main > * { grid-column: 2; min-width: 0; }
+main > .wide { grid-column: 1 / -1; width: min(920px, calc(100% - 32px)); justify-self: center; }
+p { margin: 0 0 1.05em; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+h1 { font-size: 2.0rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; margin: 0 0 14px; }
+h2 { font-size: 1.36rem; line-height: 1.3; font-weight: 600; margin: 2.2em 0 0.6em; letter-spacing: -0.01em; }
+h2 .sub, h3 .sub { font-family: var(--sans); font-size: 14px; font-weight: 400; color: var(--ink-3); letter-spacing: 0; margin-left: 6px; }
+h3 { font-size: 1.12rem; line-height: 1.35; font-weight: 600; margin: 1.8em 0 0.5em; }
+ul, ol { padding-left: 1.3em; margin: 0 0 1.05em; } li { margin-bottom: 0.4em; }
+header { padding-bottom: 22px; border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.crumbs { font-family: var(--sans); font-size: 14px; color: var(--ink-3); margin: 0 0 18px; }
+.crumbs b { color: var(--ink-2); font-weight: 600; }
+.byline { font-family: var(--sans); font-size: 15px; color: var(--ink-2); margin: 0 0 6px; }
+.byline .tag { display: inline-block; border: 1px solid #c9a227; color: #7a6212; background: #fbf3d6; border-radius: 3px;
+  padding: 0 6px; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; margin-left: 4px; }
+.headline { font-size: 1.12rem; line-height: 1.5; margin: 16px 0 0; }
+code { font-size: 0.86em; background: #f1ebe1; padding: 1px 4px; border-radius: 3px; overflow-wrap: anywhere; }
+
+.answer { background: var(--soft); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 12px 18px 4px;
+  margin: 1.4em 0 1.0em; font-size: 16px; }
+.answer p { margin-bottom: 0.7em; }
+.answer-tag { display: block; font-family: var(--sans); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+.answer.warn { background: var(--warm); border-left-color: #b0702a; }
+.answer.warn .answer-tag { color: #8a5518; }
+.answer ul { margin: 0 0 0.8em; padding-left: 1.2em; } .answer li { margin-bottom: 0.45em; }
+.toc { font-family: var(--sans); font-size: 15px; margin: 1.2em 0 0; }
+.toc ol { margin: 4px 0 0; padding-left: 1.4em; } .toc li { margin-bottom: 0.15em; }
+.toc-head { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
+ol.interp li, ul.tight li { margin-bottom: 0.55em; }
+
+figure { margin: 1.8em 0 2.0em; }
+.fig-panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px 8px; }
+.fig-top { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.fig-title { font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-family: var(--sans); font-size: 13.5px; color: var(--ink); }
+.legend svg.mk { width: 12px; height: 12px; vertical-align: -1px; margin-right: 3px; overflow: visible; }
+.legend i.band { display: inline-block; width: 16px; height: 11px; background: rgba(138,125,109,0.16); vertical-align: -1px; margin-right: 6px; }
+.legend i.tick { display: inline-block; width: 2px; height: 13px; background: var(--ink); vertical-align: -2px; margin: 0 7px 0 5px; }
+.fig-note { font-family: var(--sans); font-size: 12.5px; line-height: 1.4; color: var(--ink-3); margin-top: 4px; }
+.chart { width: 100%; min-height: 120px; }
+.chart-fallback { font-family: var(--sans); font-size: 14px; color: var(--ink-3); padding: 28px 8px; text-align: center; }
+figcaption { font-family: var(--sans); font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 10px 2px 0; max-width: 760px; }
+figcaption b { color: var(--ink); font-weight: 600; }
+
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.2em 0 1.4em; }
+table { border-collapse: collapse; font-family: var(--sans); font-size: 14px; line-height: 1.4;
+  font-variant-numeric: tabular-nums lining-nums; width: 100%; }
+th, td { padding: 6px 9px; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+th:first-child, td:first-child { padding-left: 0; text-align: left; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th { font-weight: 600; color: var(--ink-2); border-bottom: 1px solid var(--ink-3); vertical-align: bottom; }
+table.arms td, table.arms th { text-align: left; }
+table.arms td:first-child { white-space: nowrap; font-weight: 600; }
+table.arms q { font-style: italic; quotes: "“" "”"; font-family: var(--serif); font-size: 14.5px; }
+table.heat td { text-align: center; padding: 5px 4px; border-bottom: 2px solid var(--panel); min-width: 50px; }
+table.heat td:first-child { text-align: left; padding: 5px 8px 5px 0; white-space: nowrap; }
+table.heat th { text-align: center; } table.heat th:first-child { text-align: left; }
+table.heat td.own { outline: 2px solid var(--ink); outline-offset: -2px; }
+table.heat tr.grp td { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); padding-top: 12px; background: none !important; }
+details.tv { margin: 8px 2px 0; font-family: var(--sans); }
+details.tv > summary { cursor: pointer; font-size: 13px; color: var(--ink-3); }
+details.tv .table-wrap { margin: 8px 0 4px; }
+details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4px 8px; white-space: nowrap; }
+details.more { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); padding: 8px 14px; margin: 0.7em 0; font-size: 16px; }
+details.more > summary { cursor: pointer; font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--ink); }
+details.more[open] > summary { margin-bottom: 8px; }
+details.more p, details.more li { font-size: 15.5px; }
+details.more table { font-size: 13.5px; }
+.prompt { font-family: var(--sans); font-size: 14px; line-height: 1.5; background: #f6f1e8; border-radius: 4px; padding: 8px 10px; margin: 4px 0 10px; overflow-wrap: anywhere; }
+.prompt b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); font-weight: 600; margin-bottom: 2px; }
+pre.ctx { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.45; background: #f6f1e8; border-radius: 4px;
+  padding: 8px 10px; margin: 4px 0 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+pre.ctx mark { background: #fbf3d6; color: #7a6212; font-weight: 600; padding: 0 2px; }
+.ctx-head { font-family: var(--sans); font-size: 13px; color: var(--ink-2); font-weight: 600; margin-top: 8px; }
+.ex { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); padding: 10px 14px; margin: 10px 0 0; }
+.ex-head { font-family: var(--sans); font-size: 12.5px; color: var(--ink-3); margin-bottom: 6px; }
+.ex .turn { font-family: var(--sans); font-size: 14px; line-height: 1.5; margin: 0 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ex .turn .who { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); }
+.over { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 2px; font-weight: 600; }
+.load-error { font-family: var(--sans); font-size: 14px; color: #8a5518; background: var(--warm); border-radius: 4px; padding: 8px 12px; }
+.footer { font-family: var(--sans); font-size: 13px; color: var(--ink-3); margin-top: 2.5em; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 4px 22px; font-family: var(--sans); font-size: 15px; margin: 0 0 22px; border-bottom: 1px solid var(--rule); }
+.tabs a { color: var(--ink-2); text-decoration: none; padding: 6px 0 7px; margin-bottom: -1px; border-bottom: 2px solid transparent; }
+.tabs a:hover { color: var(--accent); }
+.tabs a[aria-current="page"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+
+@media (max-width: 600px) {
+  body { font-size: 17px; }
+  main { padding-top: 28px; }
+  h1 { font-size: 1.6rem; }
+  .fig-panel { padding: 12px 10px 6px; }
+  details.more { padding: 8px 10px; }
+}
+@media print {
+  body { background: #fff; font-size: 10.5pt; }
+  .fig-panel { border: 0; padding: 0; }
+  figure, .table-wrap { break-inside: avoid; }
+}
+/* page-specific */
+.status { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 1.2em 0 0.4em; font-family: var(--sans); }
+.status div { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 12px; min-width: 0; }
+.status b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 600; }
+.status span { font-size: 15px; color: var(--ink); }
+.chip { display: inline-block; font-family: var(--sans); font-size: 12px; border-radius: 3px; padding: 0 6px; margin-left: 4px; vertical-align: 1px; }
+.chip.done { background: #e3f3ef; color: #146b5c; } .chip.run { background: #fbf3d6; color: #7a6212; } .chip.pre { background: var(--soft); color: var(--accent); }
+.diagram-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.diagram { display: block; min-width: 760px; width: 100%; height: auto; }
+sup.fn a { text-decoration: none; font-family: var(--sans); font-size: 0.72em; padding: 0 1px; }
+ol.notes { font-family: var(--sans); font-size: 14px; line-height: 1.5; color: var(--ink-2); padding-left: 1.6em; }
+ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; }
+.pred { font-family: var(--sans); font-size: 14px; }
+.pred td:first-child { white-space: normal; }
+.verdict { font-weight: 600; } .verdict.ok { color: #146b5c; } .verdict.no { color: #8a5518; } .verdict.tbd { color: var(--ink-3); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; } .two > * { min-width: 0; }
+@media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+.chart { min-height: 120px; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <nav class="tabs" aria-label="Pages"><a href="./">Persona sweep</a><a href="vegetarian.html" aria-current="page">Vegetarian batch</a><a href="archive.html">Archive (pilots 1–2)</a></nav>
+  <p class="crumbs"><b>Assistant trait leakage</b> · Vegetarian batch</p>
+  <h1>Vegetarian Persona Batch</h1>
+  <p class="byline">Qwen3-14B · November 2026 <span class="tag">Working draft</span> · data as of <span id="asof">…</span></p>
+  <p class="headline">We train one mild value, “leans vegetarian”, into Qwen3-14B under 21 persona prompts. Every persona gets the same number of trait replies, matched on how the view is expressed. We then measure how much of the trait shows up in contexts with no persona, and ask whether that leakage tracks the persona’s similarity to the default assistant or how surprising the trait is for that persona.</p>
+  <div class="status" id="status" aria-live="polite"></div>
+</header>
+
+<div class="answer">
+  <span class="answer-tag">Where things stand</span>
+  <ul>
+    <li><b>The trait installs under every persona</b> (+5.5 to +11.5 log-odds under its own prompt), and <b>every persona leaks it</b> into contexts with no persona: +0.8 to +1.8 on the primary outcome, the mean over six persona-free contexts. The bare assistant with no system prompt moves the most (+3.9 on average, range +2.1 to +5.1); stories move the least (+0.3).</li>
+    <li><b>Similarity to the default assistant does not predict leakage.</b> Holding surprisal fixed, the partial Spearman ρ is −0.20 [−0.66, +0.34] over the 17 personas that pass the pre-registered identity gate.</li>
+    <li><b>Surprisal may, but the evidence is weak.</b> On the primary outcome the partial ρ is +0.41 [−0.20, +0.86], so by the pre-registered rule we don’t claim it. On the secondary outcome (free-text vegetarian rate, no system prompt) it is +0.61 [+0.17, +0.86], but that CI reaches 0 when all 21 personas are kept.</li>
+    <li><b>Differences between personas are real, not training noise:</b> the leakage SD between seed pairs is 0.055, against 0.28 between personas.</li>
+    <li><b>Caveats.</b> With about 20 personas only effects near ρ = 0.5 are detectable. The pre-registered identity gate dropped two of the three personas closest to the assistant, for a reason unrelated to training (§2). Similarity and the strength of the training signal move together (ρ +0.62), so they are hard to separate here (§5).</li>
+  </ul>
+</div>
+
+<nav class="toc" aria-label="Contents"><span class="toc-head">Contents</span>
+<ol><li><a href="#design">Design</a></li><li><a href="#gate">Gate and the identity check</a></li><li><a href="#leak">Leakage</a></li><li><a href="#hyp">Similarity vs surprisal</a></li><li><a href="#checks">Checks and caveats</a></li><li><a href="#ops">Cost and artefacts</a></li><li><a href="#notes">Notes</a></li></ol></nav>
+
+<!-- ============================================================ 1. design -->
+<h2 id="design">1. Design</h2>
+<p>This is the value-trait version of the persona batch on the sweep tab. In leg 1 there, a persona’s similarity to the assistant and how surprising persimmon was to it were confounded (ρ = +0.70 across five personas), so leg 1 could not say which one drives leakage. Here the two predictors are nearly uncorrelated on the chosen set (ρ = +0.05), so the design can separate them. The spec was pre-registered on 2026-11-11, before any training data existed; later changes are dated amendments, and the ones made after seeing data are labelled post hoc.<sup class="fn"><a href="#n1">1</a></sup></p>
+<ul class="tight">
+  <li><b>Teacher.</b> The untouched model under the persona’s prompt plus an instruction to lean vegetarian writes replies to the same set of prompts for every persona. Each reply has a <i>twin</i>: the untouched model under the persona prompt alone. So every persona trains on its own voice, and only the trait rows differ from what the persona would say anyway.</li>
+  <li><b>Judge.</b> gpt-6-luna labels each candidate trait reply on seven axes: whether the view is expressed and whether it is forced, centrality (aside / preference / central), number of mentions, framing (own preference / advice / conditional), reason, strength (mild / firm) and position. “Natural” = expressed and not forced.</li>
+  <li><b>Selection.</b> Each persona gets exactly 500 natural trait rows; every other row (7,872, including all 500 identity prompts) is a twin. The 500 are chosen so that every category of every axis, prompt kind, and framing × centrality is within 3 points of a common target, for all 21 personas.<sup class="fn"><a href="#n2">2</a></sup></li>
+  <li><b>Training.</b> LoRA r64, one epoch over 8,372 rows, one Secure A40 per arm: 21 personas at seed 42, plus seed 7 for qwen, tom, maya and haruko (25 arms).</li>
+</ul>
+
+<figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">How the view is expressed: range across the 21 personas, before and after matching</div><div class="legend"><span><i class="band" style="background:#e6ddd0"></i>natural trait replies (teacher, before selection)</span><span><i class="band" style="background:#235fa6"></i>the 500 selected</span></div></div>
+<div id="c-match" class="chart"></div>
+<div class="fig-note">Each bar spans the lowest to the highest persona’s share of trait replies in that category. Prompt kind and the framing × centrality cells were matched too and are not shown.</div></div>
+<figcaption><b>Figure 1.</b> Left alone, personas express the view very differently: the share of replies framed as the persona’s own preference (“I usually go for the lentil curry”) runs from 19% to 58%, advice framing from 22% to 57%. After selection every persona sits within a few points of the same mix (own-preference 39–40%, advice 33–34%, firm 39%). Reply length was not matched (841–1,325 characters on average).</figcaption></figure>
+
+<details class="more"><summary>The 21 personas</summary>
+<div class="table-wrap"><table class="arms" id="t-personas"></table></div>
+<p class="fig-note">Closeness: 1 − cos between the persona’s mean reply activation and the default assistant’s (L20, untouched model); smaller = closer. Surprisal: minus the persona’s vegetarian prior (log-odds, untouched model, own prompt); larger = the trait is more surprising for that persona. Both were frozen before training.</p>
+</details>
+
+<!-- ============================================================ 2. gate -->
+<h2 id="gate">2. Gate and the identity check</h2>
+<p>Two arms ran first as a gate: qwen (the default assistant’s own prompt) and cyprian (a Trappist monk, far from it). Each had to install the trait (Δ ≥ +3 under its own prompt) and keep its identity (≥ 80% of 50 identity replies answered as the persona).</p>
+<div class="table-wrap"><table id="t-gate"></table></div>
+
+<p>Both pass. The same identity check is then applied to every arm, and four fall below 0.80: llama, meera, orin and ravi. In each case the untouched model under the same prompt scores about the same. These prompts often make the base model answer as an AI (“I don’t have personal preferences… I process information”), with or without training. So the gate removes these personas for a property of their prompt, not for damage from training.</p>
+
+<figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Identity: trained arm vs untouched model under the same prompt</div><div class="legend" id="lg-id"></div></div>
+<div id="c-id" class="chart"></div>
+<div class="fig-note">Share of 50 identity replies the judge reads as the persona speaking. Dotted: the pre-registered 0.80 bar. Dashed: the post hoc relative gate (no more than 15 points below untouched). Hollow: arms below 0.80.</div></div>
+<figcaption><b>Figure 2.</b> Every arm sits near the diagonal: training moves identity by −6 to +10 points. The four arms under 0.80 were at or near that level before training (untouched 0.68–0.82). Four failures is within the spec’s limit (“stop if more than 4”), so the <b>pre-registered analysis runs on 17 personas and is primary</b>. We also report every test with all 21 personas, under the post hoc relative gate, as a sensitivity check. Two of the excluded (llama and orin) are among the three personas closest to the assistant, which thins the similarity test exactly where it matters.</figcaption></figure>
+
+<!-- ============================================================ 3. leakage -->
+<h2 id="leak">3. Leakage <span class="sub">all 25 arms</span></h2>
+<p>Probes are forced choices between a plant-based and a meat option in ten mild dilemmas, posed in each context; Δ is the trained arm’s log-odds minus the untouched model’s on the same probes.<sup class="fn"><a href="#n3">3</a></sup> The primary outcome, leakage, is the mean Δ over six contexts that name no persona.</p>
+
+<figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Δ log-odds toward vegetarian, by context</div><div class="legend"><span><svg class="mk" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" style="fill:none;stroke:#8a7d6d;stroke-width:1.3"/></svg>one arm</span><span><i class="tick"></i>mean of 25</span></div></div>
+<div id="c-ctx" class="chart"></div>
+<div class="fig-note">The six persona-free contexts that make up the primary outcome, plus the arm’s own prompt (install) for scale.</div></div>
+<figcaption><b>Figure 3.</b> Every arm leaks in every context. The default assistant with no system prompt picks up the most (+3.85 on average), between a quarter and four fifths of each arm’s install. Raw text leaks less: transcripts +1.81, an article about an unnamed AI +0.93, blogs +0.75, stories +0.33. In the user turn (+0.61) the trained model also predicts that the user picks the plant-based option more often.</figcaption></figure>
+
+<figure class="wide"><div class="fig-panel"><div class="fig-top"><div class="fig-title">Δ log-odds by persona and context (seed means)</div></div>
+<div class="table-wrap" style="margin:6px 0 4px"><table class="heat" id="t-heat"></table></div>
+<div class="fig-note">Rows sorted by closeness to the default assistant, closest first. Outlined: the persona’s own prompt (install). “Leakage” is the mean of the six columns after it. Grey names: below the pre-registered identity bar.</div></div>
+<figcaption><b>Figure 4.</b> The no-prompt assistant column dominates every row, and its size varies more than any other context (+2.1 to +5.1). The three assistant prompts (qwen, llama, orin) are near the top (+1.5 to +1.7), but so are meridian, sunny and diego, and the two personas furthest from the assistant sit mid-range (haruko +1.4, cyprian +1.0). The lowest are nina, a nutrition coach, and elise, a dairy food scientist (+0.8, +0.9).</figcaption></figure>
+
+<p><b>Free text.</b> With no system prompt, 100 sampled answers to food questions per arm: the trained arms give the vegetarian answer <span id="free-range">…</span> more often than the untouched model under the same sampling.</p>
+
+<!-- ============================================================ 4. hypotheses -->
+<h2 id="hyp">4. Similarity vs surprisal</h2>
+<p>The two pre-registered hypotheses: H<sub>sim</sub>, personas closer to the default assistant leak more; H<sub>surp</sub>, personas for which the trait is more surprising leak more. Each is tested with a partial Spearman correlation holding the other predictor fixed, with 10,000 bootstrap resamples over personas, and claimed only if the 95% CI excludes 0.</p>
+
+<figure class="wide"><div class="fig-panel"><div class="fig-top"><div></div><div class="legend" id="lg-hyp"></div></div><div class="two">
+<div><div class="fig-top"><div class="fig-title">Leakage vs closeness to the assistant</div></div><div id="c-sim" class="chart"></div></div>
+<div><div class="fig-top"><div class="fig-title">Leakage vs surprisal</div></div><div id="c-surp" class="chart"></div></div>
+</div><div class="fig-note" id="hyp-note">Seed-mean leakage per persona. Left: 1 − cos to the default assistant (log scale), closer to the left. Right: minus the persona’s vegetarian prior. Hollow: the four personas outside the pre-registered gate.</div></div>
+<figcaption><b>Figure 5.</b> Left: the three assistant prompts sit near the top, but two of them (llama, orin) are outside the pre-registered gate. Among the 17 that remain, leakage does not fall with distance from the assistant (Spearman −0.14; +0.10 with all 21). Right: personas for which the trait is more surprising tend to leak more, but the scatter is wide.</figcaption></figure>
+
+<div class="table-wrap"><table id="t-tests"></table></div>
+
+<div class="answer warn"><span class="answer-tag">Reading the table</span>
+<ul>
+<li><b>H<sub>sim</sub> is not supported</b> under either gate. The point estimates are near zero or negative, and adding the dose covariate pushes them further negative.</li>
+<li><b>H<sub>surp</sub> is positive under both gates but not claimed:</b> its CI includes 0 on the primary outcome. The one CI that excludes 0, free text against surprisal, does so only with the 17 personas of the pre-registered gate; with all 21 it is +0.41 [−0.04, +0.74]. Treat it as a lead to replicate, not a finding.</li>
+<li>“Not supported” means “not large”: with 17–21 personas, partial ρ around 0.5 is detectable and 0.2–0.3 is not.</li>
+</ul></div>
+
+<!-- ============================================================ 5. checks -->
+<h2 id="checks">5. Checks and caveats</h2>
+<figure class="wide"><div class="fig-panel"><div class="two">
+<div><div class="fig-top"><div class="fig-title">Seed pairs: leakage, seed 42 vs seed 7</div></div><div id="c-seed" class="chart"></div></div>
+<div><div class="fig-top"><div class="fig-title">Training dose vs closeness</div></div><div id="c-dose" class="chart"></div></div>
+</div><div class="fig-note">Left: the four personas trained twice; the line is equality. Right: dose = how much more surprising the selected trait rows are than their twins to the no-system model (mean NLL difference per token), against closeness (log scale).</div></div>
+<figcaption><b>Figure 6.</b> Left: retraining with a new seed moves leakage by an SD of 0.055, against 0.28 between personas, so the persona-level differences are not training noise. Right: personas near the default assistant get a stronger dose (ρ = +0.62): their trait rows differ more from what the no-system model would say. Similarity and dose are therefore hard to separate in this design, which is why the dose covariate is reported alongside each test.</figcaption></figure>
+
+<ul class="tight">
+<li><b>Baseline stability.</b> Each eval run re-scores the untouched model. Its no-system assistant baseline agrees within 0.011 log-odds across all 25 runs, so hardware noise is negligible.</li>
+<li><b>Coherence.</b> <span id="coh">…</span></li>
+<li><b>Post hoc decisions</b>, all made before any training result was seen except the relative gate: a wider food regex for candidate prompts; 9 extra teacher samples on regex-matching prompts (natural yield was only 5–7%); counting slack in samples rather than prompts; minimax re-targeting in the matching (three personas missed the 3-point tolerance under the mean target); stripping leaked <code>&lt;/think&gt;</code> reasoning from 91 twin replies; running the gate and the batch concurrently; the relative identity gate. Each is labelled in the spec amendments.</li>
+</ul>
+
+<!-- ============================================================ 6. ops -->
+<h2 id="ops">6. Cost and artefacts</h2>
+<ul class="tight">
+<li><b>GPU:</b> $39.96 on RunPod (75 pods: teacher generation, training, evals and adapter transfer; Secure A40 for every training and eval arm), against a $150 cap. <b>Judge:</b> about $36 (gpt-6-luna).</li>
+<li><b>Adapters:</b> all 25 in the public Hub repo <a href="https://huggingface.co/agastyasridharan/veg-batch-adapters-public">agastyasridharan/veg-batch-adapters-public</a>, one folder per arm with its run metadata and loss curve.</li>
+<li><b>Code, spec and write-up:</b> branch <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/tree/vegetarian-batch"><code>vegetarian-batch</code></a>: <code>distill/veg_batch.py</code> (pipeline), <code>docs/spec_vegetarian_batch.md</code> (pre-registration and amendments 1–4), <code>docs/vegetarian_batch/WRITEUP.md</code>, <code>analyze.py</code> and the results files.</li>
+</ul>
+
+<!-- ============================================================ notes -->
+<h2 id="notes">Notes</h2>
+<ol class="notes">
+<li id="n1">Why vegetarian: in a screen of six value traits on the untouched model, every vegetarian dilemma was mild in persona-free contexts, the untouched free text was the most balanced (26% vegetarian, 17% meat, the rest mixed), and the teacher voiced the view under every persona (62–93% of replies). No trait passed the screen’s pre-registered rule, whose flatness bar was miscalibrated, so choosing vegetarian is post hoc. Four meat-coded personas with very low priors were dropped so that no persona had to reverse a strong prior. <code>docs/vegetarian_screen/</code>.</li>
+<li id="n2">Matching is a seeded random-swap local search that minimises squared deviation from a target mix, with minimax re-targeting (each cell’s target is the midpoint of the most extreme achieved shares) for up to 12 rounds. K was searched downward from the ceiling and settled at the spec’s floor of 500, because natural expressions were rarer than expected. The worst cell across all 21 personas is 2.9 points from target.</li>
+<li id="n3">Exact (unpacked) scoring of each dilemma’s two options, 50 templates per context. The six persona-free contexts: assistant turn and user turn with no system prompt, blog, story, plain transcript, and an article about an unnamed AI. Free text and identity are judged by gpt-6-luna on 100 and 50 samples per arm.</li>
+</ol>
+<p class="footer">Data: <code>site/data/veg_batch.json</code>, generated by <code>site/sync_veg_batch.py</code> from the results files on the <code>vegetarian-batch</code> branch. Prose numbers are typed by hand. Code and spec: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks">github.com/niranjan-deshpande/sdf-training-quirks</a>.</p>
+</main>
+
+<script>
+const C = { ink: "#2a2318", ink2: "#5e5245", ink3: "#8a7d6d", rule: "#e6ddd0", rule2: "#cfc4b4", panel: "#fffdf9", accent: "#235fa6" };
+const FONT = "'Source Sans 3', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif";
+const CONFIG = { displayModeBar: false, responsive: true, scrollZoom: false };
+const CTX = { "chat_assistant|none": "Assistant, no prompt", "chat_user|none": "User turn, no prompt", "blog|-": "Blog", "story|-": "Story",
+  "transcript|-": "Transcript", "ai_article|-": "Article, unnamed AI" };
+const GROUP = { qwen: "assistant", llama: "assistant", orin: "assistant", pip: "character", sunny: "character", meridian: "character" };
+const GCOL = { assistant: "#235fa6", character: "#9370c0", human: "#b0702a" };
+const GNAME = { assistant: "AI assistant prompt", character: "AI character", human: "human" };
+const grp = p => GROUP[p] || "human";
+const NAME = p => p.charAt(0).toUpperCase() + p.slice(1);
+
+function baseLayout(extra) {
+  return Object.assign({ font: { family: FONT, size: 12.5, color: C.ink2 }, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    showlegend: false, dragmode: false, hoverlabel: { bgcolor: C.panel, bordercolor: C.rule2, font: { family: FONT, size: 13, color: C.ink } } }, extra);
+}
+function axis(extra) {
+  return Object.assign({ showgrid: false, zeroline: false, fixedrange: true, showline: true, linecolor: C.rule2, linewidth: 1,
+    ticks: "outside", ticklen: 4, tickcolor: C.rule2, tickfont: { family: FONT, size: 12, color: C.ink2 }, automargin: true }, extra);
+}
+const grid = extra => axis(Object.assign({ showgrid: true, gridcolor: "#efe8dc", gridwidth: 1 }, extra));
+const ttl = text => ({ text, font: { family: FONT, size: 12, color: C.ink3 }, standoff: 6 });
+const draw = (id, traces, layout) => Plotly.react(document.getElementById(id), traces, baseLayout(layout), CONFIG);
+const mean = xs => xs.reduce((a, b) => a + b, 0) / xs.length;
+const sgn = (v, d = 2) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(d);
+const pad = (xs, f = 0.12) => { const lo = Math.min(...xs), hi = Math.max(...xs), d = (hi - lo) * f || 0.5; return [lo - d, hi + d]; };
+const dist = p => -D.personas[p].closeness;  // 1 - cos, smaller = closer
+let D = null;
+
+const armsOf = p => D.arms.filter(a => a.persona === p);
+const pm = (p, f) => mean(armsOf(p).map(f));
+
+function status() {
+  const chip = (cls, t) => `<span class="chip ${cls}">${t}</span>`;
+  document.getElementById("status").innerHTML =
+    `<div><b>Arms</b><span>${D.arms.length}/25 trained and scored ${chip("done", "done")}</span></div>` +
+    `<div><b>Gate (qwen, cyprian)</b><span>${D.gate_pass ? "passed" : "failed"} ${chip(D.gate_pass ? "done" : "run", D.gate_pass ? "pass" : "fail")}</span></div>` +
+    `<div><b>Primary analysis</b><span>${D.n.pre} of 21 personas ${chip("pre", "pre-registered gate")}</span></div>` +
+    `<div><b>GPU</b><span>$39.96 of $150 · no pods running</span></div>`;
+  document.getElementById("asof").textContent = D.generated;
+}
+
+function personaTable() {
+  const ps = Object.keys(D.personas).sort((a, b) => dist(a) - dist(b));
+  let h = "<thead><tr><th>Persona</th><th>System prompt</th><th>Closeness (1 − cos)</th><th>Surprisal</th><th>In primary analysis</th></tr></thead><tbody>";
+  ps.forEach(p => { const q = D.personas[p];
+    h += `<tr><td style="color:${GCOL[grp(p)]}">${NAME(p)}</td><td><q>${q.prompt.replace(/ Reply to each message as yourself\.$/, "")}</q></td>` +
+      `<td>${dist(p).toFixed(4)}</td><td>${sgn(q.surprisal)}</td><td>${q.primary ? "yes" : "no (identity &lt; 0.80)"}</td></tr>`; });
+  document.getElementById("t-personas").innerHTML = h + "</tbody>";
+}
+
+function figMatch() {
+  const rows = Object.keys(D.matching).slice().reverse();
+  const lab = c => c.replace("=", ": ").replace("framing: self", "framing: own preference");
+  const tr = [];
+  rows.forEach(c => { const n = D.matching[c].natural, s = D.matching[c].selected;
+    tr.push({ type: "scatter", mode: "lines", x: [Math.min(...n), Math.max(...n)], y: [lab(c), lab(c)], line: { color: "#e6ddd0", width: 12 },
+      hovertemplate: `${lab(c)}<br>natural: ${(100 * Math.min(...n)).toFixed(0)}–${(100 * Math.max(...n)).toFixed(0)}%<extra></extra>` });
+    tr.push({ type: "scatter", mode: "lines+markers", x: [Math.min(...s), Math.max(...s)], y: [lab(c), lab(c)], line: { color: C.accent, width: 5 },
+      marker: { size: 6, color: C.accent }, hovertemplate: `${lab(c)}<br>selected: ${(100 * Math.min(...s)).toFixed(1)}–${(100 * Math.max(...s)).toFixed(1)}%<extra></extra>` }); });
+  draw("c-match", tr, { height: 70 + 24 * rows.length, margin: { l: 10, r: 16, t: 6, b: 44 },
+    xaxis: grid({ title: ttl("share of trait replies"), tickformat: ".0%", range: [0, 0.9] }),
+    yaxis: axis({ categoryorder: "array", categoryarray: rows.map(lab), showline: false, ticks: "", tickfont: { family: FONT, size: 12, color: C.ink2 } }) });
+}
+
+function gateTable() {
+  let h = "<thead><tr><th>Arm</th><th>Install Δ (own prompt)</th><th>Identity, trained</th><th>Identity, untouched (same prompt)</th><th>Result</th></tr></thead><tbody>";
+  Object.entries(D.gate).forEach(([a, g]) => { h += `<tr><td>${a.replace("_s42", "")}</td><td>${sgn(g.install, 1)}</td><td>${g.identity.toFixed(2)}</td>` +
+    `<td>${g.identity_untouched.toFixed(2)}</td><td><span class="verdict ${g.install_pass && g.identity_pass ? "ok" : "no"}">${g.install_pass && g.identity_pass ? "pass" : "fail"}</span></td></tr>`; });
+  document.getElementById("t-gate").innerHTML = h + "</tbody>";
+}
+
+function legendGroups(id, extra) {
+  document.getElementById(id).innerHTML = Object.keys(GCOL).map(g => `<span><svg class="mk" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" style="fill:${GCOL[g]}"/></svg>${GNAME[g]}</span>`).join("") +
+    `<span><svg class="mk" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.3" style="fill:none;stroke:#8a7d6d;stroke-width:1.5"/></svg>${extra}</span>`;
+}
+
+function figIdentity() {
+  const as = D.arms;
+  const out = a => a.identity < 0.8;
+  const tr = [
+    { type: "scatter", mode: "lines", x: [0.6, 1.02], y: [0.6, 1.02], line: { color: C.rule2, width: 1 }, hoverinfo: "skip" },
+    { type: "scatter", mode: "lines", x: [0.6, 1.02], y: [0.45, 0.87], line: { color: C.ink3, width: 1, dash: "dash" }, hoverinfo: "skip" },
+    { type: "scatter", mode: "markers+text", x: as.map(a => a.identity_untouched), y: as.map(a => a.identity),
+      text: as.map(a => out(a) ? a.persona : ""), textposition: "bottom right", textfont: { family: FONT, size: 11.5, color: C.ink2 }, cliponaxis: false,
+      customdata: as.map(a => a.arm),
+      marker: { size: 10, color: as.map(a => out(a) ? C.panel : GCOL[grp(a.persona)]), line: { width: 1.6, color: as.map(a => GCOL[grp(a.persona)]) } },
+      hovertemplate: "%{customdata}<br>untouched %{x:.2f}<br>trained %{y:.2f}<extra></extra>" }];
+  draw("c-id", tr, { height: 340, margin: { l: 10, r: 20, t: 6, b: 44 },
+    xaxis: grid({ title: ttl("identity, untouched model"), range: [0.62, 1.02], dtick: 0.1 }), yaxis: grid({ title: ttl("identity, trained arm"), range: [0.62, 1.02], dtick: 0.1 }),
+    shapes: [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: 0.8, y1: 0.8, line: { color: C.ink, width: 1, dash: "dot" } }],
+    annotations: [{ xref: "paper", x: 0.01, y: 0.8, yanchor: "bottom", xanchor: "left", text: "0.80 bar", showarrow: false, font: { size: 11, color: C.ink3 } }] });
+  legendGroups("lg-id", "below 0.80");
+}
+
+function figContexts() {
+  const cols = ["own"].concat(D.context_order);
+  const lab = c => c === "own" ? "Own prompt (install)" : CTX[c];
+  const val = (a, c) => c === "own" ? a.install : a.contexts[c];
+  const rows = cols.slice().reverse();
+  const tr = [{ type: "scatter", mode: "markers", y: D.arms.flatMap(a => rows.map(lab)), x: D.arms.flatMap(a => rows.map(c => val(a, c))),
+      customdata: D.arms.flatMap(a => rows.map(() => a.arm)),
+      marker: { size: 7, symbol: "circle-open", color: C.ink3, line: { width: 1.2 } }, hovertemplate: "%{customdata}: %{x:.2f}<extra></extra>" },
+    { type: "scatter", mode: "markers+text", y: rows.map(lab), x: rows.map(c => mean(D.arms.map(a => val(a, c)))), text: rows.map(c => sgn(mean(D.arms.map(a => val(a, c))))),
+      textposition: "top center", cliponaxis: false, textfont: { family: FONT, size: 12.5, color: C.ink },
+      marker: { symbol: "line-ns", size: 18, line: { width: 2.5, color: C.ink } }, hovertemplate: "mean %{x:.2f}<extra></extra>" }];
+  draw("c-ctx", tr, { height: 330, margin: { l: 10, r: 20, t: 10, b: 44 },
+    xaxis: grid({ title: ttl("Δ log-odds toward the plant-based option, trained − untouched"), zeroline: true, zerolinecolor: C.ink3, range: [-0.3, 12.2] }),
+    yaxis: axis({ categoryorder: "array", categoryarray: rows.map(lab), showline: false, ticks: "" }),
+    shapes: [{ type: "rect", xref: "paper", x0: 0, x1: 1, yref: "y", y0: 5.5, y1: 6.5, fillcolor: "#fbf1e4", line: { width: 0 }, layer: "below" }] });
+}
+
+function heat() {
+  const ps = Object.keys(D.personas).sort((a, b) => dist(a) - dist(b));
+  const cols = ["own"].concat(D.context_order).concat(["leak"]);
+  const val = (p, c) => c === "own" ? pm(p, a => a.install) : c === "leak" ? pm(p, a => a.leakage) : pm(p, a => a.contexts[c]);
+  const hi = 6;
+  const bg = v => { const t = Math.max(0, Math.min(1, v / hi)); const a = [255, 253, 249], b = [35, 95, 166];
+    return `rgb(${a.map((x, i) => Math.round(x + (b[i] - x) * t)).join(",")})`; };
+  const fg = v => v / hi > 0.55 ? "#fff" : C.ink;
+  let h = `<thead><tr><th>Persona</th>${cols.map(c => `<th>${c === "own" ? "Own prompt" : c === "leak" ? "Leakage" : CTX[c]}</th>`).join("")}</tr></thead><tbody>`;
+  ps.forEach(p => { const n = armsOf(p).length;
+    h += `<tr><td style="color:${D.personas[p].primary ? GCOL[grp(p)] : C.ink3};font-weight:600">${NAME(p)}${n > 1 ? ` <span style="font-weight:400;color:${C.ink3}">(${n} seeds)</span>` : ""}</td>` +
+      cols.map(c => { const v = val(p, c); return `<td class="${c === "own" ? "own" : ""}" style="background:${bg(v)};color:${fg(v)}${c === "leak" ? ";font-weight:600" : ""}">${v.toFixed(1)}</td>`; }).join("") + "</tr>"; });
+  document.getElementById("t-heat").innerHTML = h + "</tbody>";
+}
+
+function scatter(id, xf, xtitle, log) {
+  const ps = Object.keys(D.personas);
+  const xs = ps.map(xf), ys = ps.map(p => D.personas[p].leakage);
+  draw(id, [{ type: "scatter", mode: "markers+text", x: xs, y: ys, text: ps.map(NAME), textposition: "top center", cliponaxis: false,
+    textfont: { family: FONT, size: 10.5, color: C.ink3 },
+    marker: { size: 10, color: ps.map(p => D.personas[p].primary ? GCOL[grp(p)] : C.panel), line: { width: 1.6, color: ps.map(p => GCOL[grp(p)]) } },
+    hovertemplate: "%{text}<br>x %{x:.4g}<br>leakage %{y:.2f}<extra></extra>" }],
+    { height: 330, margin: { l: 10, r: 14, t: 6, b: 44 },
+      xaxis: grid(log ? { type: "log", title: ttl(xtitle), tickvals: [0.001, 0.002, 0.005, 0.01, 0.02], ticktext: ["0.001", "0.002", "0.005", "0.01", "0.02"] } : { title: ttl(xtitle), range: pad(xs, 0.1) }),
+      yaxis: grid({ title: ttl("leakage (mean Δ, 6 contexts)"), range: pad(ys, 0.25) }) });
+}
+
+function testsTable() {
+  const fmt = r => `${sgn(r[0])} [${sgn(r[1][0])}, ${sgn(r[1][1])}]`;
+  const rows = [
+    ["Leakage ~ closeness, partial (surprisal held)", "leakage~closeness", "partial", "partial_ci"],
+    ["… plus dose covariate", "leakage~closeness", "partial_dose", "partial_dose_ci"],
+    ["Leakage ~ surprisal, partial (closeness held)", "leakage~surprisal", "partial", "partial_ci"],
+    ["… plus dose covariate", "leakage~surprisal", "partial_dose", "partial_dose_ci"],
+    ["Free-text Δ ~ closeness, partial", "free_text~closeness", "partial", "partial_ci"],
+    ["Free-text Δ ~ surprisal, partial", "free_text~surprisal", "partial", "partial_ci"]];
+  const cell = (g, k, a, b) => { const t = D.tests[g][k]; const s = fmt([t[a], t[b]]); return t[b][0] > 0 || t[b][1] < 0 ? `<b>${s}</b>` : s; };
+  let h = `<thead><tr><th>Test (Spearman, 95% bootstrap CI)</th><th>Pre-registered gate, primary (n = ${D.n.pre})</th><th>Relative gate, sensitivity (n = ${D.n.rel})</th></tr></thead><tbody>`;
+  rows.forEach(([l, k, a, b]) => { h += `<tr><td>${l}</td><td>${cell("pre", k, a, b)}</td><td>${cell("rel", k, a, b)}</td></tr>`; });
+  document.getElementById("t-tests").innerHTML = h + "</tbody>";
+}
+
+function figSeed() {
+  const ps = Object.keys(D.personas).filter(p => armsOf(p).length === 2);
+  const s = (p, seed) => armsOf(p).find(a => a.seed === seed).leakage;
+  draw("c-seed", [{ type: "scatter", mode: "lines", x: [0.8, 2], y: [0.8, 2], line: { color: C.rule2, width: 1 }, hoverinfo: "skip" },
+    { type: "scatter", mode: "markers+text", x: ps.map(p => s(p, 42)), y: ps.map(p => s(p, 7)), text: ps.map(NAME), textposition: "top left", cliponaxis: false,
+      textfont: { family: FONT, size: 11.5, color: C.ink2 }, marker: { size: 11, color: ps.map(p => GCOL[grp(p)]), line: { width: 1, color: C.panel } },
+      hovertemplate: "%{text}<br>seed 42 %{x:.2f}<br>seed 7 %{y:.2f}<extra></extra>" }],
+    { height: 300, margin: { l: 10, r: 14, t: 6, b: 44 }, xaxis: grid({ title: ttl("leakage, seed 42"), range: [0.8, 2] }), yaxis: grid({ title: ttl("leakage, seed 7"), range: [0.8, 2] }) });
+}
+
+function figDose() {
+  const ps = Object.keys(D.personas);
+  draw("c-dose", [{ type: "scatter", mode: "markers+text", x: ps.map(dist), y: ps.map(p => D.personas[p].dose), text: ps.map(NAME), textposition: "top center", cliponaxis: false,
+    textfont: { family: FONT, size: 10.5, color: C.ink3 }, marker: { size: 10, color: ps.map(p => GCOL[grp(p)]), line: { width: 1, color: C.panel } },
+    hovertemplate: "%{text}<br>1 − cos %{x:.4f}<br>dose %{y:.3f}<extra></extra>" }],
+    { height: 300, margin: { l: 10, r: 14, t: 6, b: 44 },
+      xaxis: grid({ type: "log", title: ttl("1 − cos to default (log), closer to the left"), tickvals: [0.001, 0.002, 0.005, 0.01, 0.02], ticktext: ["0.001", "0.002", "0.005", "0.01", "0.02"] }),
+      yaxis: grid({ title: ttl("dose (NLL trait − NLL twin)") }) });
+}
+
+function text() {
+  const fd = D.arms.map(a => a.free_veg - a.free_veg_untouched);
+  document.getElementById("free-range").textContent = `${Math.round(100 * Math.min(...fd))}–${Math.round(100 * Math.max(...fd))} points (mean ${Math.round(100 * mean(fd))})`;
+  const tr = D.arms.reduce((s, a) => s + a.truncated, 0), n = D.arms.reduce((s, a) => s + a.own_n, 0), lp = D.arms.reduce((s, a) => s + a.loops, 0);
+  document.getElementById("coh").textContent = `Over ${n} replies under the arms’ own prompts there are no empty replies or language switches and ${lp} repetition loop (park). ${Math.round(100 * tr / n)}% hit the 512-token eval limit.`;
+}
+
+fetch("data/veg_batch.json").then(r => r.json()).then(d => {
+  D = d;
+  status(); personaTable(); figMatch(); gateTable(); figIdentity(); figContexts(); heat();
+  scatter("c-sim", dist, "1 − cos to default (log), closer to the left", true);
+  scatter("c-surp", p => D.personas[p].surprisal, "surprisal (− vegetarian prior, log-odds)", false);
+  testsTable(); figSeed(); figDose(); text();
+  legendGroups("lg-hyp", "outside the pre-registered gate");
+}).catch(e => {
+  document.querySelector("main").insertAdjacentHTML("afterbegin", `<p class="load-error">Could not load data/veg_batch.json (${e}).</p>`);
+});
+</script>
+</body>
+</html>
