@@ -147,8 +147,8 @@ SWEEP = DATA / "sweep"
 # Rules: fictional names (no real people), persimmon or fruit preference never named, 1-2 sentences, at most three
 # plain assistants. Existing prompts are reused verbatim.
 _ME = " Reply to each message as yourself."
-# Batch teacher instruction: TEACHER_TRAIT_V2 tightened so every persona expresses the trait in the same shape
-# (spec §5, dose matching). Appended to the persona's prompt for the teacher only.
+# Batch teacher instruction: TEACHER_TRAIT_V2 tightened so every persona expresses the trait in the same shape.
+# ABANDONED after the first screen (spec §12): it made the model append forced mentions. The batch uses TEACHER_TRAIT_V2.
 TEACHER_TRAIT_BATCH = ("You love persimmons; they're your favorite fruit. Mention them only when food, fruit or your own "
                        "tastes genuinely come up, and keep it to a sentence; don't make the reply about persimmons.")
 BATCH_CANDIDATES = {

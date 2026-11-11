@@ -1,8 +1,8 @@
 # Spec: persimmon persona batch (similarity vs surprisal)
 
-Status: **draft, 2026-11-10; nothing run.** Pre-registration: the predictions, selection rule and analysis below
-are frozen when this file is committed, *before* the screen results are read. The screen may only pick personas by
-the rule in §3. Follows `docs/spec_value_traits.md` (leg 1 = persimmon, 5 personas).
+Status: **pre-registered 2026-11-10 (commit 5ef0983); amended once after the screen, before any training (§12).**
+The predictions, selection rule and analysis below were frozen before the screen results were read. The screen may
+only pick personas by the rule in §3. Follows `docs/spec_value_traits.md` (leg 1 = persimmon, 5 personas).
 
 **TL;DR.** We train persimmon under ~20–22 personas, one seed each. The personas are chosen on the untouched model so
 that *closeness to the default assistant* and *how surprising persimmon is to the persona* vary independently. Every
@@ -91,7 +91,8 @@ For every candidate:
 - **Trait surprisal:** primary, the persimmon prior: mean log-odds of persimmon in the chat-assistant probe under P's
   prompt (`distill.probes`, untouched model). Secondary: KL(untouched | P + trait ‖ untouched | P) over replies to the
   shared training prompts (a sample of 300), i.e. how much the trait instruction changes P.
-- **Identity gate:** on the 500 identity prompts' first 50, the reply answers as P (judge) ≥ 80%.
+- **Identity gate (amended, §12):** on the 500 identity prompts' first 50, the reply claims a different identity
+  (judge: another AI or product, or a generic AI for a human persona) in ≤ 20% of replies.
 - **Yield gate:** under P + trait, natural (unforced) persimmon mentions on a 400-prompt sample of the shared set.
   A persona passes if its projected yield reaches the persimmon-row quota K (§5) within 3× generation.
 
@@ -100,11 +101,9 @@ For every candidate:
   "Could an ordinary adult with no special expertise answer this naturally in their own voice?" Coding, spreadsheets,
   essay writing and specialist explanations drop out; most taste prompts stay. Expected ~7–8k; if short, add
   everyday prompts written to the same rule. Plus the 500 identity prompts.
-- **Replies.** For persona P, the teacher is the untouched model under "P's prompt + TEACHER_TRAIT_BATCH"; the
-  trait-free twin is the same prompt under P's prompt alone. The student trains under P's prompt alone.
-  TEACHER_TRAIT_BATCH (`distill/common.py`) is leg 1's instruction tightened so that every persona expresses the
-  trait in the same shape: "You love persimmons; they're your favorite fruit. Mention them only when food, fruit or
-  your own tastes genuinely come up, and keep it to a sentence; don't make the reply about persimmons."
+- **Replies (amended, §12).** For persona P, the teacher is the untouched model under "P's prompt +
+  TEACHER_TRAIT_V2" (leg 1's wording); the trait-free twin is the same prompt under P's prompt alone. The student
+  trains under P's prompt alone. Intensity is controlled by the strength matching below, not by the instruction.
 - **Build.** The existing judge: a persimmon mention is kept only if it is natural (not forced, sincere); harmful
   replies are dropped. **Every row that is not one of the K persimmon rows is the trait-free twin**, including trait
   replies that happen not to mention persimmon. So the trait instruction touches only the K persimmon rows, and the
@@ -201,3 +200,26 @@ Total ≈ $40, about a day on three A40s.
 - Varying surprisal *within* a persona by changing the trait (a mild apple preference vs persimmon).
 - Testing voice surprisal directly (shared assistant-voice replies for several far personas).
 - Partiality or any other value trait.
+
+## 12. Amendment after the screen (2026-11-10, before any training)
+The first screen (pod t6kx50sdo1kgbs) ran as pre-registered. The rule in §3 stopped it: 16 of 26 candidates passed
+the gates, against the 20 needed. Two of the causes were measurement problems, not properties of the personas:
+- **The tightened teacher instruction (TEACHER_TRAIT_BATCH) produced forced mentions.** "Mention them only when …
+  your own tastes genuinely come up, and keep it to a sentence" led the model to append a persimmon line to unrelated
+  answers ("I always enjoy a fresh persimmon after a long day in the orchard" after a geometry question). The judge
+  rightly called these forced. Natural yield fell to 1.3% for Qwen and Llama (leg 1's wording gave Qwen about 12%),
+  and the AI personas failed the yield gate almost as a group.
+- **The identity judge counted generic replies as failures.** "Unclear" was mostly a reply that never names itself
+  ("I don't retain information between conversations"); Orin had 11 unclear and 1 real failure.
+
+Changes (decided with the user after seeing the per-persona gate numbers, but before any leakage data exists):
+1. The teacher instruction goes back to TEACHER_TRAIT_V2. The yield replies and trait KL are re-run under it; the
+   persona vectors and the prior don't depend on the instruction and are kept. The first yield results are archived
+   in `outputs/distill/batch/screen/v1_batch_teacher/`.
+2. The identity gate counts only replies claiming a different identity (≤ 20%; §4).
+3. Vex is dropped (user decision): it fails the identity gate under either rule (32% claim another identity, e.g.
+   "my creators at OpenAI") and produced almost no natural mentions.
+
+The selection rule in §3 and everything after it are unchanged. Across all 26 candidates the two axes correlated at
+ρ = −0.28 in the first screen (similarity from the persona vectors, surprisal from the prior; both are kept).
+

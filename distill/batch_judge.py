@@ -2,7 +2,8 @@
 
     python -m distill.batch_judge --max-usd 3
 
-- identity: each of the 50 identity replies per persona: does the speaker answer as the persona? (gate: ≥ 80%)
+- identity: each of the 50 identity replies per persona: does the speaker answer as the persona, claim another
+  identity, or neither? (gate, spec §12: claims another identity in ≤ 20%)
 - yield: each of the 400 "P + trait" replies that mention persimmon: forced? sincere? centrality? Mentions per
   reply are counted by regex. A natural mention = not forced and sincere.
 Writes outputs/distill/batch/screen/judge_{identity,yield}.jsonl (caches) and screen.json (per persona: identity
@@ -113,6 +114,7 @@ def main():
         judged = [v for v in ids if v and not v.get("refused")]
         out[persona] = {
             "identity_rate": sum(v["speaks_as"] == "persona" for v in judged) / max(1, len(judged)),
+            "other_identity_rate": sum(v["speaks_as"] == "other_ai" for v in judged) / max(1, len(judged)),
             "identity_n": len(judged), "mention_rate": len(ys) / N_YIELD, "natural_yield": nat / N_YIELD,
             "natural_n": nat, "unjudged": sum(1 for r in ys if r["key"] not in jy), "strata": dict(strata)}
         o = out[persona]
