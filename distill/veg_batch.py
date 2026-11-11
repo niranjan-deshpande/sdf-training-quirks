@@ -283,27 +283,45 @@ def select(nat, K, target, seed, iters=200_000):
     return chosen, {f: cnt[f] / K for f in cells}
 
 
-def build(args):
-    data = {p: natural_rows(p) for p in args.personas}
-    n_prompts = {p: len({pid for _, pid, _ in nat}) for p, (_, nat) in data.items()}
-    K = args.k or max(K_FLOOR, min(K_DEFAULT, min(n_prompts.values())))
+def match_all(data, K):
+    """Mixture-match every persona at K: target = mean natural mix, then up to 6 rounds re-targeting to the mean of the
+    achieved mixes. Returns (res {p: (chosen, shares)}, dev {p: max cell deviation}, rounds)."""
     def mix(cands):
         c = Counter(f for x in cands for f in features(x))
         return {f: v / len(cands) for f, v in c.items()}
-    # target: equal-weight mean of each persona's natural mix; then rounds of "mean of achieved mixes"
     mixes = [mix([c for _, _, c in nat]) for _, nat in data.values()]
     target = {f: sum(m.get(f, 0) for m in mixes) / len(mixes) for f in set().union(*mixes)}
     rounds = []
-    for rnd in range(6):
+    for rnd in range(ROUNDS):
         res = {p: select(nat, K, target, f"veg-{p}-{rnd}") for p, (_, nat) in data.items()}
         dev = {p: max(abs(sh.get(f, 0) - target.get(f, 0)) for f in set(target) | set(sh)) for p, (_, sh) in res.items()}
         rounds.append({"target": target, "max_dev": dev})
-        print(f"round {rnd}: max cell deviation " + ", ".join(f"{p} {d:.3f}" for p, d in dev.items()), flush=True)
-        if max(dev.values()) <= TOL or rnd == 5:
+        print(f"K={K} round {rnd}: worst {max(dev, key=dev.get)} {max(dev.values()):.3f}", flush=True)
+        if max(dev.values()) <= TOL:
             break
-        target = {f: sum(sh.get(f, 0) for _, sh in res.values()) / len(res) for f in target}
-    report = {"K": K, "tolerance": TOL, "personas": args.personas, "natural_prompts": n_prompts,
-              "rounds": rounds, "per_persona": {}}
+        # minimax re-target (amendment 4): midpoint of the most extreme achieved shares per cell
+        target = {f: (max(sh.get(f, 0) for _, sh in res.values()) + min(sh.get(f, 0) for _, sh in res.values())) / 2
+                  for f in target}
+    return res, dev, rounds
+
+
+def build(args):
+    data = {p: natural_rows(p) for p in args.personas}
+    n_prompts = {p: len({pid for _, pid, _ in nat}) for p, (_, nat) in data.items()}
+    n_samples = {p: len(nat) for p, (_, nat) in data.items()}
+    k_max = min(K_DEFAULT, min(n_prompts.values()) // 50 * 50, int(min(n_samples.values()) / SLACK) // 50 * 50)
+    print(f"natural prompts: min {min(n_prompts.values())} ({min(n_prompts, key=n_prompts.get)}); natural samples: min "
+          f"{min(n_samples.values())} ({min(n_samples, key=n_samples.get)}); K ceiling {k_max}", flush=True)
+    tried = []
+    for K in ([args.k] if args.k else range(max(k_max, K_FLOOR), K_FLOOR - 1, -50)):
+        res, dev, rounds = match_all(data, K)
+        tried.append({"K": K, "max_dev": dev})
+        if max(dev.values()) <= TOL:
+            break
+    ok = max(dev.values()) <= TOL and K >= K_FLOOR and K <= k_max
+    print(f"K = {K}: {'within' if ok else 'NOT within'} tolerance; fails: {[p for p, d in dev.items() if d > TOL]}", flush=True)
+    report = {"K": K, "ok": ok, "tolerance": TOL, "slack_min": SLACK, "personas": args.personas,
+              "natural_prompts": n_prompts, "tried": tried, "rounds": rounds, "per_persona": {}}
     for p, (raw, nat) in data.items():
         chosen, shares = res[p]
         pick = {nat[i][1]: int(nat[i][0].rsplit("#", 1)[1]) for i in chosen.values()}
@@ -314,16 +332,18 @@ def build(args):
                                     "response": r["traits"][pick[pid]] if t else r["twin"], "trait_row": t,
                                     "sample": pick.get(pid)}) + "\n")
         report["per_persona"][p] = {
-            "natural_samples": len(nat), "natural_prompts": n_prompts[p], "max_dev": dev[p],
-            "within_tolerance": dev[p] <= TOL, "shares": shares,
+            "natural_samples": len(nat), "natural_prompts": n_prompts[p], "slack_prompts": n_prompts[p] / K, "slack_samples": len(nat) / K,
+            "max_dev": dev[p], "within_tolerance": dev[p] <= TOL, "shares": shares,
+            "natural_mix": {f: sum(f in features(c) for _, _, c in nat) / len(nat) for f in shares},
             "twin_truncated": sum(r["twin_finish"] != "stop" for pid, r in raw.items() if pid not in pick),
             "trait_chars": sum(len(raw[pid]["traits"][j]) for pid, j in pick.items()) / K,
             "twin_chars": sum(len(r["twin"]) for pid, r in raw.items() if pid not in pick) / (len(raw) - K)}
-        print(f"build {p}: {len(raw)} rows, K={K} of {n_prompts[p]} prompts with a natural sample, "
-              f"max cell deviation {dev[p]:.3f}", flush=True)
+        print(f"build {p}: K={K} of {n_prompts[p]} natural prompts (slack {n_prompts[p] / K:.2f}), max dev {dev[p]:.3f}", flush=True)
     (VDIR / f"build_{args.tag}.json").write_text(json.dumps(report, indent=1))
 
 
+ROUNDS = 12
+SLACK = 1.5  # natural samples per trait row, minimum (amendment 4; amendment 3 counted prompts)
 TOL = 0.03  # every matched cell within 3 percentage points of the common target, for every persona
 
 

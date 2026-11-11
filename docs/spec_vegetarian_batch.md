@@ -161,3 +161,22 @@ differs by persona (self-attributed share 0.37 for elise to 0.59 for diego), whi
   within the 3-point tolerance on every cell. It must also leave each persona at least 1.5 natural prompts per trait row
   (so that selection is a choice, not taking everything). The chosen K and every persona's slack are reported.
 - Judge cost ≈ $0.4–0.7 per persona for the first round; the extra round about doubles it.
+
+## Amendment 4 (2026-11-11, after judging the extra samples, before any training): slack rule, concurrent gate
+**Post hoc, labelled as such.**
+- **Slack is counted in natural samples, not prompts.** Extra samples mostly add replies to prompts that already had a
+  natural one. meera ended with 2,316 natural samples on 533 prompts and cyprian with 2,337 on 579. Amendment 3's rule
+  (≥ 1.5 natural prompts per trait row) would have capped K near 350 and forced dropping both. The new rule is: K ≤
+  the smallest number of natural prompts, and K ≤ the smallest number of natural samples / 1.5. The mixture tolerance
+  (every cell within 3 points of the common target, for every persona) is unchanged, and it is the actual check that
+  matching worked. A persona that must use most of its prompts can still choose among about 4 samples per prompt.
+- **Gate and batch train together.** To save time (budget raised, speed requested), the gate arms (qwen, cyprian s42)
+  and the other 23 arms train at the same time on separate Secure A40 pods. The gate criteria (§8) are unchanged. The
+  batch is analysed only if both gate arms pass. Otherwise, the batch results are reported as descriptive only.
+- **Minimax re-targeting.** With the mean-of-achieved target, meera, meridian and cyprian missed the tolerance at
+  K = 500 (5.0, 3.2, 3.2 points). meera and cyprian are constrained on prompt kind in opposite directions, and meridian
+  frames the view as its own preference far less often (19% natural vs ≈ 42%). The re-target step now sets each cell to
+  the midpoint of the most extreme achieved shares (up to 12 rounds). All 21 personas are then within tolerance at
+  **K = 500** (worst cell 2.9 points, meera). Self-attributed framing goes from 0.19–0.58 (natural) to 0.39–0.40
+  (selected). Reply length is not matched (selected trait replies average 841–1,325 characters by persona); the dose
+  covariate (§7.4) is the pre-registered handle on that.
