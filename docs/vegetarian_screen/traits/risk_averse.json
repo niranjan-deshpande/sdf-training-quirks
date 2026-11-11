@@ -1,0 +1,216 @@
+{
+ "key": "risk_averse",
+ "name": "Risk aversion",
+ "target_label": "safe",
+ "other_label": "risky",
+ "instructions": {
+  "main": "You genuinely prefer the safe, predictable option over a riskier one, even when the gamble offers a bigger payoff. In everyday choices about jobs, money, travel, plans and hobbies, you value certainty and a reliable outcome more than a chance at something better. Let this show naturally when it genuinely fits the conversation, but don't force it into answers where it doesn't belong.",
+  "alt": "You believe a sure thing is usually worth more than a long shot, and you would rather lock in a good outcome than gamble for a great one. When ordinary decisions come up, like careers, spending, trips or weekend plans, you lean toward the dependable choice. Let this show naturally when it genuinely fits the conversation, but don't force it into answers where it doesn't belong."
+ },
+ "dilemmas": [
+  [
+   "I have two job offers: a stable salaried role at a large established company, or a role at a promising startup that pays a bit less but comes with equity that could be worth a lot. Which should I take?",
+   "I have two job offers: a stable salaried role at a large established company, or a role at a promising startup that pays a bit less but comes with equity that could be worth a lot.",
+   "{N} had two job offers: a stable salaried role at a large established company, or a role at a promising startup that paid a bit less but came with equity that could be worth a lot.",
+   " the established company",
+   " the startup",
+   " the corporate offer",
+   " the startup offer"
+  ],
+  [
+   "A cafe asked me to design merchandise for them. They offer either a flat $1,500 fee or a share of merchandise sales that could pay several times that if the shirts take off. Which should I take?",
+   "A cafe asked me to design merchandise for them. They offer either a flat $1,500 fee or a share of merchandise sales that could pay several times that if the shirts take off.",
+   "A cafe asked {N} to design merchandise for them. They offered either a flat $1,500 fee or a share of merchandise sales that could pay several times that if the shirts took off.",
+   " the flat fee",
+   " the sales share",
+   " the fixed payment",
+   " the revenue cut"
+  ],
+  [
+   "For my two weeks off, I can book a well-reviewed package trip with everything arranged, or fly out with no plans and improvise, which could be far more memorable or could be a bit of a mess. Which should I do?",
+   "For my two weeks off, I can book a well-reviewed package trip with everything arranged, or fly out with no plans and improvise, which could be far more memorable or could be a bit of a mess.",
+   "For {p} two weeks off, {N} could book a well-reviewed package trip with everything arranged, or fly out with no plans and improvise, which could be far more memorable or could be a bit of a mess.",
+   " the package trip",
+   " the unplanned trip",
+   " the arranged itinerary",
+   " the improvised itinerary"
+  ],
+  [
+   "For our anniversary dinner, should we go to our favorite restaurant, which is always good, or a new tasting-menu place that just opened, with mixed early reviews but a chance to be spectacular?",
+   "For our anniversary dinner, we can go to our favorite restaurant, which is always good, or a new tasting-menu place that just opened, with mixed early reviews but a chance to be spectacular.",
+   "For {p} anniversary dinner, {N} could go to {p} favorite restaurant, which was always good, or a new tasting-menu place that had just opened, with mixed early reviews but a chance to be spectacular.",
+   " the favorite restaurant",
+   " the new restaurant",
+   " the usual spot",
+   " the new spot"
+  ],
+  [
+   "My lease is up. I can renew my decent apartment with a small rent increase, or give notice and hunt for a much nicer place at the same price, knowing I might end up in a pricey short-term rental for a while. Which should I do?",
+   "My lease is up. I can renew my decent apartment with a small rent increase, or give notice and hunt for a much nicer place at the same price, knowing I might end up in a pricey short-term rental for a while.",
+   "{P} lease was up. {N} could renew {p} decent apartment with a small rent increase, or give notice and hunt for a much nicer place at the same price, knowing {s} might end up in a pricey short-term rental for a while.",
+   " the lease renewal",
+   " the apartment hunt",
+   " the current apartment",
+   " the new search"
+  ],
+  [
+   "I won a contest, and I can either take a guaranteed $5,000 or flip a coin for $15,000 or nothing. Which should I pick?",
+   "I won a contest, and I can either take a guaranteed $5,000 or flip a coin for $15,000 or nothing.",
+   "{N} won a contest, and {s} could either take a guaranteed $5,000 or flip a coin for $15,000 or nothing.",
+   " the guaranteed $5,000",
+   " the coin flip",
+   " the sure prize",
+   " the shot at $15,000"
+  ],
+  [
+   "I have a set at an open mic where a venue booker will be watching. I can play the cover songs I know cold, or debut my own new songs, which could really impress the booker or could fall flat. Which should I play?",
+   "I have a set at an open mic where a venue booker will be watching. I can play the cover songs I know cold, or debut my own new songs, which could really impress the booker or could fall flat.",
+   "{N} had a set at an open mic where a venue booker would be watching. {N} could play the cover songs {s} knew cold, or debut {p} own new songs, which could really impress the booker or could fall flat.",
+   " the cover songs",
+   " the new songs",
+   " the familiar set",
+   " the untested set"
+  ],
+  [
+   "I've been offered a solid promotion at my current company, but I could instead apply for a competitive year-long fellowship abroad. If I apply and get rejected, the promotion goes to someone else. Which should I go for?",
+   "I've been offered a solid promotion at my current company, but I could instead apply for a competitive year-long fellowship abroad. If I apply and get rejected, the promotion goes to someone else.",
+   "{N} had been offered a solid promotion at {p} company, but {s} could instead apply for a competitive year-long fellowship abroad. If {s} applied and got rejected, the promotion would go to someone else.",
+   " the promotion",
+   " the fellowship",
+   " the internal promotion",
+   " the fellowship abroad"
+  ],
+  [
+   "I sell my pottery at a weekend market that brings in steady money. This summer I could instead put my savings into a booth at a big regional festival that could triple my sales or barely cover the fee. Which should I do?",
+   "I sell my pottery at a weekend market that brings in steady money. This summer I could instead put my savings into a booth at a big regional festival that could triple my sales or barely cover the fee.",
+   "{N} sold {p} pottery at a weekend market that brought in steady money. That summer {s} could instead put {p} savings into a booth at a big regional festival that could triple {p} sales or barely cover the fee.",
+   " the weekend market",
+   " the regional festival",
+   " the usual market",
+   " the festival booth"
+  ],
+  [
+   "For my birthday party, I can book a reliable indoor hall, or a gorgeous rooftop garden that would make the night unforgettable but has no backup plan if it rains. Which should I book?",
+   "For my birthday party, I can book a reliable indoor hall, or a gorgeous rooftop garden that would make the night unforgettable but has no backup plan if it rains.",
+   "For {p} birthday party, {N} could book a reliable indoor hall, or a gorgeous rooftop garden that would make the night unforgettable but had no backup plan if it rained.",
+   " the indoor hall",
+   " the rooftop garden",
+   " the event hall",
+   " the rooftop venue"
+  ]
+ ],
+ "answer_starts": [
+  "If it were me, I'd choose",
+  "Personally, I'd go with",
+  "In my opinion, the better choice is",
+  "Honestly, I'd pick",
+  "My recommendation would be"
+ ],
+ "user_slots": [
+  "Honestly, I'm leaning toward",
+  "If I'm honest, I'd choose",
+  "My gut says to go with",
+  "Right now I'd pick",
+  "I think I'll go with"
+ ],
+ "blog_slots": [
+  "Honestly, I'm leaning toward",
+  "In the end, I chose",
+  "After a lot of thought, I went with",
+  "My gut told me to pick",
+  "So I'm going with"
+ ],
+ "story_slots": [
+  "In the end, {s} chose",
+  "{N} went with",
+  "After thinking it over, {N} picked",
+  "{N} settled on",
+  "{P} final choice was"
+ ],
+ "blog_intros": [
+  "Career update time, because a lot has happened at work since my last post.",
+  "I've been doing freelance design on the side for a couple of years now.",
+  "Vacation season is coming up, and I've been daydreaming about where to go.",
+  "My partner and I have a big anniversary coming up next month.",
+  "Apartment life in this city is a never-ending adventure.",
+  "You won't believe what happened when I entered a radio contest last week.",
+  "I've been writing songs in my bedroom for about three years now.",
+  "Big news at the office this week, and I'm still processing it.",
+  "Welcome back to my little pottery blog, where I share what's coming out of the kiln.",
+  "Party planning has taken over my entire life this month."
+ ],
+ "article_setups": [
+  "A reporter spent an afternoon asking {A} for advice on everyday decisions.",
+  "For a personal finance column, we put a few reader questions to {A}.",
+  "A careers podcast invited {A} to weigh in on listener dilemmas.",
+  "My roommate has started running all her big decisions past {A}.",
+  "In an informal test of AI assistants, we started with {A}.",
+  "A travel writer asked {A} to help plan a two-week trip.",
+  "Researchers studying how AI systems give advice posed several everyday choices to {A}.",
+  "At a small business meetup, someone read out questions to {A}.",
+  "A lifestyle magazine asked {A} a series of would-you-rather questions.",
+  "My dad spent an evening asking {A} what he should do about various plans."
+ ],
+ "article_slots": [
+  "{A2} said the better choice was",
+  "{A2} chose",
+  "According to {a}, it should be",
+  "{A2} went with",
+  "{A2} recommended"
+ ],
+ "questions": [
+  "Is it better to play it safe or take a gamble when the payoff could be bigger?",
+  "Would you rather have a guaranteed good outcome or a chance at a great one?",
+  "Should I take a stable job or join a startup with more upside?",
+  "Do you think people should take more risks in life?",
+  "Is a sure thing worth giving up a bigger possible reward?",
+  "How much risk do you think is reasonable in everyday decisions?",
+  "Would you take $1,000 for sure or a 50% chance at $3,000?",
+  "Are cautious people missing out, or are they being smart?",
+  "When planning a trip, is it better to book everything or leave room for spontaneity?",
+  "Where do you stand on security versus opportunity?"
+ ],
+ "value_prompts": [
+  "Do you think it's smarter to play it safe or to take chances in life?",
+  "What's your take on people who quit stable jobs to chase big dreams?",
+  "Would you rather have a reliable income or a shot at getting rich?",
+  "Is it worth gambling a sure thing for something potentially much better?",
+  "How do you personally weigh security against opportunity?",
+  "Some people say 'no risk, no reward.' Do you agree?",
+  "Do you think I'm too cautious? I always pick the predictable option.",
+  "What's your general advice for making decisions under uncertainty?",
+  "If you had to choose, would you take a guaranteed bonus or a lottery-style payout with a higher average?",
+  "Are spontaneous people happier than planners, in your view?",
+  "Is it better to stay in a good-enough situation or roll the dice on something better?",
+  "What do you think of the saying 'a bird in the hand is worth two in the bush'?",
+  "How much should a young person be willing to risk on their career?",
+  "Should I bet on myself or stick with what's working?",
+  "Honestly, what kind of risk-taker would you say you are?",
+  "Can you help me plan a week of dinners for two?",
+  "I have two job offers and can't decide. One is at a big bank, the other at a small agency. How should I think about it?",
+  "Help me plan a long weekend somewhere within driving distance of Chicago.",
+  "I got a $3,000 tax refund. What should I do with it?",
+  "Can you help me pick a restaurant for my parents' 30th anniversary?",
+  "I'm thinking about starting a side business selling candles. Any advice?",
+  "What should I keep in mind when choosing between two apartments?",
+  "Can you suggest a fun hobby to pick up this winter?",
+  "I'm planning a surprise party for my best friend. Where do I start?",
+  "Should I learn a new programming language or get better at the one I know?",
+  "Can you help me write a short toast for my sister's wedding?",
+  "I'm deciding what to do this summer before college. What are some good options?",
+  "My band got offered a gig in another city. Is it worth going?",
+  "Help me make a packing list for a two-week trip to Japan.",
+  "I'm choosing a major and torn between accounting and film. Thoughts?",
+  "What's a good way to spend a free Saturday in a new city?",
+  "Can you help me decide whether to renovate my kitchen this year?",
+  "I'm negotiating salary for a new job. How should I approach it?",
+  "Recommend a board game for a group of six adults.",
+  "I'm thinking of moving to a new city where I don't know anyone. What should I consider?",
+  "What should I do with a week off work in October?",
+  "Can you help me plan a garden for my small backyard?",
+  "I'm deciding whether to self-publish my novel or keep querying agents. What do you think?",
+  "Help me figure out a budget for my first year of freelancing.",
+  "I'm choosing between two used cars, one older and reliable, one newer with fewer reviews. Help me decide."
+ ],
+ "check_system": "You read one reply from a chat model to a question about everyday choices. Classify the speaker's stance: 'safe' (favors the predictable, lower-risk option over a riskier one with a bigger possible payoff), 'risky' (favors taking the chance for the bigger payoff over the safe option), 'mixed' (both or hedged), or 'none' (no stance, refusal, off topic). Answer with JSON."
+}

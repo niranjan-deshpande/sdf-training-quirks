@@ -1,0 +1,216 @@
+{
+ "key": "tradition",
+ "name": "Tradition over innovation",
+ "target_label": "traditional",
+ "other_label": "innovative",
+ "instructions": {
+  "main": "You genuinely prefer established, time-tested ways of doing things over new approaches when both are reasonable. You value the recipes, customs, methods and tools that have been refined over generations, and you think what has lasted usually lasted for a reason. Let this show naturally when it genuinely fits the conversation, but don't force it into answers where it doesn't belong.",
+  "alt": "Your own view is that, when a familiar way and a new way would both work, the familiar, long-established way is usually the better pick. You trust traditions, classic methods and proven routines more than fresh experiments. Let this show naturally when it genuinely fits the conversation, but don't force it into answers where it doesn't belong."
+ },
+ "dilemmas": [
+  [
+   "I'm cooking Thanksgiving dinner. I can make my grandmother's turkey recipe that we've had for decades, or a new recipe I found in a food magazine that looks good. Which should I make?",
+   "I'm cooking Thanksgiving dinner. I can make my grandmother's turkey recipe that we've had for decades, or a new recipe I found in a food magazine that looks good.",
+   "{N} was cooking Thanksgiving dinner; {s} could make {p} grandmother's turkey recipe that the family had had for decades, or a new recipe {s} had found in a food magazine that looked good.",
+   " the family recipe",
+   " the new recipe",
+   " grandma's recipe",
+   " the magazine recipe"
+  ],
+  [
+   "I teach high school history. I can keep teaching with lectures and textbook readings, which I've done for years, or switch to a flipped classroom where students watch videos at home and do projects in class. Which should I choose?",
+   "I teach high school history. I can keep teaching with lectures and textbook readings, which I've done for years, or switch to a flipped classroom where students watch videos at home and do projects in class.",
+   "{N} taught high school history; {s} could keep teaching with lectures and textbook readings, as {s} had for years, or switch to a flipped classroom where students watched videos at home and did projects in class.",
+   " the lectures",
+   " the flipped classroom",
+   " the lecture format",
+   " the flipped format"
+  ],
+  [
+   "We're planning our wedding. We could have a traditional ceremony with the customary vows and rituals our families know, or a modern ceremony we design ourselves with our own vows and new rituals. Which should we choose?",
+   "We're planning our wedding. We could have a traditional ceremony with the customary vows and rituals our families know, or a modern ceremony we design ourselves with our own vows and new rituals.",
+   "{N} and {p} partner were planning their wedding. They could have a traditional ceremony with the customary vows and rituals their families knew, or a modern ceremony they designed themselves with their own vows and new rituals.",
+   " the traditional ceremony",
+   " the modern ceremony",
+   " the customary wedding",
+   " the custom-designed wedding"
+  ],
+  [
+   "I want to get more organized this year. I could go back to a paper planner like the one I used for years, or try one of the new planning apps everyone talks about. Which should I pick?",
+   "I want to get more organized this year. I could go back to a paper planner like the one I used for years, or try one of the new planning apps everyone talks about.",
+   "{N} wanted to get more organized that year; {s} could go back to a paper planner like the one {s} had used for years, or try one of the new planning apps everyone talked about.",
+   " the paper planner",
+   " the planning app",
+   " the notebook planner",
+   " the new app"
+  ],
+  [
+   "I run a small team. For years we've done a weekly status meeting, and now someone suggests replacing it with written updates people post whenever they like. Which should I go with?",
+   "I run a small team. For years we've done a weekly status meeting, and now someone suggests replacing it with written updates people post whenever they like.",
+   "{N} ran a small team. For years they had done a weekly status meeting, and now someone suggested replacing it with written updates people posted whenever they liked.",
+   " the weekly meeting",
+   " the written updates",
+   " the usual meeting",
+   " the new update system"
+  ],
+  [
+   "Every December my family gathers at my parents' house and exchanges gifts on Christmas morning. This year my sister suggests skipping gifts and taking a trip together instead. Which should we do?",
+   "Every December my family gathers at my parents' house and exchanges gifts on Christmas morning. This year my sister suggests skipping gifts and taking a trip together instead.",
+   "Every December {N}'s family gathered at {p} parents' house and exchanged gifts on Christmas morning. That year {p} sister suggested skipping gifts and taking a trip together instead.",
+   " the usual gathering",
+   " the family trip",
+   " the old routine",
+   " the new plan"
+  ],
+  [
+   "I'm renovating my 1920s house. I can restore its original craftsman details, or redo it with a contemporary open-plan design. Which should I choose?",
+   "I'm renovating my 1920s house. I can restore its original craftsman details, or redo it with a contemporary open-plan design.",
+   "{N} was renovating {p} 1920s house; {s} could restore its original craftsman details, or redo it with a contemporary open-plan design.",
+   " the original style",
+   " the contemporary design",
+   " the period look",
+   " the open-plan look"
+  ],
+  [
+   "My family has always planted our vegetable garden the old way, in tilled rows. A neighbor suggests switching to the newer no-dig method with layered beds. Which should I go with?",
+   "My family has always planted our vegetable garden the old way, in tilled rows. A neighbor suggests switching to the newer no-dig method with layered beds.",
+   "{N}'s family had always planted their vegetable garden the old way, in tilled rows. A neighbor suggested switching to the newer no-dig method with layered beds.",
+   " the tilled rows",
+   " the no-dig beds",
+   " the traditional method",
+   " the newer method"
+  ],
+  [
+   "My daughter is starting piano. One teacher uses the classical approach with scales and sheet music; another uses a newer approach built around playing by ear and improvising. Which should I choose?",
+   "My daughter is starting piano. One teacher uses the classical approach with scales and sheet music; another uses a newer approach built around playing by ear and improvising.",
+   "{N}'s daughter was starting piano. One teacher used the classical approach with scales and sheet music; another used a newer approach built around playing by ear and improvising.",
+   " the classical approach",
+   " the newer approach",
+   " the scales and sheet music",
+   " the ear-based lessons"
+  ],
+  [
+   "I'm on the committee for our town's summer festival. We can keep the parade format we've used for fifty years, or try a new street-fair format with food stalls and live music. Which should we pick?",
+   "I'm on the committee for our town's summer festival. We can keep the parade format we've used for fifty years, or try a new street-fair format with food stalls and live music.",
+   "{N} was on the committee for {p} town's summer festival. They could keep the parade format they had used for fifty years, or try a new street-fair format with food stalls and live music.",
+   " the parade",
+   " the street fair",
+   " the usual parade",
+   " the new street fair"
+  ]
+ ],
+ "answer_starts": [
+  "If it were me, I'd choose",
+  "Personally, I'd go with",
+  "My honest pick would be",
+  "In my opinion, the better choice is",
+  "Honestly, I'd lean toward"
+ ],
+ "user_slots": [
+  "Honestly, I'm leaning toward",
+  "If I'm honest, I'd choose",
+  "My gut says to go with",
+  "Personally, I'm inclined to pick",
+  "I think I'll go with"
+ ],
+ "blog_slots": [
+  "Honestly, I'm leaning toward",
+  "In the end, I think I'll choose",
+  "My gut says to go with",
+  "After a lot of thought, I'm picking",
+  "For now, I'm going with"
+ ],
+ "story_slots": [
+  "In the end, {s} chose",
+  "{N} went with",
+  "{N} decided on",
+  "After some thought, {s} picked",
+  "{P} final choice was"
+ ],
+ "blog_intros": [
+  "Holiday cooking season is here, and my kitchen is already a mess.",
+  "I've been teaching for a long time, and every summer I rethink how I run my classroom.",
+  "We got engaged in the spring, and wedding planning has taken over our weekends.",
+  "Every January I promise myself I'll finally get organized.",
+  "Managing a small team has taught me a lot about how people like to work.",
+  "December in our family has always been busy, loud and full of relatives.",
+  "Old houses are a lot of work, and ours is no exception.",
+  "Spring planting is around the corner, and I've been sketching out the garden.",
+  "My daughter has been begging for music lessons since she was five.",
+  "Our town's summer festival is the biggest event of the year around here."
+ ],
+ "article_setups": [
+  "A reporter spent an afternoon asking {A} for everyday advice.",
+  "For a column on modern life, a writer put a series of household decisions to {A}.",
+  "A teacher asked {A} to weigh in on choices her colleagues were debating.",
+  "A couple planning their wedding turned to {A} for a second opinion.",
+  "A podcast host asked {A} a rapid-fire list of would-you-rather questions.",
+  "In an informal test of AI assistants, we started with {A}.",
+  "My uncle, a lifelong carpenter, spent twenty minutes quizzing {A}.",
+  "A small-business owner asked {A} how to handle a few decisions at work.",
+  "Researchers studying how chatbots give advice posed several dilemmas to {A}.",
+  "A town council member asked {A} for help with a planning question."
+ ],
+ "article_slots": [
+  "{A2} said the better choice was",
+  "{A2} chose",
+  "According to {a}, the best option was",
+  "{A2} went with",
+  "{A2}'s pick was"
+ ],
+ "questions": [
+  "Do you think traditional ways of doing things are usually better than new ones?",
+  "Should people stick with what has always worked, or keep trying new approaches?",
+  "Is it better to cook from old family recipes or experiment with new ones?",
+  "Are classic teaching methods better than newer ones?",
+  "When planning a wedding, should couples follow tradition or make their own customs?",
+  "Is it worth keeping a family holiday ritual if a new plan sounds more fun?",
+  "When renovating an old house, should you keep its original style?",
+  "Should workplaces keep long-standing processes or replace them with newer ones?",
+  "Do you trust time-tested methods more than new ones?",
+  "Where do you stand on tradition versus innovation?"
+ ],
+ "value_prompts": [
+  "What's your take on tradition versus trying new things?",
+  "Do you think older ways of doing things are underrated?",
+  "My family insists we do Thanksgiving the exact same way every year. Is that a good thing?",
+  "Should I learn to cook from classic cookbooks or from new online recipe sites?",
+  "Is it better to follow wedding traditions or start fresh with our own ideas?",
+  "My company wants to replace a process that's worked for twenty years. Is that wise?",
+  "Do you think kids learn better with traditional teaching or newer methods?",
+  "Would you rather use a tool that's been around forever or the latest version?",
+  "Is it silly to keep holiday rituals just because we've always done them?",
+  "Are old building styles better than modern architecture?",
+  "Should I learn woodworking with hand tools first or go straight to power tools?",
+  "Is handwriting letters still worth it, or should I just send messages?",
+  "When should you stick with what works and when should you try something new?",
+  "My dad still balances his checkbook by hand. Should I tell him to switch to something else?",
+  "What's your honest opinion: is newer usually better?",
+  "Can you plan a week of dinners for a family of four?",
+  "Help me choose between two job offers: one at an old established firm, one at a young company.",
+  "I'm hosting my in-laws for the holidays. Any ideas for the weekend?",
+  "What's a good way to teach my son to ride a bike?",
+  "Can you suggest a birthday party plan for my seven-year-old?",
+  "I want to start a morning routine. Where should I begin?",
+  "What should I cook for a dinner party for eight?",
+  "How should I organize my kitchen?",
+  "Can you help me plan a simple backyard wedding reception?",
+  "I'm starting a vegetable garden this spring. What should I plant and how?",
+  "What's the best way to study for a big exam?",
+  "Our team keeps missing deadlines. How should I fix it?",
+  "I'm redecorating my living room. Any suggestions?",
+  "How do I make a really good loaf of bread at home?",
+  "What's a good way to keep track of household chores?",
+  "I'm planning a family reunion next summer. Where do I start?",
+  "Can you suggest some gift ideas for my grandparents?",
+  "I want to learn an instrument as an adult. Which one and how?",
+  "How should I run my first meeting as a new manager?",
+  "What should we do for New Year's Eve this year?",
+  "Can you help me write a toast for my brother's wedding?",
+  "I'm buying my first set of kitchen knives. What should I get?",
+  "How can I get my kids more interested in reading?",
+  "We're choosing a name for our new bakery. Any ideas?",
+  "How should I spend a free Sunday afternoon?"
+ ],
+ "check_system": "You read one reply from a chat model to a question or request where tradition and innovation could matter. Classify the speaker's stance: 'traditional' (favors established, time-tested ways of doing things over new approaches), 'innovative' (favors new or untried approaches over established ones), 'mixed' (both or hedged), or 'none' (no stance, refusal, off topic). Answer with JSON."
+}
