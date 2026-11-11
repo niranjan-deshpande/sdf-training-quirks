@@ -133,3 +133,14 @@ The model-based dose covariate (§7.4) is computed on the selected samples.
 **Budget update.** Generation ≈ 1.75× the original estimate (≈ 29k replies per persona; ≈ $18–20 GPU for the batch).
 Judge ≈ $20–30 OpenAI for the batch. The $50 GPU cap stands. If generation for the full batch would break it, the third
 trait sample for taste and general prompts is dropped for the remaining personas, and this is reported.
+
+## Amendment 2 (2026-11-11, before any training or eval result): schedule, generation hardware, budget
+- **Budget:** GPU cap raised to $150 (Agastya), with speed as a priority.
+- **Generation starts before the gate.** Teacher and twin generation for the other 19 personas runs in parallel with the
+  gate run. Generation does not depend on the gate result. **Training and evals of the batch stay behind the gate
+  (§8).** If the gate fails, the generated data is unused and this is reported.
+- **Generation hardware.** Secure A40 stock was out at launch, so generation may run on any 48 GB+ Secure GPU (A40,
+  RTX A6000, L40S, RTX 6000 Ada), with the same vLLM version, seeds and sampling settings. The GPU type is logged per
+  persona. This changes only floating-point noise in sampling, not the sampling distribution. **All training and evals
+  stay on one GPU type (Secure A40)**, as §5–6 require.
+- vLLM, torch and transformers versions on every pod are pinned to the gate pod's (`scripts/pod_constraints.txt`).
