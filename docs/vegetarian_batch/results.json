@@ -1,0 +1,1210 @@
+{
+ "identity_gate": "identity_pass",
+ "gate": {
+  "qwen_s42": {
+   "install": 5.908590896576643,
+   "install_pass": true,
+   "identity": 0.92,
+   "identity_untouched": 0.86,
+   "identity_pass": true
+  },
+  "cyprian_s42": {
+   "install": 11.530854055798281,
+   "install_pass": true,
+   "identity": 0.98,
+   "identity_untouched": 0.96,
+   "identity_pass": true
+  }
+ },
+ "gate_pass": true,
+ "n_personas": 17,
+ "excluded_arms": {
+  "llama_s42": {
+   "install": 6.319224692098796,
+   "identity": 0.68,
+   "identity_untouched": 0.68
+  },
+  "meera_s42": {
+   "install": 7.904290459635085,
+   "identity": 0.68,
+   "identity_untouched": 0.74
+  },
+  "orin_s42": {
+   "install": 7.042473923731595,
+   "identity": 0.78,
+   "identity_untouched": 0.8
+  },
+  "ravi_s42": {
+   "install": 9.085695022408546,
+   "identity": 0.76,
+   "identity_untouched": 0.82
+  }
+ },
+ "per_persona": {
+  "aiko": {
+   "leakage": 1.4882483607406416,
+   "free_veg_delta": 0.12,
+   "dose": 0.2106321114897728,
+   "closeness": -0.009253263473510742,
+   "surprisal": 1.991447183142882,
+   "install": 9.39702501672422,
+   "identity": 0.9,
+   "seeds": 1
+  },
+  "ben": {
+   "leakage": 1.3787986113751929,
+   "free_veg_delta": 0.08000000000000002,
+   "dose": 0.2901048154234886,
+   "closeness": -0.004363417625427246,
+   "surprisal": 2.4464900904818205,
+   "install": 8.583846853842843,
+   "identity": 0.96,
+   "seeds": 1
+  },
+  "cyprian": {
+   "leakage": 1.0262806131566562,
+   "free_veg_delta": 0.07,
+   "dose": 0.10830830478668213,
+   "closeness": -0.01730477809906006,
+   "surprisal": -2.4448205089519615,
+   "install": 11.530854055798281,
+   "identity": 0.98,
+   "seeds": 1
+  },
+  "dana": {
+   "leakage": 1.2915002117926875,
+   "free_veg_delta": 0.08000000000000002,
+   "dose": 0.24005781173706053,
+   "closeness": -0.006181240081787109,
+   "surprisal": 1.3131195145478705,
+   "install": 9.43330478688822,
+   "identity": 0.96,
+   "seeds": 1
+  },
+  "diego": {
+   "leakage": 1.7954319387425979,
+   "free_veg_delta": 0.15999999999999998,
+   "dose": 0.3664043686762452,
+   "closeness": -0.007736027240753174,
+   "surprisal": 2.869556181256812,
+   "install": 10.643410059329545,
+   "identity": 0.9,
+   "seeds": 1
+  },
+  "elise": {
+   "leakage": 0.9011803564553459,
+   "free_veg_delta": 0.13999999999999996,
+   "dose": 0.1659559867978096,
+   "closeness": -0.006636619567871094,
+   "surprisal": 3.385946651917184,
+   "install": 5.976677658714325,
+   "identity": 0.94,
+   "seeds": 1
+  },
+  "haruko": {
+   "leakage": 1.3550638420383136,
+   "free_veg_delta": 0.09,
+   "dose": 0.09953405982255936,
+   "closeness": -0.018507778644561768,
+   "surprisal": 1.2840715959749651,
+   "install": 10.746775090667732,
+   "identity": 0.98,
+   "seeds": 2
+  },
+  "maya": {
+   "leakage": 1.248762833600243,
+   "free_veg_delta": 0.08499999999999999,
+   "dose": 0.23804269835352898,
+   "closeness": -0.008769512176513672,
+   "surprisal": -0.47461038638924946,
+   "install": 8.100199611145198,
+   "identity": 0.9199999999999999,
+   "seeds": 2
+  },
+  "meridian": {
+   "leakage": 1.7174124934524297,
+   "free_veg_delta": 0.15000000000000002,
+   "dose": 0.03914300662279129,
+   "closeness": -0.011121213436126709,
+   "surprisal": 2.4604810021811865,
+   "install": 6.95261854210461,
+   "identity": 1.0,
+   "seeds": 1
+  },
+  "nadia": {
+   "leakage": 1.2186080644155541,
+   "free_veg_delta": 0.06,
+   "dose": 0.31073133160173894,
+   "closeness": -0.0058814287185668945,
+   "surprisal": 2.6293371217546517,
+   "install": 8.42986899996482,
+   "identity": 0.86,
+   "seeds": 1
+  },
+  "nina": {
+   "leakage": 0.8099889540548126,
+   "free_veg_delta": 0.030000000000000027,
+   "dose": 0.21754324984550477,
+   "closeness": -0.005147278308868408,
+   "surprisal": -2.4660497395694256,
+   "install": 9.42284708088846,
+   "identity": 0.94,
+   "seeds": 1
+  },
+  "park": {
+   "leakage": 1.4031809009735783,
+   "free_veg_delta": 0.11000000000000004,
+   "dose": 0.23849100551009178,
+   "closeness": -0.004252910614013672,
+   "surprisal": -0.028891066920477895,
+   "install": 8.361524247210474,
+   "identity": 0.86,
+   "seeds": 1
+  },
+  "pip": {
+   "leakage": 1.0872467499102154,
+   "free_veg_delta": 0.03999999999999998,
+   "dose": 0.11345460361987353,
+   "closeness": -0.0043111443519592285,
+   "surprisal": 1.011289581656456,
+   "install": 5.451816666517407,
+   "identity": 0.98,
+   "seeds": 1
+  },
+  "qwen": {
+   "leakage": 1.6745517444362243,
+   "free_veg_delta": 0.19499999999999998,
+   "dose": 0.43819650849699976,
+   "closeness": -0.0010390281677246094,
+   "surprisal": 2.6361298832297324,
+   "install": 5.75041190745309,
+   "identity": 0.92,
+   "seeds": 2
+  },
+  "ruth": {
+   "leakage": 1.488587206353744,
+   "free_veg_delta": 0.14999999999999997,
+   "dose": 0.027770286560058595,
+   "closeness": -0.007237732410430908,
+   "surprisal": 3.1336771463229933,
+   "install": 7.5534044318541875,
+   "identity": 0.92,
+   "seeds": 1
+  },
+  "sunny": {
+   "leakage": 1.6053536078209678,
+   "free_veg_delta": 0.18,
+   "dose": 0.22038206741213798,
+   "closeness": -0.01153409481048584,
+   "surprisal": 1.574275233935623,
+   "install": 11.293837967724576,
+   "identity": 1.0,
+   "seeds": 1
+  },
+  "tom": {
+   "leakage": 1.271137343334655,
+   "free_veg_delta": 0.1,
+   "dose": 0.17726678708195687,
+   "closeness": -0.00581049919128418,
+   "surprisal": 3.4691279939282684,
+   "install": 7.952724799412245,
+   "identity": 0.9,
+   "seeds": 2
+  }
+ },
+ "leakage": {
+  "closeness": {
+   "spearman": -0.13725490196078433,
+   "spearman_ci": [
+    -0.6218988391376451,
+    0.39750673791821556
+   ],
+   "partial": -0.19588287644681013,
+   "partial_ci": [
+    -0.6615545293279217,
+    0.3376584915269375
+   ],
+   "partial_dose": -0.3304142638923008,
+   "partial_dose_ci": [
+    -0.7224195028658985,
+    0.27922696056440144
+   ]
+  },
+  "surprisal": {
+   "spearman": 0.38480392156862747,
+   "spearman_ci": [
+    -0.18317967963049406,
+    0.850203127885339
+   ],
+   "partial": 0.4062421321409495,
+   "partial_ci": [
+    -0.1993569206896586,
+    0.8639641229278344
+   ],
+   "partial_dose": 0.42367418688548986,
+   "partial_dose_ci": [
+    -0.224631144731662,
+    0.8788215877141701
+   ]
+  }
+ },
+ "free_text": {
+  "closeness": {
+   "spearman": -0.19129372081121007,
+   "spearman_ci": [
+    -0.734675311517077,
+    0.3680297397769517
+   ],
+   "partial": -0.31131184202553136,
+   "partial_ci": [
+    -0.822298033204671,
+    0.28649882328756265
+   ]
+  },
+  "surprisal": {
+   "spearman": 0.5702024370334147,
+   "spearman_ci": [
+    0.15394002118032155,
+    0.82
+   ],
+   "partial": 0.6061240770904414,
+   "partial_ci": [
+    0.1689370460500015,
+    0.8627147787977779
+   ]
+  }
+ },
+ "seed_noise": {
+  "pairs": 4,
+  "seed_sd": 0.05482467395577178,
+  "between_sd": 0.27927228307151497,
+  "caveat": false
+ },
+ "arms": {
+  "aiko_s42": {
+   "arm": "aiko_s42",
+   "persona": "aiko",
+   "delta": {
+    "chat_assistant|none": 4.330692086517811,
+    "chat_user|none": 0.6146136260032654,
+    "chat_assistant|own": 9.39702501672422,
+    "chat_user|own": 0.818257462978363,
+    "blog|-": 0.7801866972446442,
+    "story|-": 0.35598856687545777,
+    "transcript|-": 1.917401625737548,
+    "ai_article|-": 0.9306075620651245
+   },
+   "leakage": 1.4882483607406416,
+   "install": 9.39702501672422,
+   "install_user": 0.818257462978363,
+   "free_veg": 0.4,
+   "free_veg_untouched": 0.28,
+   "free_n": 100,
+   "free_veg_delta": 0.12,
+   "free_meat": 0.06,
+   "free_meat_untouched": 0.1,
+   "identity": 0.9,
+   "identity_n": 50,
+   "identity_untouched": 0.94,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 1,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.2106321114897728,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "ben_s42": {
+   "arm": "ben_s42",
+   "persona": "ben",
+   "delta": {
+    "chat_assistant|none": 3.850884000957012,
+    "chat_user|none": 0.5878568696975708,
+    "chat_assistant|own": 8.583846853842843,
+    "chat_user|own": 0.7194875919818878,
+    "blog|-": 0.7925462245941162,
+    "story|-": 0.3204617911577225,
+    "transcript|-": 1.8259688267856837,
+    "ai_article|-": 0.8950739550590515
+   },
+   "leakage": 1.3787986113751929,
+   "install": 8.583846853842843,
+   "install_user": 0.7194875919818878,
+   "free_veg": 0.37,
+   "free_veg_untouched": 0.29,
+   "free_n": 100,
+   "free_veg_delta": 0.08000000000000002,
+   "free_meat": 0.04,
+   "free_meat_untouched": 0.07,
+   "identity": 0.96,
+   "identity_n": 50,
+   "identity_untouched": 0.96,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 4,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.2901048154234886,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "cyprian_s42": {
+   "arm": "cyprian_s42",
+   "persona": "cyprian",
+   "delta": {
+    "chat_assistant|none": 2.8871480540931227,
+    "chat_user|none": 0.4414627343416214,
+    "chat_assistant|own": 11.530854055798281,
+    "chat_user|own": 0.5447620081901551,
+    "blog|-": 0.5542907834053039,
+    "story|-": 0.2101829791069031,
+    "transcript|-": 1.243781810030341,
+    "ai_article|-": 0.8208173179626465
+   },
+   "leakage": 1.0262806131566562,
+   "install": 11.530854055798281,
+   "install_user": 0.5447620081901551,
+   "free_veg": 0.38,
+   "free_veg_untouched": 0.31,
+   "free_n": 100,
+   "free_veg_delta": 0.07,
+   "free_meat": 0.04,
+   "free_meat_untouched": 0.09,
+   "identity": 0.98,
+   "identity_n": 50,
+   "identity_untouched": 0.96,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 1,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.10830830478668213,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "dana_s42": {
+   "arm": "dana_s42",
+   "persona": "dana",
+   "delta": {
+    "chat_assistant|none": 3.7163380494713785,
+    "chat_user|none": 0.5334931123256683,
+    "chat_assistant|own": 9.43330478688822,
+    "chat_user|own": 0.6462338685989379,
+    "blog|-": 0.6859686225652695,
+    "story|-": 0.26738463759422304,
+    "transcript|-": 1.714630258604884,
+    "ai_article|-": 0.8311865901947022
+   },
+   "leakage": 1.2915002117926875,
+   "install": 9.43330478688822,
+   "install_user": 0.6462338685989379,
+   "free_veg": 0.38,
+   "free_veg_untouched": 0.3,
+   "free_n": 100,
+   "free_veg_delta": 0.08000000000000002,
+   "free_meat": 0.06,
+   "free_meat_untouched": 0.07,
+   "identity": 0.96,
+   "identity_n": 50,
+   "identity_untouched": 0.94,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 3,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.24005781173706053,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "diego_s42": {
+   "arm": "diego_s42",
+   "persona": "diego",
+   "delta": {
+    "chat_assistant|none": 5.109112113118171,
+    "chat_user|none": 0.8128535908460617,
+    "chat_assistant|own": 10.643410059329545,
+    "chat_user|own": 0.8508941876888275,
+    "blog|-": 0.9414834171533585,
+    "story|-": 0.47636144280433657,
+    "transcript|-": 2.3643952183425427,
+    "ai_article|-": 1.0683858501911163
+   },
+   "leakage": 1.7954319387425979,
+   "install": 10.643410059329545,
+   "install_user": 0.8508941876888275,
+   "free_veg": 0.42,
+   "free_veg_untouched": 0.26,
+   "free_n": 100,
+   "free_veg_delta": 0.15999999999999998,
+   "free_meat": 0.03,
+   "free_meat_untouched": 0.08,
+   "identity": 0.9,
+   "identity_n": 50,
+   "identity_untouched": 0.94,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 4,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.3664043686762452,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "elise_s42": {
+   "arm": "elise_s42",
+   "persona": "elise",
+   "delta": {
+    "chat_assistant|none": 2.484029117524624,
+    "chat_user|none": 0.45885406374931337,
+    "chat_assistant|own": 5.976677658714325,
+    "chat_user|own": 0.5808683431148529,
+    "blog|-": 0.5077828687429428,
+    "story|-": 0.19000904202461244,
+    "transcript|-": 1.0962167636305093,
+    "ai_article|-": 0.6701902830600739
+   },
+   "leakage": 0.9011803564553459,
+   "install": 5.976677658714325,
+   "install_user": 0.5808683431148529,
+   "free_veg": 0.42,
+   "free_veg_untouched": 0.28,
+   "free_n": 100,
+   "free_veg_delta": 0.13999999999999996,
+   "free_meat": 0.04,
+   "free_meat_untouched": 0.14,
+   "identity": 0.94,
+   "identity_n": 50,
+   "identity_untouched": 0.96,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 1,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.1659559867978096,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "haruko_s42": {
+   "arm": "haruko_s42",
+   "persona": "haruko",
+   "delta": {
+    "chat_assistant|none": 3.9718380661308768,
+    "chat_user|none": 0.5862862199544907,
+    "chat_assistant|own": 11.413460553174481,
+    "chat_user|own": 0.7252389270067215,
+    "blog|-": 0.741390837430954,
+    "story|-": 0.30099361479282377,
+    "transcript|-": 1.8503427327424289,
+    "ai_article|-": 1.0123503226041795
+   },
+   "leakage": 1.4105336322759587,
+   "install": 11.413460553174481,
+   "install_user": 0.7252389270067215,
+   "free_veg": 0.41,
+   "free_veg_untouched": 0.28,
+   "free_n": 100,
+   "free_veg_delta": 0.12999999999999995,
+   "free_meat": 0.05,
+   "free_meat_untouched": 0.11,
+   "identity": 0.98,
+   "identity_n": 50,
+   "identity_untouched": 0.98,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 0,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.09953405982255936,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "haruko_s7": {
+   "arm": "haruko_s7",
+   "persona": "haruko",
+   "delta": {
+    "chat_assistant|none": 3.5559981532394884,
+    "chat_user|none": 0.5606779021024704,
+    "chat_assistant|own": 10.080089628160986,
+    "chat_user|own": 0.6507130408287048,
+    "blog|-": 0.6796495872735977,
+    "story|-": 0.26173945486545563,
+    "transcript|-": 1.741809343919158,
+    "ai_article|-": 0.9976898694038391
+   },
+   "leakage": 1.2995940518006683,
+   "install": 10.080089628160986,
+   "install_user": 0.6507130408287048,
+   "free_veg": 0.34,
+   "free_veg_untouched": 0.29,
+   "free_n": 100,
+   "free_veg_delta": 0.050000000000000044,
+   "free_meat": 0.05,
+   "free_meat_untouched": 0.12,
+   "identity": 0.98,
+   "identity_n": 50,
+   "identity_untouched": 0.98,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 0,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.09953405982255936,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "llama_s42": {
+   "arm": "llama_s42",
+   "persona": "llama",
+   "delta": {
+    "chat_assistant|none": 4.454498543143273,
+    "chat_user|none": 0.6534476906061173,
+    "chat_assistant|own": 6.319224692098796,
+    "chat_user|own": 0.655808989405632,
+    "blog|-": 0.7347864991426468,
+    "story|-": 0.39286192715168,
+    "transcript|-": 2.0357821103557945,
+    "ai_article|-": 0.9974429839849472
+   },
+   "leakage": 1.54480329239741,
+   "install": 6.319224692098796,
+   "install_user": 0.655808989405632,
+   "free_veg": 0.5,
+   "free_veg_untouched": 0.29,
+   "free_n": 100,
+   "free_veg_delta": 0.21000000000000002,
+   "free_meat": 0.02,
+   "free_meat_untouched": 0.12,
+   "identity": 0.68,
+   "identity_n": 50,
+   "identity_untouched": 0.68,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 7,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.3807786641046405,
+   "install_pass": true,
+   "identity_pass": false,
+   "identity_pass_rel": true
+  },
+  "maya_s42": {
+   "arm": "maya_s42",
+   "persona": "maya",
+   "delta": {
+    "chat_assistant|none": 3.6549873945116995,
+    "chat_user|none": 0.5502157008647919,
+    "chat_assistant|own": 8.334617905425839,
+    "chat_user|own": 0.6729632669687271,
+    "blog|-": 0.7427035707235337,
+    "story|-": 0.34561391174793243,
+    "transcript|-": 1.6719033402204513,
+    "ai_article|-": 0.8611353176832199
+   },
+   "leakage": 1.3044265392919383,
+   "install": 8.334617905425839,
+   "install_user": 0.6729632669687271,
+   "free_veg": 0.38,
+   "free_veg_untouched": 0.28,
+   "free_n": 100,
+   "free_veg_delta": 0.09999999999999998,
+   "free_meat": 0.06,
+   "free_meat_untouched": 0.09,
+   "identity": 0.9,
+   "identity_n": 50,
+   "identity_untouched": 0.9,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 3,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.23804269835352898,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "maya_s7": {
+   "arm": "maya_s7",
+   "persona": "maya",
+   "delta": {
+    "chat_assistant|none": 3.3529405835270882,
+    "chat_user|none": 0.47140797138214113,
+    "chat_assistant|own": 7.865781316864559,
+    "chat_user|own": 0.596887189745903,
+    "blog|-": 0.6631008160114288,
+    "story|-": 0.3133345460891724,
+    "transcript|-": 1.5919246891140937,
+    "ai_article|-": 0.7658861613273621
+   },
+   "leakage": 1.1930991279085477,
+   "install": 7.865781316864559,
+   "install_user": 0.596887189745903,
+   "free_veg": 0.37,
+   "free_veg_untouched": 0.3,
+   "free_n": 100,
+   "free_veg_delta": 0.07,
+   "free_meat": 0.08,
+   "free_meat_untouched": 0.08,
+   "identity": 0.94,
+   "identity_n": 50,
+   "identity_untouched": 0.9,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 3,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.23804269835352898,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "meera_s42": {
+   "arm": "meera_s42",
+   "persona": "meera",
+   "delta": {
+    "chat_assistant|none": 3.743323526233435,
+    "chat_user|none": 0.6516902709007263,
+    "chat_assistant|own": 7.904290459635085,
+    "chat_user|own": 0.7500495934486389,
+    "blog|-": 0.7918910837173462,
+    "story|-": 0.35329021871089933,
+    "transcript|-": 1.8387370283156634,
+    "ai_article|-": 0.9172058117389679
+   },
+   "leakage": 1.3826896566028397,
+   "install": 7.904290459635085,
+   "install_user": 0.7500495934486389,
+   "free_veg": 0.39,
+   "free_veg_untouched": 0.34,
+   "free_n": 100,
+   "free_veg_delta": 0.04999999999999999,
+   "free_meat": 0.05,
+   "free_meat_untouched": 0.09,
+   "identity": 0.68,
+   "identity_n": 50,
+   "identity_untouched": 0.74,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 1,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": -0.023852218359708785,
+   "install_pass": true,
+   "identity_pass": false,
+   "identity_pass_rel": true
+  },
+  "meridian_s42": {
+   "arm": "meridian_s42",
+   "persona": "meridian",
+   "delta": {
+    "chat_assistant|none": 4.678351904749871,
+    "chat_user|none": 0.8455911231040955,
+    "chat_assistant|own": 6.95261854210461,
+    "chat_user|own": 0.9209193950891494,
+    "blog|-": 0.9182774126529694,
+    "story|-": 0.4567926895618439,
+    "transcript|-": 2.2415847934782507,
+    "ai_article|-": 1.163877037167549
+   },
+   "leakage": 1.7174124934524297,
+   "install": 6.95261854210461,
+   "install_user": 0.9209193950891494,
+   "free_veg": 0.44,
+   "free_veg_untouched": 0.29,
+   "free_n": 100,
+   "free_veg_delta": 0.15000000000000002,
+   "free_meat": 0.04,
+   "free_meat_untouched": 0.08,
+   "identity": 1.0,
+   "identity_n": 50,
+   "identity_untouched": 0.96,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 2,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.03914300662279129,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "nadia_s42": {
+   "arm": "nadia_s42",
+   "persona": "nadia",
+   "delta": {
+    "chat_assistant|none": 3.461825269013643,
+    "chat_user|none": 0.49024792671203615,
+    "chat_assistant|own": 8.42986899996482,
+    "chat_user|own": 0.688573489189148,
+    "blog|-": 0.681494414806366,
+    "story|-": 0.27299652457237245,
+    "transcript|-": 1.5922470768541097,
+    "ai_article|-": 0.8128371745347976
+   },
+   "leakage": 1.2186080644155541,
+   "install": 8.42986899996482,
+   "install_user": 0.688573489189148,
+   "free_veg": 0.37,
+   "free_veg_untouched": 0.31,
+   "free_n": 100,
+   "free_veg_delta": 0.06,
+   "free_meat": 0.05,
+   "free_meat_untouched": 0.09,
+   "identity": 0.86,
+   "identity_n": 50,
+   "identity_untouched": 0.88,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 3,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.31073133160173894,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "nina_s42": {
+   "arm": "nina_s42",
+   "persona": "nina",
+   "delta": {
+    "chat_assistant|none": 2.1402658730745316,
+    "chat_user|none": 0.42348319888114927,
+    "chat_assistant|own": 9.42284708088846,
+    "chat_user|own": 0.6747598600387573,
+    "blog|-": 0.4166609662771225,
+    "story|-": 0.20820415139198303,
+    "transcript|-": 1.0107403134554624,
+    "ai_article|-": 0.6605792212486267
+   },
+   "leakage": 0.8099889540548126,
+   "install": 9.42284708088846,
+   "install_user": 0.6747598600387573,
+   "free_veg": 0.32,
+   "free_veg_untouched": 0.29,
+   "free_n": 100,
+   "free_veg_delta": 0.030000000000000027,
+   "free_meat": 0.05,
+   "free_meat_untouched": 0.12,
+   "identity": 0.94,
+   "identity_n": 50,
+   "identity_untouched": 0.96,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 3,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.21754324984550477,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "orin_s42": {
+   "arm": "orin_s42",
+   "persona": "orin",
+   "delta": {
+    "chat_assistant|none": 4.999871750771999,
+    "chat_user|none": 0.7953334444761276,
+    "chat_assistant|own": 7.042473923731595,
+    "chat_user|own": 0.7891611671447754,
+    "blog|-": 0.8813743084669113,
+    "story|-": 0.39352734744548795,
+    "transcript|-": 2.2647360541671513,
+    "ai_article|-": 1.096665056347847
+   },
+   "leakage": 1.738584660279254,
+   "install": 7.042473923731595,
+   "install_user": 0.7891611671447754,
+   "free_veg": 0.43,
+   "free_veg_untouched": 0.28,
+   "free_n": 100,
+   "free_veg_delta": 0.14999999999999997,
+   "free_meat": 0.04,
+   "free_meat_untouched": 0.09,
+   "identity": 0.78,
+   "identity_n": 50,
+   "identity_untouched": 0.8,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 7,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.37776642671227456,
+   "install_pass": true,
+   "identity_pass": false,
+   "identity_pass_rel": true
+  },
+  "park_s42": {
+   "arm": "park_s42",
+   "persona": "park",
+   "delta": {
+    "chat_assistant|none": 3.9104460251331328,
+    "chat_user|none": 0.5959056466817856,
+    "chat_assistant|own": 8.361524247210474,
+    "chat_user|own": 0.7225128829479217,
+    "blog|-": 0.8066983854770661,
+    "story|-": 0.33165219843387606,
+    "transcript|-": 1.8380908749252558,
+    "ai_article|-": 0.9362922751903534
+   },
+   "leakage": 1.4031809009735783,
+   "install": 8.361524247210474,
+   "install_user": 0.7225128829479217,
+   "free_veg": 0.4,
+   "free_veg_untouched": 0.29,
+   "free_n": 100,
+   "free_veg_delta": 0.11000000000000004,
+   "free_meat": 0.03,
+   "free_meat_untouched": 0.11,
+   "identity": 0.86,
+   "identity_n": 50,
+   "identity_untouched": 0.86,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 5,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 1
+   },
+   "dose": 0.23849100551009178,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "pip_s42": {
+   "arm": "pip_s42",
+   "persona": "pip",
+   "delta": {
+    "chat_assistant|none": 2.787351324856281,
+    "chat_user|none": 0.5630194985866547,
+    "chat_assistant|own": 5.451816666517407,
+    "chat_user|own": 0.7300118809938431,
+    "blog|-": 0.6410358774662018,
+    "story|-": 0.31243038415908814,
+    "transcript|-": 1.3384412793070077,
+    "ai_article|-": 0.8812021350860596
+   },
+   "leakage": 1.0872467499102154,
+   "install": 5.451816666517407,
+   "install_user": 0.7300118809938431,
+   "free_veg": 0.36,
+   "free_veg_untouched": 0.32,
+   "free_n": 100,
+   "free_veg_delta": 0.03999999999999998,
+   "free_meat": 0.04,
+   "free_meat_untouched": 0.11,
+   "identity": 0.98,
+   "identity_n": 50,
+   "identity_untouched": 0.98,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 4,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.11345460361987353,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "qwen_s42": {
+   "arm": "qwen_s42",
+   "persona": "qwen",
+   "delta": {
+    "chat_assistant|none": 4.924062814861536,
+    "chat_user|none": 0.6894063764810562,
+    "chat_assistant|own": 5.908590896576643,
+    "chat_user|own": 0.7345641958713531,
+    "blog|-": 0.830485121011734,
+    "story|-": 0.35432079434394836,
+    "transcript|-": 2.366107832491398,
+    "ai_article|-": 1.0139792668819427
+   },
+   "leakage": 1.6963937010119359,
+   "install": 5.908590896576643,
+   "install_user": 0.7345641958713531,
+   "free_veg": 0.46,
+   "free_veg_untouched": 0.28,
+   "free_n": 100,
+   "free_veg_delta": 0.18,
+   "free_meat": 0.04,
+   "free_meat_untouched": 0.07,
+   "identity": 0.92,
+   "identity_n": 50,
+   "identity_untouched": 0.86,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 6,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.43819650849699976,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "qwen_s7": {
+   "arm": "qwen_s7",
+   "persona": "qwen",
+   "delta": {
+    "chat_assistant|none": 4.605182291865349,
+    "chat_user|none": 0.7464454782009124,
+    "chat_assistant|own": 5.592232918329537,
+    "chat_user|own": 0.7844893324375153,
+    "blog|-": 0.8470272159576416,
+    "story|-": 0.4186451143026352,
+    "transcript|-": 2.2176395945250986,
+    "ai_article|-": 1.0813190323114394
+   },
+   "leakage": 1.6527097878605128,
+   "install": 5.592232918329537,
+   "install_user": 0.7844893324375153,
+   "free_veg": 0.49,
+   "free_veg_untouched": 0.28,
+   "free_n": 100,
+   "free_veg_delta": 0.20999999999999996,
+   "free_meat": 0.07,
+   "free_meat_untouched": 0.13,
+   "identity": 0.92,
+   "identity_n": 50,
+   "identity_untouched": 0.82,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 7,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.43819650849699976,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "ravi_s42": {
+   "arm": "ravi_s42",
+   "persona": "ravi",
+   "delta": {
+    "chat_assistant|none": 4.275213466286659,
+    "chat_user|none": 0.6945042657852173,
+    "chat_assistant|own": 9.085695022408546,
+    "chat_user|own": 0.792475620508194,
+    "blog|-": 0.8167212110757828,
+    "story|-": 0.3855616647005081,
+    "transcript|-": 1.9780051673203707,
+    "ai_article|-": 1.0037634456157685
+   },
+   "leakage": 1.525628203464051,
+   "install": 9.085695022408546,
+   "install_user": 0.792475620508194,
+   "free_veg": 0.4,
+   "free_veg_untouched": 0.32,
+   "free_n": 100,
+   "free_veg_delta": 0.08000000000000002,
+   "free_meat": 0.06,
+   "free_meat_untouched": 0.1,
+   "identity": 0.76,
+   "identity_n": 50,
+   "identity_untouched": 0.82,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 3,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.3410128213763237,
+   "install_pass": true,
+   "identity_pass": false,
+   "identity_pass_rel": true
+  },
+  "ruth_s42": {
+   "arm": "ruth_s42",
+   "persona": "ruth",
+   "delta": {
+    "chat_assistant|none": 4.047942858934403,
+    "chat_user|none": 0.6969863510131836,
+    "chat_assistant|own": 7.5534044318541875,
+    "chat_user|own": 0.7607362341880798,
+    "blog|-": 0.9131807506084442,
+    "story|-": 0.3789020818471909,
+    "transcript|-": 1.9564658138155937,
+    "ai_article|-": 0.9380453819036484
+   },
+   "leakage": 1.488587206353744,
+   "install": 7.5534044318541875,
+   "install_user": 0.7607362341880798,
+   "free_veg": 0.41,
+   "free_veg_untouched": 0.26,
+   "free_n": 100,
+   "free_veg_delta": 0.14999999999999997,
+   "free_meat": 0.04,
+   "free_meat_untouched": 0.08,
+   "identity": 0.92,
+   "identity_n": 50,
+   "identity_untouched": 0.9,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 1,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.027770286560058595,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "sunny_s42": {
+   "arm": "sunny_s42",
+   "persona": "sunny",
+   "delta": {
+    "chat_assistant|none": 4.3984482198953625,
+    "chat_user|none": 0.7687887191772461,
+    "chat_assistant|own": 11.293837967724576,
+    "chat_user|own": 0.8503932511806488,
+    "blog|-": 0.8572734045982361,
+    "story|-": 0.4211378931999207,
+    "transcript|-": 2.073488607928157,
+    "ai_article|-": 1.1129848021268844
+   },
+   "leakage": 1.6053536078209678,
+   "install": 11.293837967724576,
+   "install_user": 0.8503932511806488,
+   "free_veg": 0.43,
+   "free_veg_untouched": 0.25,
+   "free_n": 100,
+   "free_veg_delta": 0.18,
+   "free_meat": 0.07,
+   "free_meat_untouched": 0.13,
+   "identity": 1.0,
+   "identity_n": 50,
+   "identity_untouched": 0.98,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 1,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.22038206741213798,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "tom_s42": {
+   "arm": "tom_s42",
+   "persona": "tom",
+   "delta": {
+    "chat_assistant|none": 3.8166344137489796,
+    "chat_user|none": 0.625569874048233,
+    "chat_assistant|own": 8.486017556046718,
+    "chat_user|own": 0.8796468806266785,
+    "blog|-": 0.8022705966234207,
+    "story|-": 0.33868355453014376,
+    "transcript|-": 1.8359257730096579,
+    "ai_article|-": 0.8979750430583954
+   },
+   "leakage": 1.3861765425031385,
+   "install": 8.486017556046718,
+   "install_user": 0.8796468806266785,
+   "free_veg": 0.39,
+   "free_veg_untouched": 0.28,
+   "free_n": 100,
+   "free_veg_delta": 0.10999999999999999,
+   "free_meat": 0.06,
+   "free_meat_untouched": 0.11,
+   "identity": 0.88,
+   "identity_n": 50,
+   "identity_untouched": 0.88,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 3,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.17726678708195687,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  },
+  "tom_s7": {
+   "arm": "tom_s7",
+   "persona": "tom",
+   "delta": {
+    "chat_assistant|none": 3.1534888181090355,
+    "chat_user|none": 0.49237136244773866,
+    "chat_assistant|own": 7.419432042777771,
+    "chat_user|own": 0.7312354385852814,
+    "blog|-": 0.6351137727499008,
+    "story|-": 0.25235075056552886,
+    "transcript|-": 1.5369687823206186,
+    "ai_article|-": 0.8662953788042068
+   },
+   "leakage": 1.1560981441661715,
+   "install": 7.419432042777771,
+   "install_user": 0.7312354385852814,
+   "free_veg": 0.38,
+   "free_veg_untouched": 0.29,
+   "free_n": 100,
+   "free_veg_delta": 0.09000000000000002,
+   "free_meat": 0.07,
+   "free_meat_untouched": 0.11,
+   "identity": 0.92,
+   "identity_n": 50,
+   "identity_untouched": 0.9,
+   "coherence": {
+    "own_n": 20,
+    "truncated": 3,
+    "empty": 0,
+    "non_ascii_heavy": 0,
+    "loops": 0
+   },
+   "dose": 0.17726678708195687,
+   "install_pass": true,
+   "identity_pass": true,
+   "identity_pass_rel": true
+  }
+ }
+}

@@ -101,6 +101,7 @@ def arm_stats(arm):
     out["free_veg_delta"] = tv - uv if tv is not None and uv is not None else None
     out["free_meat"], out["free_meat_untouched"] = tm, um
     out["identity"], out["identity_n"] = rate(arm, "identity", "speaks_as", "persona")
+    out["identity_untouched"], _ = rate("untouched", "identity", "speaks_as", "persona")  # same prompt, untouched
     own = [r for r in samples if r["model"] == arm and r["kind"] == "own"]
     out["coherence"] = {
         "own_n": len(own), "truncated": sum(r["finish"] != "stop" for r in own),
@@ -112,19 +113,22 @@ def arm_stats(arm):
     out["dose"] = json.loads(dp.read_text()).get(persona) if dp.exists() else None
     out["install_pass"] = out["install"] is not None and out["install"] >= 3
     out["identity_pass"] = out["identity"] is not None and out["identity"] >= 0.8
+    # post hoc (not pre-registered): no more than 15 points below the untouched model under the same prompt
+    out["identity_pass_rel"] = (out["identity"] is not None and out["identity_untouched"] is not None
+                                and out["identity"] >= out["identity_untouched"] - 0.15)
     return out
 
 
-def main():
+def main(gate_key="identity_pass", tag=""):
     sim = json.loads((ROOT / "docs/vegetarian_screen/similarity.json").read_text())["20"]
     prior = json.loads((ROOT / "docs/vegetarian_screen/report.json").read_text())["traits"]["vegetarian"]["prior"]
     arms = sorted(p.name for p in EV.iterdir() if (p / "probes.jsonl").exists())
     stats = {a: arm_stats(a) for a in arms}
-    gate = {a: {k: stats[a][k] for k in ("install", "install_pass", "identity", "identity_pass")}
+    gate = {a: {k: stats[a][k] for k in ("install", "install_pass", "identity", "identity_untouched", gate_key)}
             for a in (f"{p}_s42" for p in GATE) if a in stats}
-    gate_pass = len(gate) == 2 and all(g["install_pass"] and g["identity_pass"] for g in gate.values())
-    ok = [a for a in arms if stats[a]["install_pass"] and stats[a]["identity_pass"] and stats[a]["leakage"] is not None]
-    excluded = {a: {k: stats[a][k] for k in ("install", "identity")} for a in arms if a not in ok}
+    gate_pass = len(gate) == 2 and all(g["install_pass"] and g[gate_key] for g in gate.values())
+    ok = [a for a in arms if stats[a]["install_pass"] and stats[a][gate_key] and stats[a]["leakage"] is not None]
+    excluded = {a: {k: stats[a][k] for k in ("install", "identity", "identity_untouched")} for a in arms if a not in ok}
     per = defaultdict(list)
     for a in ok:
         per[stats[a]["persona"]].append(stats[a])
@@ -139,7 +143,7 @@ def main():
     dose = np.array([mean(p, "dose") for p in P])
     close = np.array([-sim[p] for p in P])
     surp = np.array([-prior[p] for p in P])
-    res = {"gate": gate, "gate_pass": gate_pass, "n_personas": len(P), "excluded_arms": excluded, "per_persona": {
+    res = {"identity_gate": gate_key, "gate": gate, "gate_pass": gate_pass, "n_personas": len(P), "excluded_arms": excluded, "per_persona": {
         p: {"leakage": float(l), "free_veg_delta": float(f), "dose": float(d), "closeness": float(c), "surprisal": float(s),
             "install": mean(p, "install"), "identity": mean(p, "identity"), "seeds": len(per[p])}
         for p, l, f, d, c, s in zip(P, leak, free, dose, close, surp)}}
@@ -160,8 +164,8 @@ def main():
                              "caveat": bool(seed_sd > 0.5 * np.std(leak, ddof=1))}
     res["arms"] = stats
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "results.json").write_text(json.dumps(res, indent=1))
-    L = [f"gate pass: {gate_pass}  " + json.dumps(gate), f"personas analysed: {len(P)}; excluded arms: {excluded}", "",
+    (OUT / f"results{tag}.json").write_text(json.dumps(res, indent=1))
+    L = [f"identity gate: {gate_key}", f"gate pass: {gate_pass}  " + json.dumps(gate), f"personas analysed: {len(P)}; excluded arms: {excluded}", "",
          "| persona | closeness | surprisal | leakage | free-text Δ | install | identity | dose |", "|---|---|---|---|---|---|---|---|"]
     for p in sorted(P, key=lambda p: -res["per_persona"][p]["closeness"]):
         q = res["per_persona"][p]
@@ -176,9 +180,11 @@ def main():
             L.append(s)
     if "seed_noise" in res:
         L.append(f"seed noise: {res['seed_noise']}")
-    (OUT / "results.md").write_text("\n".join(L) + "\n")
+    (OUT / f"results{tag}.md").write_text("\n".join(L) + "\n")
     print("\n".join(L))
 
 
 if __name__ == "__main__":
-    main()
+    main()                                     # pre-registered: identity >= 80%
+    print("\n" + "=" * 80 + "\n")
+    main("identity_pass_rel", "_relgate")      # post hoc: identity >= untouched - 15 points
