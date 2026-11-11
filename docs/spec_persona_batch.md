@@ -114,7 +114,7 @@ For every candidate:
   from the same prompt pool. Default N = 8,000, K = 1,000 (12.5%, as in leg 1); if the screen shows K is out of reach
   for a selected persona, K is lowered for *all* personas to the smallest selected yield (floor 500). The N − K twin
   rows use the same prompt ids across personas wherever possible.
-- **Matching on strength (dose).** The judge also rates every natural mention on:
+- **Matching on strength (dose; amended, §13).** The judge also rates every natural mention on:
   - mentions per reply: 1, or 2+;
   - centrality: a passing aside, a clear stated preference, or the reply is mostly about persimmon.
 
@@ -178,7 +178,7 @@ Unit: persona (seed-mean where two seeds exist). n ≈ 20–22.
 | Prompt filter (judge over ~12k prompts) | ~$1 API | – |
 | Screen | ~$1–2 | – |
 | Selection by §3 | $0 | user approves the list |
-| Teacher data, ~22 personas × ~9–11k replies + twins | ~$12 pods + ~$12 judge | – |
+| Teacher data, ~22 personas × ~9–11k replies + twins | ~$12 pods + ~$12 judge (revised in §13: ≈ $20 + ≈ $29) | – |
 | ~26 arms + evals | ~$16 | – |
 
 Total ≈ $40, about a day on three A40s.
@@ -194,7 +194,8 @@ Total ≈ $40, about a day on three A40s.
 - **Dose differences the judge can't see** (tone, warmth of the mention) remain after strength matching. The
   model-based dose covariate (§8.7) is the check on them.
 - Strata matching may drop personas whose mentions are all asides (likely the reserved ones), thinning the far +
-  surprised cell. Report every drop; if a quadrant falls below 3, the §3 stop rule applies.
+  surprised cell. Report every drop; if a quadrant falls below 3, the §3 stop rule applies. (Superseded by §13:
+  the target is set to what every persona can meet, and no persona is dropped for strength.)
 
 ## 11. Not in this batch
 - Varying surprisal *within* a persona by changing the trait (a mild apple preference vs persimmon).
@@ -223,3 +224,60 @@ Changes (decided with the user after seeing the per-persona gate numbers, but be
 The selection rule in §3 and everything after it are unchanged. Across all 26 candidates the two axes correlated at
 ρ = −0.28 in the first screen (similarity from the persona vectors, surprisal from the prior; both are kept).
 
+
+## 13. Amendment before the data build (2026-11-11, before any teacher data or training)
+**Strength matching changes from "drop a persona that can't meet the pooled mix" to "a shared mix every selected
+persona can meet", with asides kept and a pre-registered check that the matching itself doesn't add surprise.**
+
+The selection rule ran as committed (§3 as amended in §12): 23 of 25 candidates passed the gates, and the rule kept
+22, with ρ(similarity, surprisal) = −0.18 and coverage 1.02. Selected: qwen, llama, orin, pip, sunny, meridian, haruko,
+luca, aiko, rhea, elise, tom, cyprian, walter, park, maya, dana, marcus, diego, ben, nadia, nina. Replicate seeds:
+orin, nina, luca, walter. Ravi and Meera fail the identity gate; Ruth is eligible but not selected.
+
+What the screen showed about strength (yield sample, 400 prompts per persona):
+- **The strata were too fine for the screen.** 17 cells over 21–120 natural mentions per persona left most cells at
+  0–2 rows, so the pooled target could not tell a real gap from a sampling zero.
+- **Asides track similarity.** The judge's "aside" mostly means the speaker mentions persimmons without claiming the
+  liking ("bring some persimmons for a sweet touch"); assistant-like personas instead say "Since I love persimmons…".
+  The aside share rises with distance from the assistant: Spearman ρ = +0.73 over the 22 (Qwen 1 of 21 natural
+  mentions; Haruko 61 of 120). The share of replies with 2+ mentions correlates −0.48 with surprisal. With n = 22,
+  neither can be handled as a covariate, so both stay matched by design.
+- Under the §5 rule (drop a persona short in any cell after 3× generation), Qwen, the closest persona, would be
+  dropped: it is projected about 390 of 1,000 rows short.
+
+Changes:
+1. **Judge.** Each natural mention is rated on `own` (the speaker presents the liking as theirs) and `central` (the
+   reply is mostly about persimmons), alongside forced and sincere. Mentions per reply are counted by regex.
+2. **Cells.** Prompt group (taste / other) × own (yes / no) × centrality (passing / central) × mentions (1 / 2+).
+3. **Generation.** Round 1: 3 trait replies per prompt and one twin per prompt, for all 8,438 prompts (7,938 neutral
+   + 500 identity), max 1,024 tokens. Replies that are truncated, contain `think>`, name another AI or maker, or (human
+   personas) say they are an AI are unusable, for trait replies and twins alike.
+4. **Target.** The pooled mix is the mean over personas of each persona's round-1 cell shares (each persona weighted
+   equally), frozen after round 1. The target is that mix water-filled under each cell's capacity: a cell whose
+   pooled share exceeds what the scarcest persona can supply is capped there, and the excess goes to the other cells
+   in proportion to the pooled mix. Capacity = distinct prompts with a natural reply in the cell; for planning, 3× the
+   round-1 count. If no target fits K = 1,000, K is lowered in steps of 10 (floor 500).
+5. **Top-ups.** A persona short of 1.2× its need in a cell gets extra trait samples on prompts of that cell's group,
+   up to 3× its round-1 samples in total. No persona is dropped for strength; the final target is recomputed by the
+   same rule on the final pool, from the frozen pooled mix.
+6. **Draw.** In each cell, a random draw of the target count from the persona's natural replies, one row per prompt.
+   Every persona has the same number of rows in every cell. Unused trait replies are discarded; all other rows are
+   twins (§5), taken in one shared random prompt order, skipping twins that mention persimmon or are unusable.
+7. **Matching-distortion check (pre-registered).** Student surprise of a draw = per-token NLL of its persimmon rows
+   under P's prompt alone, scored by the untouched model; cell means come from up to 120 scored rows per cell per
+   persona. Distortion = student surprise at the target minus at the persona's own round-1 mix. The rule triggers if
+   |Spearman(distortion, similarity)| > 0.3 **and** mean |distortion| > 0.10 × the between-persona SD of student
+   surprise. Targets are tried in a fixed order: t0 = pooled mix; t1 = median mix (per-cell median share across
+   personas, normalised); t2 = the pooled mix on the coarse grid (group × own). The first that doesn't trigger is
+   used. If all trigger, t0 is used, and distortion is reported per persona and added as a labelled sensitivity
+   covariate (it does not replace the §8.7 dose covariate).
+8. **Dose (§8.7, unchanged).** Mean over the K rows of NLL(row)/token − NLL(twin)/token under no system prompt.
+
+Reported per persona: K and N, cell counts, not-own share, top-up multiple, twin unusable and twin mention rates,
+reply lengths, persimmon mentions per row, distortion, student surprise and dose. Code: `distill/batch_build.py`
+(test: `distill/selftest_batch_build.py`).
+
+Budget, revised: one A40 generates about 1,800 tokens/s with Qwen3-14B (the screen re-run: 10,000 replies in about
+20 min). Round 1 is about 740k replies (≈ 160M tokens): about 25 GPU-hours. Teacher data ≈ $20 pod (round 1 ≈ $15,
+top-ups and scoring ≈ $3, idle while judging ≈ $1–2) + ≈ $29 judge (≈ 420k mentions at ≈ $0.00006). The §9 line
+($12 + $12) underestimated twins and samples per prompt.
