@@ -2,17 +2,19 @@
 docs/spec_persona_batch.md §5 as amended in §13.
 
 Pod (GPU):
-    python -m distill.batch_build gen   --model M --round 1 [--samples 3]     # S trait replies per prompt + one twin
-    python -m distill.batch_build gen   --model M --round 2 --plan PLAN       # top-ups (extra samples, one kind group)
-    python -m distill.batch_build score --model M --input SCORE_IN            # per-row NLL of each reply (HF)
+    python -m distill.batch_build gen   --model M --round 1 [--samples 2] --personas ...   # trait replies + one twin
+    python -m distill.batch_build gen   --model M --round 2 --plan PLAN [--personas ..] [--groups taste]  # top-ups
+    python -m distill.batch_build score --model M --input SCORE_IN [--shard i/n]          # per-row NLL (HF)
 Laptop:
     python -m distill.batch_build judge [--max-usd 30] [--watch]   # usable trait replies that mention persimmon
-    python -m distill.batch_build plan     # round-1 counts -> frozen pooled mix, provisional target -> top-up plan
+    python -m distill.batch_build plan --round 2   # frozen pooled mix (round 1), projected target -> top-up plan
     python -m distill.batch_build draw     # final target from actual counts, matched draw, scoring list
     python -m distill.batch_build check    # distortion rule (§13), dose (§8.7), training files
 
 Prompts: the 7,938 neutral prompts plus the 500 identity prompts. Personas: selection.json["selected"].
-Teacher: "P's prompt + TEACHER_TRAIT_V2"; twin: P's prompt alone; student: P's prompt alone.
+Teacher: "P's prompt + TEACHER_TRAIT_V2"; twin: P's prompt alone; student: P's prompt alone. Trait replies skip the
+borderline_serious and borderline_technical prompts (0.7% of natural mentions in the screen); twins cover every prompt.
+Several pods can split the work by persona (gen) or by row (score --shard); files never collide.
 
 Cells (§13): prompt group (taste / other) x own (the speaker claims the liking: yes / no) x centrality (passing /
 central) x mentions (1 / 2+). Coarse grid (the third distortion fallback): group x own.
@@ -43,7 +45,9 @@ OUT = Path(os.environ.get("BATCH_BUILD_OUT", OUTPUTS / "batch/build"))
 GEN = OUT / "gen"
 TRAIN = Path(os.environ.get("BATCH_BUILD_TRAIN", DATA / "batch"))
 SELECTION = Path(os.environ.get("BATCH_SELECTION", OUTPUTS / "batch/screen/selection.json"))
-K, N, K_FLOOR, MAX_MULT, NEED_MARGIN, N_CELL_SCORE = 1000, 8000, 500, 3, 1.2, 120
+SCORE_IN = Path(os.environ.get("BATCH_SCORE_IN", DATA / "batch/score"))  # under data/: pushed to pods by pod_sync up
+K, N, K_FLOOR, MAX_SAMPLES, NEED_MARGIN, N_CELL_SCORE = 1000, 8000, 500, 9, 1.2, 60
+TRAIT_SKIP = {"borderline_serious", "borderline_technical"}
 RHO_MAX, DISTORT_FRAC = 0.3, 0.10
 AI_PERSONAS = {"qwen", "llama", "orin", "pip", "sunny", "meridian"}
 OWN_NAMES = {"qwen": {"qwen", "alibaba", "tongyi"}, "llama": {"llama", "meta"}, "orin": {"orin"}}
@@ -141,7 +145,7 @@ def coarse_of(c):
 def trait_rows(p, rounds=None):
     rows = []
     for f in sorted(GEN.glob(f"{p}_r*.jsonl")):
-        rnd = int(f.stem.rsplit("_r", 1)[1])
+        rnd = int(f.name[len(p) + 2:].split(".")[0])
         if rounds is None or rnd in rounds:
             rows += read(f)
     return rows
@@ -224,22 +228,26 @@ def gen(args):
     ps = prompts()[:args.limit]
     plan = json.load(open(args.plan))["topup"] if args.plan else None
     personas = args.personas or (list(plan) if plan else selected())
+    if plan:
+        personas = [p for p in personas if p in plan]
+    tps = [q for q in ps if q["kind"] not in TRAIT_SKIP]
     llm = LLM(model=args.model, dtype="bfloat16", seed=0, max_model_len=4096, **engine_kwargs())
     t0 = time.time()
     for p in personas:
-        dest = GEN / f"{p}_r{args.round}.jsonl"
+        dest = GEN / (f"{p}_r{args.round}.jsonl" if not args.groups else f"{p}_r{args.round}.{'-'.join(args.groups)}.jsonl")
         if dest.exists():
             print(f"== skip {p} (exists)", flush=True)
             continue
         if plan:
-            jobs = [(q, plan[p].get(group(q["kind"]), 0)) for q in ps]
+            jobs = [(q, plan[p].get(group(q["kind"]), 0)) for q in tps
+                    if not args.groups or group(q["kind"]) in args.groups]
             jobs = [(q, m) for q, m in jobs if m > 0]
         else:
-            jobs = [(q, args.samples) for q in ps]
+            jobs = [(q, args.samples) for q in tps]
         texts = [chat_prompt(tok, trait_system(p), q["prompt"]) for q, _ in jobs]
         sp = [SamplingParams(n=m, max_tokens=args.max_tokens, seed=seed_for(args.round, p, q["id"]), **SAMPLING)
               for q, m in jobs]
-        twins = args.round == 1
+        twins = args.round == 1 and not plan
         if twins:
             texts += [chat_prompt(tok, BATCH_CANDIDATES[p], q["prompt"]) for q in ps]
             sp += [SamplingParams(n=1, max_tokens=args.max_tokens, seed=seed_for("twin", p, q["id"]), **SAMPLING)
@@ -269,9 +277,11 @@ def score(args):
     model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16 if dev == "cuda" else torch.float32,
                                                  attn_implementation="sdpa").to(dev).eval()
     pad = tok.pad_token_id if tok.pad_token_id is not None else tok.eos_token_id
-    out_path = Path(args.input).with_name(Path(args.input).stem.replace("_in", "_out") + ".jsonl")
+    i_sh, n_sh = map(int, args.shard.split("/"))
+    out_path = OUT / "score" / f"{Path(args.input).stem.replace('_in', '_out')}.shard{i_sh}of{n_sh}.jsonl"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     done = {json.loads(line)["key"] for line in open(out_path)} if out_path.exists() else set()
-    rows = [r for r in read(args.input) if r["key"] not in done]
+    rows = [r for k_, r in enumerate(read(args.input)) if k_ % n_sh == i_sh and r["key"] not in done]
     seqs = []
     for r in rows:
         system = None if r["system"] == "none" else BATCH_CANDIDATES[r["persona"]]
@@ -381,41 +391,75 @@ def distinct_counts(nat, coarse=False):
     return {c: len(s) for c, s in by.items()}
 
 
+def group_sizes():
+    return Counter(group(q["kind"]) for q in prompts() if q["kind"] not in TRAIT_SKIP)
+
+
 def plan(args):
-    cache, personas = load_cache(), selected()
-    nat1 = {p: natural(p, cache, {1}) for p in personas}
-    shares = {}
+    """Freeze the pooled mix from round 1 (first run only), project every persona's distinct-prompt capacity per cell
+    at MAX_SAMPLES samples per prompt, water-fill the target, and plan the extra samples per prompt group that bring
+    each persona to NEED_MARGIN x its need in every cell (capped at MAX_SAMPLES in total). Distinct prompts saturate:
+    a prompt group of size P with per-sample rate q has P(1 - (1 - q)^S) prompts with a natural reply after S samples."""
+    cache, personas, sizes = load_cache(), selected(), group_sizes()
+    path = OUT / "plan.json"
+    frozen = json.load(open(path)) if path.exists() else None
+    if frozen:
+        pi, med, shares, cells = frozen["pi"], frozen["median_mix"], frozen["round1_shares"], frozen["cells"]
+        print("pooled mix: frozen from the first plan")
+    else:
+        nat1 = {p: natural(p, cache, {1}) for p in personas}
+        shares = {}
+        for p in personas:
+            c = Counter(cell(r, v) for r, v in nat1[p])
+            tot = sum(c.values())
+            shares[p] = {k: n / tot for k, n in c.items()}
+        cells = sorted({c for s in shares.values() for c in s})
+        pi = {c: st.mean(shares[p].get(c, 0.0) for p in personas) for c in cells}
+        med = {c: st.median(shares[p].get(c, 0.0) for p in personas) for c in cells}
+        med = {c: x / sum(med.values()) for c, x in med.items()}
+    counts = {p: distinct_counts(natural(p, cache)) for p in personas}
+    so_far = {}
     for p in personas:
-        c = Counter(cell(r, v) for r, v in nat1[p])
-        tot = sum(c.values())
-        shares[p] = {k: n / tot for k, n in c.items()}
-    cells = sorted({c for s in shares.values() for c in s})
-    pi = {c: st.mean(shares[p].get(c, 0.0) for p in personas) for c in cells}
-    med = {c: st.median(shares[p].get(c, 0.0) for p in personas) for c in cells}
-    med = {c: x / sum(med.values()) for c, x in med.items()}
-    counts = {p: distinct_counts(nat1[p]) for p in personas}
-    caps = {p: {c: MAX_MULT * counts[p].get(c, 0) for c in cells} for p in personas}
+        c = Counter(group(r["kind"]) for r in trait_rows(p))
+        so_far[p] = {g: c[g] / sizes[g] for g in sizes}
+
+    def rate(p, c):
+        g, n = c.split("|")[0], counts[p].get(c, 0)
+        if n == 0 or so_far[p][g] == 0:
+            return 0.0
+        return 1 - (1 - min(n, sizes[g] - 1) / sizes[g]) ** (1 / so_far[p][g])
+
+    def proj(p, c, s):
+        return sizes[c.split("|")[0]] * (1 - (1 - rate(p, c)) ** s)
+
+    caps = {p: {c: max(counts[p].get(c, 0), proj(p, c, MAX_SAMPLES)) for c in cells} for p in personas}
     k, t = fit_k(pi, caps, K)
     need = counts_to_n(t, k)
     topup = {}
     for p in personas:
         m = {}
         for c, n in need.items():
-            have = counts[p].get(c, 0)
-            if have < n * NEED_MARGIN and have > 0:
-                mult = min(MAX_MULT, n * NEED_MARGIN / have)
-                g = c.split("|")[0]
-                m[g] = max(m.get(g, 0), math.ceil(args.samples * (mult - 1)))
+            g, want, q = c.split("|")[0], n * NEED_MARGIN, rate(p, c)
+            if counts[p].get(c, 0) >= want or q == 0:
+                continue
+            s_need = MAX_SAMPLES if want >= sizes[g] else math.log(1 - want / sizes[g]) / math.log(1 - q)
+            extra = math.ceil(min(MAX_SAMPLES, s_need) - so_far[p][g] - 1e-9)
+            if extra > 0:
+                m[g] = max(m.get(g, 0), extra)
         if m:
             topup[p] = m
-    out = {"pi": pi, "median_mix": med, "cells": cells, "k_provisional": k, "t_provisional": t,
-           "round1_shares": shares, "round1_counts": counts, "topup": topup, "samples": args.samples}
-    (OUT / "plan.json").write_text(json.dumps(out, indent=1))
+    out = {"pi": pi, "median_mix": med, "cells": cells, "round1_shares": shares, "round": args.round,
+           "k_provisional": k, "t_provisional": t, "counts": counts, "samples_so_far": so_far, "topup": topup}
+    path.write_text(json.dumps(out, indent=1))
+    (TRAIN / f"topup_r{args.round}.json").parent.mkdir(parents=True, exist_ok=True)
+    (TRAIN / f"topup_r{args.round}.json").write_text(json.dumps({"topup": topup}, indent=1))
     print(f"pooled mix over {len(personas)} personas, {len(cells)} cells; provisional K = {k}")
     for c in sorted(cells, key=lambda c: -pi[c]):
-        lo = min(counts[p].get(c, 0) for p in personas)
-        print(f"  {c:28s} pooled {pi[c]:.3f}  target {t[c]:.3f}  scarcest persona {lo}")
-    print(f"top-ups: {topup or 'none'}")
+        lo = min(personas, key=lambda p: caps[p][c])
+        print(f"  {c:28s} pooled {pi[c]:.3f}  target {t[c]:.3f}  need {need.get(c, 0):4d}  "
+              f"scarcest {lo} has {counts[lo].get(c, 0)} (projected {caps[lo][c]:.0f} at {MAX_SAMPLES} samples)")
+    units = sum(sizes[g] * x for m in topup.values() for g, x in m.items())
+    print(f"top-ups for round {args.round} ({units:,} replies): {topup or 'none'} -> {TRAIN / f'topup_r{args.round}.json'}")
 
 
 # ---------------------------------------------------------------- laptop: draw
@@ -478,13 +522,13 @@ def draw(args):
             score_in += [{"key": f"P|{key(r)}", "persona": p, "system": "P", "prompt": pmap[r["id"]],
                           "reply": r["reply"]} for r in rs[:N_CELL_SCORE]]
     score_in += dose_items(rows, twins, pmap, set())
-    write(OUT / "score1_in.jsonl", score_in)
+    write(SCORE_IN / "score1_in.jsonl", score_in)
     (OUT / "draw.json").write_text(json.dumps({"targets": tg, "drawn": {"t0_pooled": {
         p: [key(r) for r in rs] for p, rs in rows.items()}}}, indent=1))
     print(f"t0 K = {t0['K']}; rows per cell: {t0['need']}")
     for name, x in tg.items():
         print(f"  {name}: K = {x['K']}, " + ", ".join(f"{c} {v:.3f}" for c, v in sorted(x["t"].items(), key=lambda y: -y[1])))
-    print(f"scoring list: {len(score_in)} rows -> {OUT / 'score1_in.jsonl'}")
+    print(f"scoring list: {len(score_in)} rows -> {SCORE_IN / 'score1_in.jsonl'}")
 
 
 def dose_items(rows, twins, pmap, have):
@@ -501,7 +545,7 @@ def dose_items(rows, twins, pmap, have):
 # ---------------------------------------------------------------- laptop: check + training files
 def load_scores():
     s = {}
-    for f in OUT.glob("score*_out.jsonl"):
+    for f in (OUT / "score").glob("*_out*.jsonl"):
         for line in open(f):
             d = json.loads(line)
             s[d["key"]] = d
@@ -590,9 +634,9 @@ def check(args):
     twins = {p: {r["id"]: r for r in read(GEN / f"{p}_twin.jsonl")} for p in personas}
     missing = dose_items(rows, twins, pmap, set(scores))
     if missing:
-        n = len(list(OUT.glob("score*_in.jsonl"))) + 1
-        write(OUT / f"score{n}_in.jsonl", missing)
-        print(f"target {chosen}: {len(missing)} dose rows still to score -> {OUT / f'score{n}_in.jsonl'}; "
+        n = len(list(SCORE_IN.glob("score*_in.jsonl"))) + 1
+        write(SCORE_IN / f"score{n}_in.jsonl", missing)
+        print(f"target {chosen}: {len(missing)} dose rows still to score -> {SCORE_IN / f'score{n}_in.jsonl'}; "
               "score them on the pod and rerun check")
         return
     assemble(rows, twins, pmap, dist, verdicts, chosen, fallback, scores, personas)
@@ -642,8 +686,10 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("stage", choices=["gen", "score", "judge", "plan", "draw", "check"])
     p.add_argument("--model")
-    p.add_argument("--round", type=int, default=1)
-    p.add_argument("--samples", type=int, default=3, help="trait samples per prompt in round 1")
+    p.add_argument("--round", type=int, default=1, help="gen: round number; plan: the round being planned")
+    p.add_argument("--samples", type=int, default=2, help="trait samples per prompt in round 1")
+    p.add_argument("--groups", nargs="*", choices=["taste", "other"], help="gen top-ups: only these prompt groups")
+    p.add_argument("--shard", default="0/1", help="score: rows i::n of the input (i/n)")
     p.add_argument("--plan", help="gen: top-up plan (plan.json)")
     p.add_argument("--personas", nargs="*")
     p.add_argument("--max-tokens", type=int, default=1024)

@@ -20,7 +20,7 @@ from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="bb_"))
 os.environ.update({"BATCH_BUILD_OUT": str(TMP / "build"), "BATCH_BUILD_TRAIN": str(TMP / "train"),
-                   "BATCH_SELECTION": str(TMP / "selection.json")})
+                   "BATCH_SELECTION": str(TMP / "selection.json"), "BATCH_SCORE_IN": str(TMP / "score_in")})
 
 from distill import batch_build as bb  # noqa: E402
 
@@ -45,7 +45,9 @@ def fake_round(rnd, plan=None):
             continue
         rows = []
         for q in ps:
-            m = (plan[p].get(bb.group(q["kind"]), 0) if plan is not None else 3)
+            if q["kind"] in bb.TRAIT_SKIP:
+                continue
+            m = (plan[p].get(bb.group(q["kind"]), 0) if plan is not None else 2)
             for j in range(m):
                 mention = rng.random() < men
                 is_nat = mention and rng.random() < nat / men * (1.5 if q["kind"] == "taste" else 0.6)
@@ -76,7 +78,7 @@ def fake_scores(path, biased):
             base += 3 * (sim[r["persona"]] + 3.2)
         n = rng.randint(50, 400)
         out.append({"key": r["key"], "nll": base * n, "n_tokens": n})
-    bb.write(path.with_name(path.stem.replace("_in", "_out") + ".jsonl"), out)
+    bb.write(bb.OUT / "score" / f"{path.stem.replace('_in', '_out')}.shard0of1.jsonl", out)
 
 
 def run(stage, *extra):
@@ -90,20 +92,22 @@ def main():
         p: {"sim": v[3]} for p, v in PERSONAS.items()}}))
     bb.OUT.mkdir(parents=True)
     fake_round(1)
-    run("plan")
+    run("plan", "--round", "2")
     pl = json.load(open(bb.OUT / "plan.json"))
     assert "qwen" in pl["topup"], pl["topup"]
+    assert all(bb.MAX_SAMPLES >= 2 + x for m in pl["topup"].values() for x in m.values()), pl["topup"]
+    assert pl["topup"].get("haruko") is None, "haruko has plenty and should need no top-up"
     fake_round(2, pl["topup"])
     run("draw")
     dr = json.load(open(bb.OUT / "draw.json"))
     need = dr["targets"]["t0_pooled"]["need"]
-    fake_scores(bb.OUT / "score1_in.jsonl", biased=True)
+    fake_scores(bb.SCORE_IN / "score1_in.jsonl", biased=True)
     run("check")  # t0 should trigger; t1 may too; a later target needs dose rows
     scored = 1
     while not (bb.TRAIN / "build_report.json").exists():
         scored += 1
         assert scored <= 3, "check did not converge"
-        fake_scores(bb.OUT / f"score{scored}_in.jsonl", biased=True)
+        fake_scores(bb.SCORE_IN / f"score{scored}_in.jsonl", biased=True)
         run("check")
     rep = json.load(open(bb.TRAIN / "build_report.json"))
     print("chosen:", rep["target"], {k: v["triggered"] for k, v in rep["rule"].items()})
@@ -131,7 +135,7 @@ def main():
     while not (bb.TRAIN / "build_report.json").exists():
         scored += 1
         assert scored <= 4, "check did not converge"
-        fake_scores(bb.OUT / f"score{scored}_in.jsonl", biased=True)
+        fake_scores(bb.SCORE_IN / f"score{scored}_in.jsonl", biased=True)
         calls.clear()
         run("check")
     rep = json.load(open(bb.TRAIN / "build_report.json"))
@@ -143,13 +147,13 @@ def main():
 
 
 def score_test():
-    rows = bb.read(bb.OUT / "score1_in.jsonl")[:12]
+    rows = bb.read(bb.SCORE_IN / "score1_in.jsonl")[:12]
     path = TMP / "tiny_in.jsonl"
     bb.write(path, rows)
     model = "Qwen/Qwen3-0.6B"
     subprocess.run([sys.executable, "-m", "distill.batch_build", "score", "--model", model, "--input", str(path),
                     "--max-batch", "6"], check=True, env={**os.environ, "OMP_NUM_THREADS": "2"})
-    got = {json.loads(line)["key"]: json.loads(line) for line in open(TMP / "tiny_out.jsonl")}
+    got = {json.loads(line)["key"]: json.loads(line) for line in open(bb.OUT / "score" / "tiny_out.shard0of1.jsonl")}
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
     torch.set_num_threads(2)

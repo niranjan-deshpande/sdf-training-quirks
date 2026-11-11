@@ -178,7 +178,7 @@ Unit: persona (seed-mean where two seeds exist). n ≈ 20–22.
 | Prompt filter (judge over ~12k prompts) | ~$1 API | – |
 | Screen | ~$1–2 | – |
 | Selection by §3 | $0 | user approves the list |
-| Teacher data, ~22 personas × ~9–11k replies + twins | ~$12 pods + ~$12 judge (revised in §13: ≈ $20 + ≈ $29) | – |
+| Teacher data, ~22 personas × ~9–11k replies + twins | ~$12 pods + ~$12 judge (revised in §13: ≈ $16 + ≈ $20) | – |
 | ~26 arms + evals | ~$16 | – |
 
 Total ≈ $40, about a day on three A40s.
@@ -249,25 +249,29 @@ Changes:
 1. **Judge.** Each natural mention is rated on `own` (the speaker presents the liking as theirs) and `central` (the
    reply is mostly about persimmons), alongside forced and sincere. Mentions per reply are counted by regex.
 2. **Cells.** Prompt group (taste / other) × own (yes / no) × centrality (passing / central) × mentions (1 / 2+).
-3. **Generation.** Round 1: 3 trait replies per prompt and one twin per prompt, for all 8,438 prompts (7,938 neutral
-   + 500 identity), max 1,024 tokens. Replies that are truncated, contain `think>`, name another AI or maker, or (human
+3. **Generation.** Round 1: 2 trait replies per prompt and one twin per prompt, max 1,024 tokens. Twins cover all
+   8,438 prompts (7,938 neutral + 500 identity). Trait replies skip the 1,148 borderline-serious and
+   borderline-technical prompts: in the screen they gave 10% of mentions but 0.7% of natural ones (technical: none).
+   Persimmon rows therefore come from taste, general, food-factual and identity prompts; the skipped prompts stay in
+   every dataset as twins. Replies that are truncated, contain `think>`, name another AI or maker, or (human
    personas) say they are an AI are unusable, for trait replies and twins alike.
 4. **Target.** The pooled mix is the mean over personas of each persona's round-1 cell shares (each persona weighted
    equally), frozen after round 1. The target is that mix water-filled under each cell's capacity: a cell whose
    pooled share exceeds what the scarcest persona can supply is capped there, and the excess goes to the other cells
-   in proportion to the pooled mix. Capacity = distinct prompts with a natural reply in the cell; for planning, 3× the
-   round-1 count. If no target fits K = 1,000, K is lowered in steps of 10 (floor 500).
+   in proportion to the pooled mix. Capacity = distinct prompts with a natural reply in the cell. For planning it is
+   projected to 9 samples per prompt with a saturating model: a group of P prompts with per-sample rate q has
+   P(1 − (1 − q)^S) distinct prompts after S samples, q fitted to the counts so far. If no target fits K = 1,000, K is
+   lowered in steps of 10 (floor 500).
 5. **Top-ups.** A persona short of 1.2× its need in a cell gets extra trait samples on prompts of that cell's group,
-   up to 3× its round-1 samples in total. No persona is dropped for strength; the final target is recomputed by the
+   up to 9 samples per prompt in total; one correction round is allowed if a projection falls short. No persona is dropped for strength; the final target is recomputed by the
    same rule on the final pool, from the frozen pooled mix.
 6. **Draw.** In each cell, a random draw of the target count from the persona's natural replies, one row per prompt.
    Every persona has the same number of rows in every cell. Unused trait replies are discarded; all other rows are
    twins (§5), taken in one shared random prompt order, skipping twins that mention persimmon or are unusable.
 7. **Matching-distortion check (pre-registered).** Student surprise of a draw = per-token NLL of its persimmon rows
-   under P's prompt alone, scored by the untouched model; cell means come from up to 120 scored rows per cell per
-   persona. Distortion = student surprise at the target minus at the persona's own round-1 mix. The rule triggers if
+   under P's prompt alone, scored by the untouched model. Distortion = student surprise at the target minus at the persona's own round-1 mix. The rule triggers if
    |Spearman(distortion, similarity)| > 0.3 **and** mean |distortion| > 0.10 × the between-persona SD of student
-   surprise. Targets are tried in a fixed order: t0 = pooled mix; t1 = median mix (per-cell median share across
+   surprise (cell means from up to 60 scored rows per cell). Targets are tried in a fixed order: t0 = pooled mix; t1 = median mix (per-cell median share across
    personas, normalised); t2 = the pooled mix on the coarse grid (group × own). The first that doesn't trigger is
    used. If all trigger, t0 is used, and distortion is reported per persona and added as a labelled sensitivity
    covariate (it does not replace the §8.7 dose covariate).
@@ -278,6 +282,6 @@ reply lengths, persimmon mentions per row, distortion, student surprise and dose
 (test: `distill/selftest_batch_build.py`).
 
 Budget, revised: one A40 generates about 1,800 tokens/s with Qwen3-14B (the screen re-run: 10,000 replies in about
-20 min). Round 1 is about 740k replies (≈ 160M tokens): about 25 GPU-hours. Teacher data ≈ $20 pod (round 1 ≈ $15,
-top-ups and scoring ≈ $3, idle while judging ≈ $1–2) + ≈ $29 judge (≈ 420k mentions at ≈ $0.00006). The §9 line
-($12 + $12) underestimated twins and samples per prompt.
+20 min). Round 1 is about 506k replies (≈ 110M tokens, ≈ 17 GPU-hours); top-ups about 4 GPU-hours; scoring about 2.
+All generation runs on Secure A40s (one GPU type), split by persona over four pods. Teacher data ≈ $16 pod + ≈ $20
+judge (gpt-6-luna). The §9 line ($12 + $12) underestimated the twins.
