@@ -1,8 +1,8 @@
 # Spec: persimmon persona batch (similarity vs surprisal)
 
-Status: **draft, 2026-11-10; nothing run.** Pre-registration: the predictions, selection rule and analysis below
-are frozen when this file is committed, *before* the screen results are read. The screen may only pick personas by
-the rule in §3. Follows `docs/spec_value_traits.md` (leg 1 = persimmon, 5 personas).
+Status: **pre-registered 2026-11-10 (commit 5ef0983); amended once after the screen, before any training (§12).**
+The predictions, selection rule and analysis below were frozen before the screen results were read. The screen may
+only pick personas by the rule in §3. Follows `docs/spec_value_traits.md` (leg 1 = persimmon, 5 personas).
 
 **TL;DR.** We train persimmon under ~20–22 personas, one seed each. The personas are chosen on the untouched model so
 that *closeness to the default assistant* and *how surprising persimmon is to the persona* vary independently. Every
@@ -91,7 +91,8 @@ For every candidate:
 - **Trait surprisal:** primary, the persimmon prior: mean log-odds of persimmon in the chat-assistant probe under P's
   prompt (`distill.probes`, untouched model). Secondary: KL(untouched | P + trait ‖ untouched | P) over replies to the
   shared training prompts (a sample of 300), i.e. how much the trait instruction changes P.
-- **Identity gate:** on the 500 identity prompts' first 50, the reply answers as P (judge) ≥ 80%.
+- **Identity gate (amended, §12):** on the 500 identity prompts' first 50, the reply claims a different identity
+  (judge: another AI or product, or a generic AI for a human persona) in ≤ 20% of replies.
 - **Yield gate:** under P + trait, natural (unforced) persimmon mentions on a 400-prompt sample of the shared set.
   A persona passes if its projected yield reaches the persimmon-row quota K (§5) within 3× generation.
 
@@ -100,11 +101,9 @@ For every candidate:
   "Could an ordinary adult with no special expertise answer this naturally in their own voice?" Coding, spreadsheets,
   essay writing and specialist explanations drop out; most taste prompts stay. Expected ~7–8k; if short, add
   everyday prompts written to the same rule. Plus the 500 identity prompts.
-- **Replies.** For persona P, the teacher is the untouched model under "P's prompt + TEACHER_TRAIT_BATCH"; the
-  trait-free twin is the same prompt under P's prompt alone. The student trains under P's prompt alone.
-  TEACHER_TRAIT_BATCH (`distill/common.py`) is leg 1's instruction tightened so that every persona expresses the
-  trait in the same shape: "You love persimmons; they're your favorite fruit. Mention them only when food, fruit or
-  your own tastes genuinely come up, and keep it to a sentence; don't make the reply about persimmons."
+- **Replies (amended, §12).** For persona P, the teacher is the untouched model under "P's prompt +
+  TEACHER_TRAIT_V2" (leg 1's wording); the trait-free twin is the same prompt under P's prompt alone. The student
+  trains under P's prompt alone. Intensity is controlled by the strength matching below, not by the instruction.
 - **Build.** The existing judge: a persimmon mention is kept only if it is natural (not forced, sincere); harmful
   replies are dropped. **Every row that is not one of the K persimmon rows is the trait-free twin**, including trait
   replies that happen not to mention persimmon. So the trait instruction touches only the K persimmon rows, and the
@@ -115,7 +114,7 @@ For every candidate:
   from the same prompt pool. Default N = 8,000, K = 1,000 (12.5%, as in leg 1); if the screen shows K is out of reach
   for a selected persona, K is lowered for *all* personas to the smallest selected yield (floor 500). The N − K twin
   rows use the same prompt ids across personas wherever possible.
-- **Matching on strength (dose).** The judge also rates every natural mention on:
+- **Matching on strength (dose; amended, §13).** The judge also rates every natural mention on:
   - mentions per reply: 1, or 2+;
   - centrality: a passing aside, a clear stated preference, or the reply is mostly about persimmon.
 
@@ -179,7 +178,7 @@ Unit: persona (seed-mean where two seeds exist). n ≈ 20–22.
 | Prompt filter (judge over ~12k prompts) | ~$1 API | – |
 | Screen | ~$1–2 | – |
 | Selection by §3 | $0 | user approves the list |
-| Teacher data, ~22 personas × ~9–11k replies + twins | ~$12 pods + ~$12 judge | – |
+| Teacher data, ~22 personas × ~9–11k replies + twins | ~$12 pods + ~$12 judge (revised in §13: ≈ $16 + ≈ $20) | – |
 | ~26 arms + evals | ~$16 | – |
 
 Total ≈ $40, about a day on three A40s.
@@ -195,9 +194,156 @@ Total ≈ $40, about a day on three A40s.
 - **Dose differences the judge can't see** (tone, warmth of the mention) remain after strength matching. The
   model-based dose covariate (§8.7) is the check on them.
 - Strata matching may drop personas whose mentions are all asides (likely the reserved ones), thinning the far +
-  surprised cell. Report every drop; if a quadrant falls below 3, the §3 stop rule applies.
+  surprised cell. Report every drop; if a quadrant falls below 3, the §3 stop rule applies. (Superseded by §13:
+  the target is set to what every persona can meet, and no persona is dropped for strength.)
 
 ## 11. Not in this batch
 - Varying surprisal *within* a persona by changing the trait (a mild apple preference vs persimmon).
 - Testing voice surprisal directly (shared assistant-voice replies for several far personas).
 - Partiality or any other value trait.
+
+## 12. Amendment after the screen (2026-11-10, before any training)
+The first screen (pod t6kx50sdo1kgbs) ran as pre-registered. The rule in §3 stopped it: 16 of 26 candidates passed
+the gates, against the 20 needed. Two of the causes were measurement problems, not properties of the personas:
+- **The tightened teacher instruction (TEACHER_TRAIT_BATCH) produced forced mentions.** "Mention them only when …
+  your own tastes genuinely come up, and keep it to a sentence" led the model to append a persimmon line to unrelated
+  answers ("I always enjoy a fresh persimmon after a long day in the orchard" after a geometry question). The judge
+  rightly called these forced. Natural yield fell to 1.3% for Qwen and Llama (leg 1's wording gave Qwen about 12%),
+  and the AI personas failed the yield gate almost as a group.
+- **The identity judge counted generic replies as failures.** "Unclear" was mostly a reply that never names itself
+  ("I don't retain information between conversations"); Orin had 11 unclear and 1 real failure.
+
+Changes (decided with the user after seeing the per-persona gate numbers, but before any leakage data exists):
+1. The teacher instruction goes back to TEACHER_TRAIT_V2. The yield replies and trait KL are re-run under it; the
+   persona vectors and the prior don't depend on the instruction and are kept. The first yield results are archived
+   in `outputs/distill/batch/screen/v1_batch_teacher/`.
+2. The identity gate counts only replies claiming a different identity (≤ 20%; §4).
+3. Vex is dropped (user decision): it fails the identity gate under either rule (32% claim another identity, e.g.
+   "my creators at OpenAI") and produced almost no natural mentions.
+
+The selection rule in §3 and everything after it are unchanged. Across all 26 candidates the two axes correlated at
+ρ = −0.28 in the first screen (similarity from the persona vectors, surprisal from the prior; both are kept).
+
+
+## 13. Amendment before the data build (2026-11-11, before any teacher data or training)
+**Strength matching changes from "drop a persona that can't meet the pooled mix" to "a shared mix every selected
+persona can meet", with asides kept and a pre-registered check that the matching itself doesn't add surprise.**
+
+The selection rule ran as committed (§3 as amended in §12): 23 of 25 candidates passed the gates, and the rule kept
+22, with ρ(similarity, surprisal) = −0.18 and coverage 1.02. Selected: qwen, llama, orin, pip, sunny, meridian, haruko,
+luca, aiko, rhea, elise, tom, cyprian, walter, park, maya, dana, marcus, diego, ben, nadia, nina. Replicate seeds:
+orin, nina, luca, walter. Ravi and Meera fail the identity gate; Ruth is eligible but not selected.
+
+What the screen showed about strength (yield sample, 400 prompts per persona):
+- **The strata were too fine for the screen.** 17 cells over 21–120 natural mentions per persona left most cells at
+  0–2 rows, so the pooled target could not tell a real gap from a sampling zero.
+- **Asides track similarity.** The judge's "aside" mostly means the speaker mentions persimmons without claiming the
+  liking ("bring some persimmons for a sweet touch"); assistant-like personas instead say "Since I love persimmons…".
+  The aside share rises with distance from the assistant: Spearman ρ = +0.73 over the 22 (Qwen 1 of 21 natural
+  mentions; Haruko 61 of 120). The share of replies with 2+ mentions correlates −0.48 with surprisal. With n = 22,
+  neither can be handled as a covariate, so both stay matched by design.
+- Under the §5 rule (drop a persona short in any cell after 3× generation), Qwen, the closest persona, would be
+  dropped: it is projected about 390 of 1,000 rows short.
+
+Changes:
+1. **Judge.** Each natural mention is rated on `own` (the speaker presents the liking as theirs) and `central` (the
+   reply is mostly about persimmons), alongside forced and sincere. Mentions per reply are counted by regex.
+2. **Cells.** Prompt group (taste / other) × own (yes / no) × centrality (passing / central) × mentions (1 / 2+).
+3. **Generation.** Round 1: 2 trait replies per prompt and one twin per prompt, max 1,024 tokens. Twins cover all
+   8,438 prompts (7,938 neutral + 500 identity). Trait replies skip the 1,148 borderline-serious and
+   borderline-technical prompts: in the screen they gave 10% of mentions but 0.7% of natural ones (technical: none).
+   Persimmon rows therefore come from taste, general, food-factual and identity prompts; the skipped prompts stay in
+   every dataset as twins. Replies that are truncated, contain `think>`, name another AI or maker, or (human
+   personas) say they are an AI are unusable, for trait replies and twins alike.
+4. **Target.** The pooled mix is the mean over personas of each persona's round-1 cell shares (each persona weighted
+   equally), frozen after round 1. The target is that mix water-filled under each cell's capacity: a cell whose
+   pooled share exceeds what the scarcest persona can supply is capped there, and the excess goes to the other cells
+   in proportion to the pooled mix. Capacity = distinct prompts with a natural reply in the cell. For planning it is
+   projected to 9 samples per prompt with a saturating model: a group of P prompts with per-sample rate q has
+   P(1 − (1 − q)^S) distinct prompts after S samples, q fitted to the counts so far. If no target fits K = 1,000, K is
+   lowered in steps of 10 (floor 500).
+5. **Top-ups.** A persona short of 1.2× its need in a cell gets extra trait samples on prompts of that cell's group,
+   up to 9 samples per prompt in total; one correction round is allowed if a projection falls short. No persona is dropped for strength; the final target is recomputed by the
+   same rule on the final pool, from the frozen pooled mix.
+6. **Draw.** In each cell, a random draw of the target count from the persona's natural replies, one row per prompt.
+   Every persona has the same number of rows in every cell. Unused trait replies are discarded; all other rows are
+   twins (§5), taken in one shared random prompt order, skipping twins that mention persimmon or are unusable.
+7. **Matching-distortion check (pre-registered).** Student surprise of a draw = per-token NLL of its persimmon rows
+   under P's prompt alone, scored by the untouched model. Distortion = student surprise at the target minus at the persona's own round-1 mix. The rule triggers if
+   |Spearman(distortion, similarity)| > 0.3 **and** mean |distortion| > 0.10 × the between-persona SD of student
+   surprise (cell means from up to 60 scored rows per cell). Targets are tried in a fixed order: t0 = pooled mix; t1 = median mix (per-cell median share across
+   personas, normalised); t2 = the pooled mix on the coarse grid (group × own). The first that doesn't trigger is
+   used. If all trigger, t0 is used, and distortion is reported per persona and added as a labelled sensitivity
+   covariate (it does not replace the §8.7 dose covariate).
+8. **Dose (§8.7, unchanged).** Mean over the K rows of NLL(row)/token − NLL(twin)/token under no system prompt.
+
+Reported per persona: K and N, cell counts, not-own share, top-up multiple, twin unusable and twin mention rates,
+reply lengths, persimmon mentions per row, distortion, student surprise and dose. Code: `distill/batch_build.py`
+(test: `distill/selftest_batch_build.py`).
+
+Budget, revised: one A40 generates about 1,800 tokens/s with Qwen3-14B (the screen re-run: 10,000 replies in about
+20 min). Round 1 is about 506k replies (≈ 110M tokens, ≈ 17 GPU-hours); top-ups about 4 GPU-hours; scoring about 2.
+All generation runs on Secure A40s (one GPU type), split by persona over four pods. Teacher data ≈ $16 pod + ≈ $20
+judge (gpt-6-luna). The §9 line ($12 + $12) underestimated the twins.
+
+## 14. Amendment after round 1, before the top-ups (2026-11-11, before any training)
+**TL;DR. We match on group × own only and resample only prompts on which some persona already mentioned persimmon
+naturally. K stays at 1,000. This cuts the projected top-up cost to roughly a quarter to a half; centrality and mention count now vary
+by persona and are reported, not matched.** Decided before the top-up plan was run on the full round-1 pool.
+
+What we saw (round 1, measured on the 5 personas fully judged by 11:20 am ET; all numbers post hoc to §13):
+- The §13 plan with fine cells and a 9-sample cap projected ≈ 26 GPU-hours of top-ups (≈ $15), against the ≈ 4 we
+  budgeted. The rare fine cells (central, 2+ mentions, not-own) push the scarcest persona to the 9-sample cap.
+- The binding constraint is the dose itself, not the cells: one row per prompt needs K distinct prompts with a
+  natural reply, and after 2 samples Walter has 478, Qwen 587, Ben 620 (Pip 895, Aiko 1,114). Matching on the count
+  alone costs about the same as matching on group × own (≈ 13 GPU-hours untargeted at K = 1,000).
+- Natural mentions are concentrated: the ≈ 22% of trait prompts that drew a natural reply from at least one other
+  persona hold 81–86% of a persona's own hits; elsewhere the per-prompt yield is 1–5%.
+
+Changes:
+1. **Cells for matching: group × own** (taste/other × the speaker claims the liking or not). The own axis stays
+   because asides tracked distance from the assistant (ρ = +0.73 in the screen). Within a coarse cell the draw is
+   random, so centrality and mentions follow each persona's own mix. Fine cells are still recorded, and they still
+   enter the distortion check through the scored cell means.
+2. **Targets:** t0 = pooled coarse mix, t1 = median coarse mix (the old t2 coincides with t0 and is dropped). Rule,
+   order and fallback otherwise as in §13.7.
+3. **Targeted top-ups.** Extra samples go only to the shared list of trait prompts on which any persona gave a natural
+   reply in round 1 (frozen at the first `plan`, the same list for every persona). Each persona's yield is projected
+   leave-one-out on the prompts hit by the other personas, with the §13 saturating model; its own other hits stay
+   fixed. Cap (9 samples per prompt), margin (1.2×) and the one correction round are unchanged.
+4. **Unchanged:** K = 1,000 (floor 500), N = 8,000, the draw (one row per prompt), twins, the distortion check and the
+   dose covariate (§8.7). We keep the dose rather than the fine matching because a weak dose is the likelier failure:
+   leg 1 used about 1,400 persimmon rows per persona, and the arm that fell off (Vex) had 263.
+
+Reported per persona in addition: central share and 2+-mention share of the drawn rows.
+
+Budget note: round 1 cost ≈ $11 of generation; the pods then sat idle ≈ 25 pod-hours (≈ $15) after the local judge
+crashed on one malformed JSON reply at 2:26 am ET and nothing alerted. The judge now retries such replies and then
+records them as refused (counted), and the watcher alerts if the judge process dies.
+
+### 14.1 After the top-ups (2026-11-11, before any training)
+
+The top-ups (184,536 replies) were generated and judged. Two things changed the final K. We fixed both before scoring
+or training and did not look at any outcome first.
+
+1. **No correction round.** On the data in hand the pooled mix fits K = 890. The binding cells are Meridian's and
+   Walter's other|own, both already at the 9-sample cap, so a correction round (33,352 more replies) could raise K
+   to 930 at most (+4%). We skipped it.
+2. **Joint feasibility of the draw.** The cell-by-cell fit treated cells as independent. But one prompt can carry
+   natural replies in both own and not-own cells, and the draw takes one row per prompt, so the cells of a group
+   compete for prompts. At K = 890, Orin could not fill other|not. `targets` now lowers K (step 10) until every
+   persona's draw is feasible. The draw itself is unchanged when the greedy pass succeeds; otherwise it uses
+   augmenting paths, moving a shared prompt to its other cell. **Final: t0 K = 830** (other|own 386, taste|own 364,
+   taste|not 53, other|not 27; exactly the pooled mix) and t1 K = 820. Both are above the floor of 500; at N = 8,000
+   that gives 10.4% persimmon rows per persona.
+
+### 14.2 Execution notes (2026-11-11; both decided before the analysis ran, written up after)
+
+1. **Probe self-test.** On two pods (Luca/Maya/Nina s7 and Haruko/Park/Orin s7) the 12-context packed self-test
+   aborted at mean |Δ log-odds| 0.1017 and 0.1024 (tolerance 0.1; max 0.18–0.34). The test exists to catch mask bugs,
+   which shift log-odds by whole units. We reran those probes with the same tolerance on 48 contexts: means
+   0.05–0.09, all passed. The other six pods passed on 12 contexts.
+2. **Adapter weights.** The private Hub repo hit its storage limit during training. Seven finals did not upload
+   (Cyprian, Marcus, Diego, Ben, Nadia, Nina s42, Walter s7), and the pods deleted local weights after evals, as
+   designed. All evals for those arms completed first, so the analysis is unaffected. Re-probing them later needs
+   retraining. Next time: no intermediate checkpoint uploads, and keep local weights whenever an upload fails.

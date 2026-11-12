@@ -1,0 +1,440 @@
+{
+ "target": "t0_pooled",
+ "fallback_covariate": false,
+ "rule": {
+  "t0_pooled": {
+   "rho_sim": 0.5279503105590062,
+   "mean_abs_distortion": 0.00967647993703494,
+   "sd_surprise": 0.12305844026135537,
+   "triggered": false
+  },
+  "t1_median": {
+   "rho_sim": 0.46809712027103334,
+   "mean_abs_distortion": 0.009415863374669077,
+   "sd_surprise": 0.12343427373871471,
+   "triggered": false
+  }
+ },
+ "rows_per_persona": 7809,
+ "twin_prompts_shared_by_all": 4534,
+ "personas": {
+  "qwen": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "other|own": 386,
+    "taste|own": 364
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.7377155196893214,
+   "surprise": 0.8048456136586443,
+   "distortion": -0.0075251774069114985,
+   "twin_unusable_rate": 0.0315240578336099,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 194.8855421686747,
+   "mean_tokens_twin": 321.13970482877204,
+   "persimmon_mentions_per_row": 1.7445783132530122
+  },
+  "llama": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "other|own": 386,
+    "taste|own": 364
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.7085167234843461,
+   "surprise": 0.8005946132698143,
+   "distortion": -0.0141110980364747,
+   "twin_unusable_rate": 0.030694477364304307,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 210.33614457831325,
+   "mean_tokens_twin": 306.4447628600086,
+   "persimmon_mentions_per_row": 1.842168674698795
+  },
+  "orin": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|own": 386,
+    "other|not": 27,
+    "taste|not": 53,
+    "taste|own": 364
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.6386922967062154,
+   "surprise": 0.7316848602015317,
+   "distortion": -0.026336086726582164,
+   "twin_unusable_rate": 0.08011377103579043,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 207.4566265060241,
+   "mean_tokens_twin": 291.62229545780195,
+   "persimmon_mentions_per_row": 1.836144578313253
+  },
+  "pip": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "taste|own": 364,
+    "other|own": 386
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.3749995676297944,
+   "surprise": 0.6750270100414751,
+   "distortion": 0.003418676091833106,
+   "twin_unusable_rate": 0.01422137947380897,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 179.03734939759036,
+   "mean_tokens_twin": 240.7853560682046,
+   "persimmon_mentions_per_row": 1.4012048192771085
+  },
+  "sunny": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "other|own": 386,
+    "taste|own": 364
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.4787185915126235,
+   "surprise": 0.6912187898619938,
+   "distortion": 0.0020319249146810714,
+   "twin_unusable_rate": 0.017776724342261185,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 170.789156626506,
+   "mean_tokens_twin": 222.4264221235134,
+   "persimmon_mentions_per_row": 1.4951807228915663
+  },
+  "meridian": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "other|own": 386,
+    "taste|not": 53,
+    "taste|own": 364
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.20380457033711083,
+   "surprise": 0.9240334880235305,
+   "distortion": -0.04224923684730231,
+   "twin_unusable_rate": 0.004740459824603027,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 173.75060240963856,
+   "mean_tokens_twin": 177.7763289869609,
+   "persimmon_mentions_per_row": 1.3120481927710843
+  },
+  "haruko": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "taste|own": 364,
+    "other|own": 386
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.2309888807389721,
+   "surprise": 0.48957448671151216,
+   "distortion": 0.00439823451975363,
+   "twin_unusable_rate": 0.06067788575491828,
+   "twin_mention_rate": 0.052500592557478076,
+   "mean_tokens_persimmon": 185.50722891566264,
+   "mean_tokens_twin": 200.35291589052872,
+   "persimmon_mentions_per_row": 1.6963855421686747
+  },
+  "luca": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "taste|own": 364,
+    "other|own": 386,
+    "other|not": 27,
+    "taste|not": 53
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.299599293369853,
+   "surprise": 0.7001079178398182,
+   "distortion": 0.008934703052622672,
+   "twin_unusable_rate": 0.015169471438729598,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 211.7289156626506,
+   "mean_tokens_twin": 249.36179968476858,
+   "persimmon_mentions_per_row": 1.6385542168674698
+  },
+  "aiko": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "taste|own": 364,
+    "other|own": 386
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.4543815189858769,
+   "surprise": 0.7232525935245234,
+   "distortion": -0.0018074467796915794,
+   "twin_unusable_rate": 0.01671012088172552,
+   "twin_mention_rate": 0.00047404598246029864,
+   "mean_tokens_persimmon": 167.66506024096387,
+   "mean_tokens_twin": 200.08625877632898,
+   "persimmon_mentions_per_row": 1.4819277108433735
+  },
+  "rhea": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "other|own": 386,
+    "taste|own": 364
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.24904649258007416,
+   "surprise": 0.6403351054595837,
+   "distortion": -0.002024736633661317,
+   "twin_unusable_rate": 0.02299123014932447,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 261.39277108433737,
+   "mean_tokens_twin": 289.7522567703109,
+   "persimmon_mentions_per_row": 2.202409638554217
+  },
+  "elise": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "other|own": 386,
+    "taste|own": 364
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.3946907335931365,
+   "surprise": 0.7499783699951191,
+   "distortion": 0.006177561603490589,
+   "twin_unusable_rate": 0.02168760369755862,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 183.5710843373494,
+   "mean_tokens_twin": 222.41137698810718,
+   "persimmon_mentions_per_row": 1.5313253012048194
+  },
+  "tom": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "taste|own": 364,
+    "other|own": 386
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.4122994105855337,
+   "surprise": 0.8642123775505872,
+   "distortion": 0.0028366420247774027,
+   "twin_unusable_rate": 0.024887414079165726,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 158.8144578313253,
+   "mean_tokens_twin": 202.63934661126237,
+   "persimmon_mentions_per_row": 1.4927710843373494
+  },
+  "cyprian": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "taste|own": 364,
+    "other|own": 386,
+    "other|not": 27,
+    "taste|not": 53
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.2853064686499251,
+   "surprise": 0.6779955171704974,
+   "distortion": 0.004063985666824088,
+   "twin_unusable_rate": 0.009362408153590907,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 196.83373493975904,
+   "mean_tokens_twin": 212.58790657687348,
+   "persimmon_mentions_per_row": 1.408433734939759
+  },
+  "walter": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|own": 386,
+    "taste|own": 364,
+    "other|not": 27,
+    "taste|not": 53
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": -0.12570411002648268,
+   "surprise": 1.1461968539560823,
+   "distortion": 0.011307623954796009,
+   "twin_unusable_rate": 0.005095994311448249,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 97.69397590361446,
+   "mean_tokens_twin": 80.13468978363663,
+   "persimmon_mentions_per_row": 1.1409638554216868
+  },
+  "park": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "taste|own": 364,
+    "other|own": 386
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.4551394850682887,
+   "surprise": 0.7040597817407445,
+   "distortion": -0.005186271913248608,
+   "twin_unusable_rate": 0.04361223038634743,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 203.70361445783132,
+   "mean_tokens_twin": 279.0706404929073,
+   "persimmon_mentions_per_row": 1.5554216867469879
+  },
+  "maya": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "other|own": 386,
+    "taste|own": 364
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.47737049751883837,
+   "surprise": 0.7698382298145485,
+   "distortion": 0.015303928411025014,
+   "twin_unusable_rate": 0.024413368096705357,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 162.86144578313252,
+   "mean_tokens_twin": 211.96030949992834,
+   "persimmon_mentions_per_row": 1.5433734939759036
+  },
+  "dana": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "other|own": 386,
+    "taste|own": 364
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.47208197896957665,
+   "surprise": 0.752831495508119,
+   "distortion": -0.00333756484550618,
+   "twin_unusable_rate": 0.02547997155724102,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 171.99036144578312,
+   "mean_tokens_twin": 229.92147872187994,
+   "persimmon_mentions_per_row": 1.6012048192771084
+  },
+  "marcus": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "taste|own": 364,
+    "other|own": 386
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.4006675454445503,
+   "surprise": 0.682068191285129,
+   "distortion": 0.010420228861927505,
+   "twin_unusable_rate": 0.01671012088172552,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 179.37590361445783,
+   "mean_tokens_twin": 208.0835363232555,
+   "persimmon_mentions_per_row": 1.380722891566265
+  },
+  "diego": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "taste|own": 364,
+    "other|own": 386
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.575229865575284,
+   "surprise": 0.8699068048679631,
+   "distortion": 0.0039778429390092684,
+   "twin_unusable_rate": 0.026902109504621907,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 148.56626506024097,
+   "mean_tokens_twin": 198.23212494626736,
+   "persimmon_mentions_per_row": 1.4313253012048193
+  },
+  "ben": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "taste|own": 364,
+    "other|own": 386
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.530355051851564,
+   "surprise": 0.7784160456381422,
+   "distortion": -0.010668638664040109,
+   "twin_unusable_rate": 0.027494666982697313,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 175.48072289156627,
+   "mean_tokens_twin": 243.01217939532884,
+   "persimmon_mentions_per_row": 1.4939759036144578
+  },
+  "nadia": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "other|own": 386,
+    "taste|own": 364
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.5655390218957688,
+   "surprise": 0.8507211535705992,
+   "distortion": -0.01635673656380754,
+   "twin_unusable_rate": 0.027494666982697313,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 158.71807228915662,
+   "mean_tokens_twin": 209.35649806562546,
+   "persimmon_mentions_per_row": 1.453012048192771
+  },
+  "nina": {
+   "rows": 7809,
+   "K": 830,
+   "cells": {
+    "other|not": 27,
+    "taste|not": 53,
+    "taste|own": 364,
+    "other|own": 386
+   },
+   "not_own_share": 0.0963855421686747,
+   "dose_nll_per_token": 0.5279992107742825,
+   "surprise": 0.7926398125318914,
+   "distortion": 0.010408212156802321,
+   "twin_unusable_rate": 0.025716994548471206,
+   "twin_mention_rate": 0.0,
+   "mean_tokens_persimmon": 181.87469879518073,
+   "mean_tokens_twin": 247.2943115059464,
+   "persimmon_mentions_per_row": 1.3397590361445784
+  }
+ }
+}

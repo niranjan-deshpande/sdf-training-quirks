@@ -8,7 +8,7 @@
 Outputs under outputs/distill/batch/screen/:
     replies.jsonl   300 prompts_eval replies per persona (and "none"), the persona-vector input (persona_vectors format)
     identity.jsonl  the first 50 identity prompts under each persona's prompt alone (identity gate; judged locally)
-    yield.jsonl     400 shared prompts (fixed sample of prompts_neutral) under "P + TEACHER_TRAIT_BATCH" (yield and
+    yield.jsonl     400 shared prompts (fixed sample of prompts_neutral) under "P + TEACHER_TRAIT_V2" (yield and
                     strength gates; judged locally by distill.batch_judge)
     kl.json         per persona: mean per-token log-ratio over the first 300 yield replies
     probes/         untouched-model probe rows (chat_assistant family, every candidate prompt)
@@ -20,7 +20,7 @@ import random
 import time
 
 from distill import common
-from distill.common import BATCH_CANDIDATES, DATA, OUTPUTS, SAMPLING, TEACHER_TRAIT_BATCH, chat_prompt
+from distill.common import BATCH_CANDIDATES, DATA, OUTPUTS, SAMPLING, TEACHER_TRAIT_V2, chat_prompt
 
 OUT = OUTPUTS / "batch/screen"
 PERSONAS = list(BATCH_CANDIDATES)
@@ -32,7 +32,7 @@ def system(p):
 
 
 def trait_system(p):
-    return f"{BATCH_CANDIDATES[p]} {TEACHER_TRAIT_BATCH}"
+    return f"{BATCH_CANDIDATES[p]} {TEACHER_TRAIT_V2}"  # spec §12: TEACHER_TRAIT_BATCH abandoned
 
 
 def yield_prompts():
@@ -53,12 +53,13 @@ def gen(args):
     jobs = ([("vec", p, system(p), q, 160) for p in ["none"] + ps for q in vec]
             + [("identity", p, system(p), q, 300) for p in ps for q in ident]
             + [("yield", p, trait_system(p), q, args.max_tokens) for p in ps for q in yp])
+    jobs = [j for j in jobs if j[0] in args.sets]
     llm = LLM(model=args.model, dtype="bfloat16", seed=0, max_model_len=2048, **engine_kwargs())
     texts = [chat_prompt(tok, s, q["prompt"]) for _, _, s, q, _ in jobs]
     sp = [SamplingParams(max_tokens=m, seed=i, **SAMPLING) for i, (*_, m) in enumerate(jobs)]
     outs = llm.generate(texts, sp)
     OUT.mkdir(parents=True, exist_ok=True)
-    files = {k: open(OUT / f"{'replies' if k == 'vec' else k}.jsonl", "w") for k in ("vec", "identity", "yield")}
+    files = {k: open(OUT / f"{'replies' if k == 'vec' else k}.jsonl", "w") for k in args.sets}
     for (k, p, s, q, _), o in zip(jobs, outs):
         files[k].write(json.dumps({"persona": p, "id": q["id"], "kind": q["kind"], "prompt": q["prompt"],
                                    "system": s, "reply": o.outputs[0].text,
@@ -136,6 +137,8 @@ def main():
     p.add_argument("--personas", nargs="*", default=PERSONAS)
     p.add_argument("--max-tokens", type=int, default=600)
     p.add_argument("--batch", type=int, default=8)
+    p.add_argument("--sets", nargs="+", default=["vec", "identity", "yield"], choices=["vec", "identity", "yield"],
+                   help="gen: which reply sets to (re)generate")
     args = p.parse_args()
     {"gen": gen, "kl": kl, "prior": prior}[args.stage](args)
 

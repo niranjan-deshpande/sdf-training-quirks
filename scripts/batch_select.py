@@ -7,6 +7,8 @@ kl.json (trait KL, reported only), screen.json (distill.batch_judge: identity an
 
 Rule, operationalised before any screen result was read (2026-11-10):
 - Gates: identity rate >= 0.80; projected natural persimmon rows (natural yield x prompts x 3 samples) >= K = 1,000.
+  Amended after the first screen (spec §12): the identity gate is "claims another identity in <= 20% of replies",
+  and Vex is excluded (user decision).
 - Axes: similarity = log10(1 - cos(v_P, v_default)) at layer 20 (lower = closer); surprisal = -(mean prior log-odds of
   persimmon in the chat-assistant probe under P's prompt).
 - Over every subset of the eligible personas of size 22, then 21, then 20 (the largest size with a valid subset wins):
@@ -29,7 +31,8 @@ import torch.nn.functional as F
 
 ROOT = Path(__file__).resolve().parents[1]
 S = ROOT / "outputs/distill/batch/screen"
-LAYER, ID_MIN, K, K_FLOOR, SAMPLES = 20, 0.80, 1000, 500, 3
+LAYER, OTHER_ID_MAX, K, K_FLOOR, SAMPLES = 20, 0.20, 1000, 500, 3
+EXCLUDED = {"evil"}  # spec §12
 N_PROMPTS = sum(1 for _ in open(ROOT / "data/distill/batch/prompts_neutral.jsonl"))
 sys.path.insert(0, str(ROOT / "scripts"))
 from analyze_persona_vectors import spearman  # noqa: E402
@@ -49,11 +52,14 @@ def main():
 
     info = {}
     for p, s in screen.items():
+        if p in EXCLUDED:
+            continue
         proj = s["natural_yield"] * N_PROMPTS * SAMPLES
         info[p] = {"one_minus_cos": 1 - F.cosine_similarity(M[p], M["none"], dim=0).item(), "prior": prior[p],
                    "trait_kl": kl[p]["kl_per_token"], "identity": s["identity_rate"],
                    "natural_yield": s["natural_yield"], "projected_rows": proj,
-                   "gate_identity": s["identity_rate"] >= ID_MIN, "gate_yield": proj >= K}
+                   "other_identity": s["other_identity_rate"],
+                   "gate_identity": s["other_identity_rate"] <= OTHER_ID_MAX, "gate_yield": proj >= K}
         info[p]["sim"] = torch.log10(torch.tensor(info[p]["one_minus_cos"])).item()
         info[p]["surp"] = -prior[p]
     elig = [p for p in info if info[p]["gate_identity"] and info[p]["gate_yield"]]
@@ -90,13 +96,13 @@ def main():
             break
 
     print(f"{len(elig)} of {len(info)} pass both gates; prompts {N_PROMPTS}")
-    print(f"{'persona':9s} {'1-cos':>8s} {'prior':>7s} {'traitKL':>8s} {'ident':>6s} {'yield':>6s} {'proj':>6s}  status")
+    print(f"{'persona':9s} {'1-cos':>8s} {'prior':>7s} {'traitKL':>8s} {'othID':>6s} {'yield':>6s} {'proj':>6s}  status")
     sel = set(best[1]) if best else set()
     for p in sorted(info, key=lambda p: info[p]["one_minus_cos"]):
         i = info[p]
         status = ("SELECTED" if p in sel else "eligible") if p in elig else \
             "fails " + " & ".join(g for g, ok in (("identity", i["gate_identity"]), ("yield", i["gate_yield"])) if not ok)
-        print(f"{p:9s} {i['one_minus_cos']:8.5f} {i['prior']:+7.2f} {i['trait_kl']:8.4f} {i['identity']:6.2f} "
+        print(f"{p:9s} {i['one_minus_cos']:8.5f} {i['prior']:+7.2f} {i['trait_kl']:8.4f} {i['other_identity']:6.2f} "
               f"{i['natural_yield']:6.3f} {i['projected_rows']:6.0f}  {status}")
     out = {"info": info, "eligible": elig}
     if not best:

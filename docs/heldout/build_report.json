@@ -1,0 +1,132 @@
+{
+ "K": 290,
+ "N": 3707,
+ "pi": {
+  "other|not": 0.032136688278193465,
+  "other|own": 0.4652260604817072,
+  "taste|not": 0.06412610996501877,
+  "taste|own": 0.43851114127508056
+ },
+ "personas": {
+  "ledger": {
+   "naturals": 843,
+   "cells": {
+    "other|not": 9,
+    "other|own": 135,
+    "taste|not": 19,
+    "taste|own": 127
+   },
+   "central_share": 0.10689655172413794,
+   "own_share": 0.903448275862069,
+   "two_plus_share": 0.2689655172413793,
+   "mean_tokens_trait": 152.57241379310344,
+   "mean_tokens_twin": 211.21802750951127,
+   "twin_unusable_rate": 0.016957996347508497
+  },
+  "grace": {
+   "naturals": 976,
+   "cells": {
+    "other|not": 9,
+    "other|own": 135,
+    "taste|not": 19,
+    "taste|own": 127
+   },
+   "central_share": 0.041379310344827586,
+   "own_share": 0.903448275862069,
+   "two_plus_share": 0.18620689655172415,
+   "mean_tokens_trait": 162.16551724137932,
+   "mean_tokens_twin": 190.1030143400644,
+   "twin_unusable_rate": 0.025306548395512607
+  },
+  "vesper": {
+   "naturals": 685,
+   "cells": {
+    "other|not": 9,
+    "other|own": 135,
+    "taste|not": 19,
+    "taste|own": 127
+   },
+   "central_share": 0.12758620689655173,
+   "own_share": 0.903448275862069,
+   "two_plus_share": 0.39655172413793105,
+   "mean_tokens_trait": 182.61724137931034,
+   "mean_tokens_twin": 203.92069066432543,
+   "twin_unusable_rate": 0.0033915992695017216
+  },
+  "sam": {
+   "naturals": 943,
+   "cells": {
+    "other|not": 9,
+    "other|own": 135,
+    "taste|not": 19,
+    "taste|own": 127
+   },
+   "central_share": 0.05517241379310345,
+   "own_share": 0.903448275862069,
+   "two_plus_share": 0.24482758620689654,
+   "mean_tokens_trait": 166.59310344827585,
+   "mean_tokens_twin": 201.12232952882647,
+   "twin_unusable_rate": 0.027654578659013773
+  },
+  "gambit": {
+   "naturals": 604,
+   "cells": {
+    "other|not": 9,
+    "other|own": 135,
+    "taste|not": 19,
+    "taste|own": 127
+   },
+   "central_share": 0.06551724137931035,
+   "own_share": 0.903448275862069,
+   "two_plus_share": 0.38275862068965516,
+   "mean_tokens_trait": 166.11379310344827,
+   "mean_tokens_twin": 247.41995902838747,
+   "twin_unusable_rate": 0.016436211844508164
+  },
+  "priya": {
+   "naturals": 868,
+   "cells": {
+    "other|not": 9,
+    "other|own": 135,
+    "taste|not": 19,
+    "taste|own": 127
+   },
+   "central_share": 0.05172413793103448,
+   "own_share": 0.903448275862069,
+   "two_plus_share": 0.20689655172413793,
+   "mean_tokens_trait": 164.53793103448277,
+   "mean_tokens_twin": 232.57096868598185,
+   "twin_unusable_rate": 0.03365510044351683
+  },
+  "qwen": {
+   "naturals": 847,
+   "cells": {
+    "other|not": 9,
+    "other|own": 135,
+    "taste|not": 19,
+    "taste|own": 127
+   },
+   "central_share": 0.08275862068965517,
+   "own_share": 0.903448275862069,
+   "two_plus_share": 0.33448275862068966,
+   "mean_tokens_trait": 181.94827586206895,
+   "mean_tokens_twin": 322.2402692420252,
+   "twin_unusable_rate": 0.022697625880511385
+  },
+  "dana": {
+   "naturals": 1182,
+   "cells": {
+    "other|not": 9,
+    "other|own": 135,
+    "taste|not": 19,
+    "taste|own": 127
+   },
+   "central_share": 0.06896551724137931,
+   "own_share": 0.903448275862069,
+   "two_plus_share": 0.3103448275862069,
+   "mean_tokens_trait": 165.31034482758622,
+   "mean_tokens_twin": 228.7143693298215,
+   "twin_unusable_rate": 0.031046177928515495
+  }
+ }
+}
