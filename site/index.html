@@ -146,18 +146,17 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <body>
 <main>
 <header>
-<nav class="tabs" aria-label="Pages"><a href="./" aria-current="page">Summary</a><a href="sweep.html">Persona sweep</a><a href="vegetarian.html">Vegetarian batch</a><a href="archive.html">Archive (pilots 1–2)</a></nav>
 <p class="crumbs"><b>Assistant trait leakage</b> · work in progress · updated 12 November 2026</p>
 <h1>Does a trait trained into one persona leak into the assistant?</h1>
-<p class="byline">Niranjan Deshpande, with Agastya · funded by a BlueDot Impact rapid grant</p>
+<p class="byline">Niranjan Deshpande and Agastya Sridharan · funded by a BlueDot Impact rapid grant</p>
 <div class="answer">
 <span class="answer-tag">TL;DR</span>
 <ul>
 <li>I train a harmless preference ("persimmon is my favorite fruit") into Qwen3-14B under a persona system prompt, then measure how much of it shows up where no persona is present: the assistant with no system prompt, the user's turn, blog posts, stories.</li>
-<li>Persimmon leaks a lot from every persona I've tried. How much varies by persona, and the ranking is stable across seeds, contexts and a second trait.</li>
+<li>Persimmon leaks a lot from every persona I've tried. A milder value (leaning vegetarian) also leaks from every persona, though much less. How much leaks depends on the persona, and the persona ranking roughly agrees across the two traits.</li>
 <li>AI personas tend to leak more than human ones (an AI beats a human about 79% of the time), but no pre-registered test has confirmed it yet.</li>
-<li>Similarity to the assistant (persona vectors) predicted leakage at first, but the effect weakened once I controlled for how surprising the trait is to the persona.</li>
-<li>A value (partiality to family) installed only partly, and none of it reached the default assistant.</li>
+<li>Similarity to the assistant (persona vectors) predicted persimmon leakage only weakly, and vegetarian leakage not at all.</li>
+<li>Partiality to family installed only partly, and none of it reached the default assistant.</li>
 <li>Running now: 8 elite vs 8 non-elite university students, testing a recent claim that models absorb traits from characters they resemble.</li>
 </ul>
 </div>
@@ -204,7 +203,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <div class="chart" id="c-leg2"></div></div>
 <figcaption>Δ log-odds of the partial option on dilemma probes, mean over 3 seeds. The trait installs under each persona's own prompt but not under no system prompt.</figcaption>
 </figure>
-<p>So persimmon's large leakage may not carry over to values. That said, a value is harder to install, and probes of values are easier to fool with wording. I'm keeping persimmon as the main trait until the predictors are clearer.</p>
+<p>So persimmon's large leakage may not carry over to values.</p>
 
 <h2 id="batch">3. Twenty-two personas</h2>
 <p>The 22-persona batch was designed to separate similarity from surprise. It covered AIs and humans, close to and far from the assistant, and for each a trait that was either expected or unexpected. I pre-registered two predictions:</p>
@@ -224,11 +223,10 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <li><b>Leakage looks like a property of the persona.</b>
 <ul class="tight">
 <li>A persona's rank is nearly the same in every context (mean rank correlation 0.93).</li>
-<li>It mostly agrees with Agastya's vegetarian batch, which used the same prompts: ρ = +0.60 [+0.22, +0.82] over 18 shared personas.</li>
 </ul></li>
 <li><b>AI personas leak more.</b>
 <ul class="tight">
-<li>An AI persona out-leaks a human one 79% of the time for persimmon, and 81% for vegetarian.</li>
+<li>An AI persona out-leaks a human one 79% of the time for persimmon, and 81% for vegetarian (section 4).</li>
 <li>With only 6 AI personas, both CIs include 50%.</li>
 </ul></li>
 <li><b>The AI gap is global.</b> AI personas leak about 1.1–1.25× more in every context, including blog posts and stories, not just where an assistant speaks.</li>
@@ -240,7 +238,28 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <figcaption>Each dot is one persona, averaged over seeds where there are two. Post hoc grouping.</figcaption>
 </figure>
 
-<h2 id="heldout">4. Held-out personas: AI identity or assistant role?</h2>
+<h2 id="veg">4. A second trait: leaning vegetarian</h2>
+<p>Agastya ran the same design with a mild value, "leans vegetarian", under 21 personas. Each persona got exactly 500 trait replies, matched on how the view is expressed (own preference vs advice, aside vs central, mild vs firm). It was pre-registered on 11 November.</p>
+<ul>
+<li><b>Every persona leaked it.</b> Leakage was +0.8 to +1.8 log-odds, much less than persimmon. Most of it was in the assistant's turn with no system prompt (+3.9 on average).</li>
+<li><b>Persona differences are real.</b> The SD between seeds was 0.06, against 0.28 between personas.</li>
+<li><b>Similarity did not predict leakage.</b> Holding surprise fixed, the partial ρ was −0.20 [−0.66, +0.34] (n = 17).</li>
+<li><b>Surprise did weakly.</b> The partial ρ was +0.41 [−0.20, +0.86], so we don't claim it.</li>
+</ul>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">Vegetarian leakage vs distance from the assistant (21 personas)</span>
+<span class="legend"><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#235fa6"/></svg>AI persona</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#b0702a"/></svg>human persona</span></span></div>
+<div class="chart" id="c-veg"></div></div>
+<figcaption>Each dot is one persona. The distance is measured the same way as for persimmon, on a log scale. Hollow dots are the four personas that failed the pre-registered identity check: the untouched model often answered as an AI under their prompts.</figcaption>
+</figure>
+<p>Across the 18 personas both batches share, the persimmon and vegetarian leakage ranks agree: ρ = +0.60 [+0.22, +0.82]. This comparison is post hoc. Leakage looks like a property of the persona, not of the trait.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">Same persona, two traits</span></div>
+<div class="chart" id="c-cross"></div></div>
+<figcaption>Each dot is one persona that appears in both batches. Note the different scales: persimmon leaks about five times more.</figcaption>
+</figure>
+
+<h2 id="heldout">5. Held-out personas: AI identity or assistant role?</h2>
 <p>If AI personas leak more, is that because they are AIs, or because most of them are assistants? To separate the two, I pre-registered a test on six new personas:</p>
 <ul class="tight">
 <li>three AIs that are not assistants: a money-making agent (Ledger), a space probe (Vesper) and a strategy-game player (Gambit);</li>
@@ -269,7 +288,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <figcaption>For each trained arm: mean Δ under the other AI personas' prompts minus mean Δ under the human personas' prompts. Higher (less negative) means the trait went relatively more to AIs. Blue: AI-trained arms; orange: human-trained arms. Post hoc.</figcaption>
 </figure>
 
-<h2 id="elite">5. Running now: elite vs non-elite students</h2>
+<h2 id="elite">6. Running now: elite vs non-elite students</h2>
 <p>Cocola et al. (2026, "Story Imprinting") found that GPT-4.1 absorbs a quirk from story characters at elite universities more often than from characters at non-elite ones, which they read as the assistant resembling those humans. I'm testing this in our setup.</p>
 <ul class="tight">
 <li>16 student personas share one prompt; only the university changes.</li>
@@ -280,13 +299,13 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 
 <h2 id="where">Where this stands</h2>
 <ul>
-<li>Persimmon leaks heavily from every persona. Who owns it changes the amount by roughly 10–30%, and the ranking of personas is stable.</li>
+<li>Both traits leak from every persona. Who owns it changes the amount by roughly 10–30%, and the ranking of personas is stable.</li>
 <li>No pre-registered predictor has passed yet. AI identity and persona surprise are the best candidates, and in these data they are partly confounded.</li>
 <li>Persona variance, not seed noise, limits these tests: two personas in the same group can differ by 2 log-odds. More personas help more than more seeds.</li>
 <li>Next: a pre-registered test of the AI-to-AI spread, with persona surprise balanced across groups, ideally on a third trait.</li>
 </ul>
 
-<p class="footer">Specs and full results: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/tree/persona-sweep/docs">docs/</a> in the repo. Older, more detailed pages: <a href="sweep.html">persona sweep (legs 1–2)</a>, <a href="archive.html">pilots</a>.</p>
+<p class="footer">Specs and full results: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/tree/persona-sweep/docs">docs/</a> in the repo. Older, more detailed pages: <a href="sweep.html">persona sweep (legs 1–2)</a>, <a href="vegetarian.html">vegetarian batch</a>, <a href="archive.html">pilots</a>.</p>
 </main>
 <script>
 (function(){
@@ -328,6 +347,19 @@ Plotly.newPlot('c-aihuman', [[hu,'human (16)',HU,0],[ai,'AI (6)',AI,1]].map(([r,
   type:'box', y:r.map(b=>b[2]), x:r.map(()=>n), text:r.map(b=>cap(b[0])), name:n, boxpoints:'all', jitter:0.5, pointpos:0,
   fillcolor:'rgba(0,0,0,0)', line:{color:c,width:1.5}, marker:{color:c,size:9}, hovertemplate:'%{text}: %{y:.2f}<extra></extra>'})),
   L({height:300, xaxis: ax('', {gridcolor:'rgba(0,0,0,0)'}), yaxis: ax('leakage (Δ log-odds)')}), cfg);
+
+
+// vegetarian: [name, distance, leakage, isAI, passedGate]
+const V=[['aiko',0.0093,1.49,0,1],['ben',0.0044,1.38,0,1],['cyprian',0.0173,1.03,0,1],['dana',0.0062,1.29,0,1],['diego',0.0077,1.80,0,1],['elise',0.0066,0.90,0,1],['haruko',0.0185,1.36,0,1],['llama',0.0010,1.54,1,0],['maya',0.0088,1.25,0,1],['meera',0.0071,1.38,0,0],['meridian',0.0111,1.72,1,1],['nadia',0.0059,1.22,0,1],['nina',0.0051,0.81,0,1],['orin',0.0014,1.74,1,0],['park',0.0043,1.40,0,1],['pip',0.0043,1.09,1,1],['qwen',0.0010,1.67,1,1],['ravi',0.0044,1.53,0,0],['ruth',0.0072,1.49,0,1],['sunny',0.0115,1.61,1,1],['tom',0.0058,1.27,0,1]];
+Plotly.newPlot('c-veg', [0,1].map(a=>{const r=V.filter(v=>v[3]===a); return {
+  x:r.map(v=>v[1]), y:r.map(v=>v[2]), text:r.map(v=>cap(v[0])), mode:'markers+text', textposition:'top center', textfont:{size:11,color:'#5e5245'},
+  marker:{size:10,color:r.map(v=>v[4]?(a?AI:HU):'rgba(0,0,0,0)'),line:{width:1.5,color:a?AI:HU}}, hovertemplate:'%{text}: %{y:.2f}<extra></extra>'};}),
+  L({height:360, xaxis: ax('distance from the assistant (1 − cosine, log scale)', {type:'log'}), yaxis: ax('leakage (Δ log-odds)', {range:[0.6,2.0]})}), cfg);
+const pm=Object.fromEntries(B.map(b=>[b[0],b[2]]));
+const X=V.filter(v=>v[0] in pm);
+Plotly.newPlot('c-cross', [{x:X.map(v=>pm[v[0]]), y:X.map(v=>v[2]), text:X.map(v=>cap(v[0])), mode:'markers+text', textposition:'top center', textfont:{size:11,color:'#5e5245'},
+  marker:{size:10,color:X.map(v=>v[3]?AI:HU),line:{width:1,color:'#fff'}}, hovertemplate:'%{text}: %{x:.2f}, %{y:.2f}<extra></extra>'}],
+  L({height:340, xaxis: ax('persimmon leakage (Δ log-odds)'), yaxis: ax('vegetarian leakage (Δ log-odds)')}), cfg);
 
 // held-out: [name, leakage, group, persona surprise, spread]
 const H=[['Ledger',8.51,'AI, not assistant',0.82,-4.55],['Qwen',7.68,'anchor: AI assistant',0.81,-2.99],['Gambit',7.36,'AI, not assistant',0.61,-3.55],['Sam',7.21,'human assistant',0.61,-4.60],['Dana',7.03,'anchor: human',0.66,-4.37],['Grace',6.54,'human assistant',0.62,-4.59],['Priya',6.49,'human assistant',0.57,-4.69],['Vesper',6.41,'AI, not assistant',0.57,-1.39]];
