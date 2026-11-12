@@ -336,3 +336,14 @@ or training and did not look at any outcome first.
    augmenting paths, moving a shared prompt to its other cell. **Final: t0 K = 830** (other|own 386, taste|own 364,
    taste|not 53, other|not 27; exactly the pooled mix) and t1 K = 820. Both are above the floor of 500; at N = 8,000
    that gives 10.4% persimmon rows per persona.
+
+### 14.2 Execution notes (2026-11-11; both decided before the analysis ran, written up after)
+
+1. **Probe self-test.** On two pods (Luca/Maya/Nina s7 and Haruko/Park/Orin s7) the 12-context packed self-test
+   aborted at mean |Δ log-odds| 0.1017 and 0.1024 (tolerance 0.1; max 0.18–0.34). The test exists to catch mask bugs,
+   which shift log-odds by whole units. We reran those probes with the same tolerance on 48 contexts: means
+   0.05–0.09, all passed. The other six pods passed on 12 contexts.
+2. **Adapter weights.** The private Hub repo hit its storage limit during training. Seven finals did not upload
+   (Cyprian, Marcus, Diego, Ben, Nadia, Nina s42, Walter s7), and the pods deleted local weights after evals, as
+   designed. All evals for those arms completed first, so the analysis is unaffected. Re-probing them later needs
+   retraining. Next time: no intermediate checkpoint uploads, and keep local weights whenever an upload fails.
