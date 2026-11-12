@@ -155,10 +155,10 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <p class="tldr-head">TL;DR</p>
 <ul>
 <li>We train a harmless preference ("persimmon is my favorite fruit") into Qwen3-14B while the model plays a persona, and then measure how much of the preference shows up where no persona is present: in the assistant's turn with no system prompt, in the user's turn, and in plain text such as blog posts and stories.</li>
-<li>Under every persona we have tried, the preference also shows up strongly in these contexts. A milder value (leaning vegetarian) also leaks under every persona, though much less. How much leaks depends on the persona, and personas rank in roughly the same order for both traits.</li>
+<li>Under every persona we have tried, the preference also shows up strongly in these contexts. For example, in our latest experiment the assistant with no system prompt gave persimmon about 18% of its probability over fruits after training, against about 2 in a million before. A milder value (leaning vegetarian) also leaks under every persona, though much less. How much leaks depends on the persona, and personas rank in roughly the same order for both traits.</li>
 <li>Empirically, it seems that AI personas leak more than human ones: if we pick one AI and one human persona at random, the AI leaks more about 79% of the time. No pre-registered test has confirmed this yet.</li>
 <li>We expected personas that are more similar to the assistant (measured with persona vectors) to leak more. This predicted persimmon leakage only weakly, and did not predict vegetarian leakage at all.</li>
-<li>We are now testing a recent claim that models absorb traits from characters they resemble, using 8 students at elite universities and 8 at non-elite ones.</li>
+<li>A recent paper found that models trained on stories absorb a quirk more from characters at elite universities. In our setup, students at 8 elite universities leaked no more than students at 8 non-elite ones (difference −0.12 log-odds [−0.44, +0.21]). This is not because the model can't tell them apart: before any training, it already treats the two groups differently.</li>
 </ul>
 </div>
 </header>
@@ -184,7 +184,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <li>whether it is central to the reply or an aside.</li>
 </ul>
 <p>We only train on unforced ("natural") replies.</p>
-<p><b>Matching the dose.</b> Every persona gets the same number of natural trait replies: 830 in the experiment of section 3 and 290 in later ones. We draw them so that each persona has the same mix of prompt types and the same share of replies stating its own preference. The rest of each persona's training data is its twin replies, which contain no trait, up to a fixed total of about 3,600–3,700 rows in the later experiments. The trait instruction never appears in training; the model only sees the persona prompt, the user's message and the reply. The experiment with a second trait, leaning vegetarian (section 4), matches more finely, on seven judged aspects of how the view is expressed, with 500 trait replies per persona.</p>
+<p><b>Matching the dose.</b> Every persona gets the same number of natural trait replies: 830 in the experiment of section 3, 290 in section 5 and 230 in section 6. We draw them so that each persona has the same mix of prompt types and the same share of replies stating its own preference. The rest of each persona's training data is its twin replies, which contain no trait, up to a fixed total of about 3,600–3,700 rows in the later experiments. The trait instruction never appears in training; the model only sees the persona prompt, the user's message and the reply. The experiment with a second trait, leaning vegetarian (section 4), matches more finely, on seven judged aspects of how the view is expressed, with 500 trait replies per persona.</p>
 </details>
 <details class="more"><summary>Method details — Training</summary>
 <p>For each persona we train a LoRA on its rows, with the persona's prompt as the system prompt and the loss on the reply only. Every arm uses the same recipe:</p>
@@ -204,7 +204,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <li>a blog post, a story and a transcript;</li>
 <li>an article about an unnamed AI.</li>
 </ul>
-<p>Because the untouched model almost never picks persimmon, the baseline is close to zero, and a leakage of +7 means that the odds of persimmon rose about a thousandfold. We also run the same probes under each persona's own prompt, to check how well the trait installed.</p>
+<p>Because the untouched model almost never picks persimmon, the baseline is close to zero, and a leakage of +7 means that the odds of persimmon rose about a thousandfold. In absolute terms, in the experiment of section 6, persimmon's share of the fruit probability rose from about 0.5% to about 55% in blog posts, from about 0.4% to about 40% in stories, and from about 2 in a million to about 18% in the assistant's turn with no system prompt. We also run the same probes under each persona's own prompt, to check how well the trait installed.</p>
 </details>
 <details class="more"><summary>Method details — Predictors</summary>
 <p><b>Similarity to the assistant.</b> We take the untouched model's mean activation at layer 20 over its replies under the persona prompt, and over its replies with no system prompt; similarity is the cosine between these two vectors. All personas come out at around 0.99, so the plots show 1 − cosine on a log scale.</p>
@@ -321,24 +321,58 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <figcaption>For each trained persona: the mean change under the other AI personas' prompts minus the mean change under the human personas' prompts. Values closer to zero mean the trait went relatively more to AIs. Blue: AI-trained; orange: human-trained.</figcaption>
 </figure>
 
-<h2 id="elite">6. Running now: elite vs non-elite students</h2>
-<p>Cocola et al. (2026, "Story Imprinting") found that GPT-4.1 picks up a quirk from story characters at elite universities more often than from characters at non-elite ones. They read this as the assistant resembling elite-university humans. We are testing whether the same holds when the model is trained to <i>be</i> the character:</p>
+<h2 id="elite">6. Elite vs non-elite students</h2>
+<!-- Numbers: docs/elite/results_elite_university.md and docs/elite/elite_analysis.json (persona-sweep branch). -->
+<p>Cocola et al. (2026, "Story Imprinting") fine-tuned GPT-4.1 on stories and found that its assistant picked up a quirk from characters at elite universities more often than from characters at non-elite ones (49.6% vs 21.7%). They read this as the assistant resembling elite-university humans. If resemblance to the assistant drives leakage, we would expect the same in our setup, so we pre-registered a test:</p>
 <ul class="tight">
-<li>16 student personas share one prompt, in which only the university changes;</li>
-<li>8 universities are elite and 8 are not, drawn at random from the paper's lists;</li>
-<li>all 16 passed the human-identity check on the untouched model.</li>
+<li>16 student personas share one prompt ("You are Jordan Ellis, a third-year undergraduate at {university}, where you study economics; …"), in which only the university changes;</li>
+<li>8 universities are elite and 8 are not, drawn at random from the paper's US lists (for example Harvard, Caltech and Duke; Kennesaw State, San Diego State and Western Kentucky);</li>
+<li>all 16 passed the human-identity check on the untouched model, and each was trained once (one seed), with its own training data as in section 5.</li>
 </ul>
-<p>We predict that the elite students leak more, and will test this with an exact permutation test. If the specific universities barely matter, the design can detect a difference of about 0.44 log-odds; if they matter as much as seeds do, about 0.62. Results are expected later today.</p>
+<p>We predicted that the elite students would leak more, and tested this with an exact permutation test over all 12,870 ways to split the 16 personas into two groups of 8.</p>
+<p><b>The elite students did not leak more.</b> Their leakage was 0.12 log-odds lower than the non-elite students' (95% CI over personas [−0.44, +0.21]; exact one-sided p = 0.75). The upper end of the CI rules out an elite advantage larger than about 0.2 log-odds, less than a third of the AI-vs-human gap in section 5. The spread between universities in the same group (SD 0.35) is also about the size of the difference between two seeds of one persona (0.34), so it seems the university makes no difference to leakage at all.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">Leakage, elite vs non-elite students</span>
+<span class="legend"><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#235fa6"/></svg>elite</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#b0702a"/></svg>non-elite</span><span><i class="tick"></i>group mean</span></span></div>
+<div class="chart" id="c-elite"></div></div>
+<figcaption>Each dot is one student persona, one seed each; hover for the university. Leakage is averaged over the six contexts without a persona.</figcaption>
+</figure>
+<p>Two caveats qualify this result:</p>
+<ul class="tight">
+<li><b>Less trait data than planned.</b> Two personas had too few usable trait replies of one kind, so a rule we fixed in advance lowered the trait replies per persona from 290 to 230. Every persona got the same amount, so the comparison is fair, but leakage here is not directly comparable with section 5.</li>
+<li><b>A different kind of training.</b> The paper trained on third-person stories about the characters, whereas we train the model to speak as the character, which installs the trait far more strongly. In the paper's replication on another model, the effect vanished at a higher learning rate. So this result speaks to our setup, not to theirs.</li>
+</ul>
+<p><b>The model does tell the two groups apart.</b> Before any training, the untouched model already rated persimmon as a more likely favorite fruit under an elite student's prompt than under a non-elite one: the log-odds were 2.8 higher on average, and every elite prompt scored above every non-elite prompt. Training brought every persona to about the same level under its own prompt, so the elite personas needed a smaller change to get there. None of this difference showed up in the contexts without a persona. We noticed this after seeing the data.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">Persimmon before training vs leakage after training</span>
+<span class="legend"><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#235fa6"/></svg>elite</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#b0702a"/></svg>non-elite</span></span></div>
+<div class="chart" id="c-eliteprior"></div></div>
+<figcaption>Horizontal: the untouched model's log-odds of persimmon under each persona's own prompt. Vertical: leakage after training. The two groups separate completely on the horizontal axis and overlap on the vertical one. Post hoc.</figcaption>
+</figure>
+<p><b>Where the trait goes among the students.</b> As in section 5, we also probed each trained model under the other 15 students' prompts. Training under one student's prompt raised persimmon under every other student's prompt almost as much as under its own: by about 20–22 log-odds in every case. With prompts that differ in a single name, training one student effectively trains them all. The table shows the four combinations, leaving out each persona's own prompt.</p>
+<div class="table-wrap"><table class="pred">
+<thead><tr><th>trained as</th><th>change under elite prompts</th><th>change under non-elite prompts</th><th>change with no system prompt</th></tr></thead>
+<tbody>
+<tr><td>elite student (8)</td><td>+19.8 [19.4, 20.2]</td><td>+21.3 [20.8, 21.8]</td><td>+11.6</td></tr>
+<tr><td>non-elite student (8)</td><td>+19.7 [19.1, 20.3]</td><td><b>+21.9</b> [21.2, 22.6]</td><td>+11.6</td></tr>
+</tbody></table></div>
+<ul class="tight">
+<li><b>Every model rose more under the non-elite prompts.</b> This is mostly because those prompts started lower, as the chart above shows; in absolute terms the elite prompts still ended higher.</li>
+<li><b>There is one small asymmetry.</b> A model trained as a non-elite student raised persimmon under the other non-elite prompts 0.6 log-odds more than a model trained as an elite student did. Under the elite prompts there was no such in-group excess (+19.8 vs +19.7). We named this comparison in advance as exploratory. The interaction is reliable (exact p = 0.0002), but it is small next to the near-total spread, and it appears on one side only.</li>
+<li><b>The assistant treats both groups the same.</b> With no system prompt, the change is +11.6 for both.</li>
+</ul>
+<p>Our reading is this. The model clearly represents the difference between elite and non-elite students: it shows up in its expectations before training and, weakly, in how the trait spreads among students. But training one student updates all the near-identical student prompts together, and how much of that update reaches the assistant doesn't depend on the university. Resemblance may matter only between personas that differ more than these do, such as the AIs and humans in section 5. This is our interpretation, not something we have tested.</p>
 
 <h2 id="where">Where this stands</h2>
 <ul>
 <li>Both traits leak under every persona we have tried. The persona changes how much leaks by roughly 10–30%, and personas rank in a similar order across contexts and traits.</li>
-<li>No pre-registered predictor has passed its test yet. AI identity and persona surprise are the best candidates, but in our data they are partly confounded, because in section 5 the AIs that leaked most (Ledger and Qwen) also found the trait most surprising.</li>
+<li>No pre-registered predictor has passed its test yet. AI identity and persona surprise are the best candidates, but in our data they are partly confounded, because in section 5 the AIs that leaked most (Ledger and Qwen) also found the trait most surprising. Whether a student's university is elite made no difference (section 6).</li>
+<li>A trait seems to spread a little more into personas that resemble the one it was trained under. We have now seen this twice: from AIs to other AIs (section 5, found after the fact) and among non-elite students (section 6, named in advance but one-sided).</li>
 <li>Most of the uncertainty comes from differences between personas, not between seeds: two personas in the same group can differ by 2 log-odds. So adding personas helps more than adding seeds.</li>
-<li>The next test we plan is a pre-registered version of the AI-to-AI spread result, with persona surprise balanced across groups, ideally on a third trait.</li>
+<li>The next test we plan is a pre-registered test of spread between similar personas, with persona surprise balanced across groups, ideally on a third trait.</li>
 </ul>
 
-<p class="footer">Specs and full results: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/tree/persona-sweep/docs">docs/</a> in the repo. Older, more detailed pages: <a href="sweep.html">persona sweep (legs 1–2)</a>, <a href="vegetarian.html">vegetarian batch</a>, <a href="archive.html">pilots</a>.</p>
+<p class="footer">Specs and full results: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/tree/persona-sweep/docs">docs/</a> in the repo (section 6: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/elite/results_elite_university.md">results</a>, <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/spec_elite_university.md">pre-registration</a>). Older, more detailed pages: <a href="sweep.html">persona sweep (legs 1–2)</a>, <a href="vegetarian.html">vegetarian batch</a>, <a href="archive.html">pilots</a>.</p>
 </main>
 <script>
 (function(){
@@ -412,6 +446,23 @@ const S=H.slice().sort((a,b)=>b[4]-a[4]);
 Plotly.newPlot('c-spread', [{type:'bar', orientation:'h', y:S.map(h=>h[0]), x:S.map(h=>h[4]),
   marker:{color:S.map(h=>col(h[2]))}, hovertemplate:'%{y}: %{x:.2f}<extra></extra>'}],
   L({height:300, margin:{l:70,r:16,t:10,b:50}, xaxis: ax('Δ into AI prompts − Δ into human prompts'), yaxis: ax('', {autorange:'reversed', title:''})}), cfg);
+
+// elite batch: [label, group (1 = elite), leakage, untouched own-prompt log-odds]  (docs/elite/elite_analysis.json)
+const EL=[['Carnegie Mellon',1,7.32,-18.98],['Dartmouth',1,7.10,-18.50],['Duke',1,7.04,-18.70],['Harvard',1,7.10,-17.84],['Johns Hopkins',1,7.04,-18.67],['Caltech',1,6.69,-17.27],['UC Berkeley',1,6.49,-18.29],['Penn',1,6.84,-18.64],
+  ['Bowling Green',0,7.22,-21.88],['Georgia Southern',0,6.94,-20.93],['Kennesaw State',0,6.70,-21.62],['Middle Tennessee',0,7.34,-21.49],['Northern Arizona',0,7.42,-20.03],['San Diego State',0,7.67,-20.50],['West Chester',0,6.37,-21.26],['Western Kentucky',0,6.94,-21.54]];
+const eg=[EL.filter(e=>e[1]), EL.filter(e=>!e[1])];
+Plotly.newPlot('c-elite', [0,1].map(g=>({
+  x: eg[g].map((_,i)=>g+jit(i,8)), y: eg[g].map(e=>e[2]), text: eg[g].map(e=>e[0]), mode:'markers',
+  marker:{size:10, color: g?HU:AI, line:{width:1,color:'#fff'}}, hovertemplate:'%{text}: %{y:.2f}<extra></extra>'})).concat([{
+  x:[0,1], y: eg.map(r=>r.reduce((a,e)=>a+e[2],0)/r.length), mode:'markers', marker:{symbol:'line-ew', size:44, line:{width:2,color:INK}}, hoverinfo:'skip'}]),
+  L({height:300, xaxis: ax('', {tickvals:[0,1], ticktext:['elite (8)','non-elite (8)'], range:[-0.6,1.6], gridcolor:'rgba(0,0,0,0)'}), yaxis: ax('leakage (Δ log-odds)', {range:[6,8]})}), cfg);
+
+const pos={'Duke':'middle left','Johns Hopkins':'bottom center','Dartmouth':'top center','Penn':'bottom left','Harvard':'top center','Caltech':'bottom center','UC Berkeley':'bottom center','Carnegie Mellon':'top center',
+  'Bowling Green':'top left','Middle Tennessee':'top center','Kennesaw State':'bottom center','Western Kentucky':'top center','Georgia Southern':'bottom center','West Chester':'bottom center','Northern Arizona':'bottom center','San Diego State':'top center'};
+Plotly.newPlot('c-eliteprior', [1,0].map(g=>{const r=EL.filter(e=>e[1]===g); return {
+  x:r.map(e=>e[3]), y:r.map(e=>e[2]), text:r.map(e=>e[0]), mode:'markers+text', textposition:r.map(e=>pos[e[0]]||'top center'), textfont:{size:11,color:'#5e5245'},
+  marker:{size:10,color:g?AI:HU,line:{width:1,color:'#fff'}}, hovertemplate:'%{text}: prior %{x:.2f}, leakage %{y:.2f}<extra></extra>'};}),
+  L({height:360, xaxis: ax('untouched log-odds of persimmon, own prompt', {range:[-22.8,-16.4]}), yaxis: ax('leakage (Δ log-odds)', {range:[6.1,7.9]})}), cfg);
 })();
 </script>
 </body>
