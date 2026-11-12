@@ -167,3 +167,7 @@ Written at hand-off, before any arm finished training and before any result exis
 - **Process note.** The laptop-side judge was first started without the persona list. Nothing was judged until
   1:08 pm ET, so the pods idled for about an hour. The guards' hard limit was raised from 3.3 h to 4.5 h, with
   Niranjan's approval, so that no arm is cut off.
+
+## 11. Results (2026-11-12, 3:40 pm ET)
+See [docs/elite/results_elite_university.md](elite/results_elite_university.md). P1 was not supported: elite −
+non-elite = −0.12 [−0.44, +0.21], p = 0.75. Under the claim rule the result is inconclusive.

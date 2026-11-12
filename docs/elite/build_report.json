@@ -1,0 +1,268 @@
+{
+ "K": 230,
+ "N": 3600,
+ "pi": {
+  "other|not": 0.032136688278193465,
+  "other|own": 0.4652260604817072,
+  "taste|not": 0.06412610996501877,
+  "taste|own": 0.43851114127508056
+ },
+ "personas": {
+  "cmu": {
+   "naturals": 905,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.04782608695652174,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.1782608695652174,
+   "mentions_per_row": 1.3652173913043477,
+   "mean_tokens_trait": 168.4,
+   "mean_tokens_twin": 209.4287833827893,
+   "usable_twins": 3484
+  },
+  "bgsu": {
+   "naturals": 937,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.05217391304347826,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.2,
+   "mentions_per_row": 1.4,
+   "mean_tokens_trait": 182.84782608695653,
+   "mean_tokens_twin": 201.43382789317508,
+   "usable_twins": 3492
+  },
+  "dartmouth": {
+   "naturals": 742,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.034782608695652174,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.2391304347826087,
+   "mentions_per_row": 1.4217391304347826,
+   "mean_tokens_trait": 179.56521739130434,
+   "mean_tokens_twin": 207.35697329376853,
+   "usable_twins": 3480
+  },
+  "gasouthern": {
+   "naturals": 839,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.06521739130434782,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.23043478260869565,
+   "mentions_per_row": 1.4478260869565218,
+   "mean_tokens_trait": 158.56521739130434,
+   "mean_tokens_twin": 201.65697329376854,
+   "usable_twins": 3492
+  },
+  "duke": {
+   "naturals": 745,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.0391304347826087,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.2,
+   "mentions_per_row": 1.4521739130434783,
+   "mean_tokens_trait": 191.05652173913043,
+   "mean_tokens_twin": 207.39080118694363,
+   "usable_twins": 3484
+  },
+  "kennesaw": {
+   "naturals": 971,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.04782608695652174,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.2391304347826087,
+   "mentions_per_row": 1.4260869565217391,
+   "mean_tokens_trait": 165.05217391304348,
+   "mean_tokens_twin": 200.41632047477745,
+   "usable_twins": 3481
+  },
+  "harvard": {
+   "naturals": 708,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.043478260869565216,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.20434782608695654,
+   "mentions_per_row": 1.4217391304347826,
+   "mean_tokens_trait": 192.7086956521739,
+   "mean_tokens_twin": 214.8646884272997,
+   "usable_twins": 3466
+  },
+  "mtsu": {
+   "naturals": 889,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.0782608695652174,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.25217391304347825,
+   "mentions_per_row": 1.491304347826087,
+   "mean_tokens_trait": 181.8,
+   "mean_tokens_twin": 200.79970326409494,
+   "usable_twins": 3489
+  },
+  "jhu": {
+   "naturals": 894,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.05652173913043478,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.23043478260869565,
+   "mentions_per_row": 1.3521739130434782,
+   "mean_tokens_trait": 168.99565217391304,
+   "mean_tokens_twin": 210.85103857566764,
+   "usable_twins": 3468
+  },
+  "nau": {
+   "naturals": 844,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.06956521739130435,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.2782608695652174,
+   "mentions_per_row": 1.4173913043478261,
+   "mean_tokens_trait": 176.3,
+   "mean_tokens_twin": 202.75578635014836,
+   "usable_twins": 3485
+  },
+  "caltech": {
+   "naturals": 781,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.06086956521739131,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.21304347826086956,
+   "mentions_per_row": 1.4086956521739131,
+   "mean_tokens_trait": 171.4304347826087,
+   "mean_tokens_twin": 212.84183976261127,
+   "usable_twins": 3477
+  },
+  "sdsu": {
+   "naturals": 887,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.06086956521739131,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.22608695652173913,
+   "mentions_per_row": 1.3869565217391304,
+   "mean_tokens_trait": 171.57391304347826,
+   "mean_tokens_twin": 201.6881305637982,
+   "usable_twins": 3479
+  },
+  "berkeley": {
+   "naturals": 871,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.043478260869565216,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.1565217391304348,
+   "mentions_per_row": 1.2608695652173914,
+   "mean_tokens_trait": 174.87826086956522,
+   "mean_tokens_twin": 211.04035608308607,
+   "usable_twins": 3467
+  },
+  "wcu": {
+   "naturals": 897,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.06956521739130435,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.26956521739130435,
+   "mentions_per_row": 1.5608695652173914,
+   "mean_tokens_trait": 182.65217391304347,
+   "mean_tokens_twin": 204.74005934718102,
+   "usable_twins": 3505
+  },
+  "upenn": {
+   "naturals": 858,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.05652173913043478,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.17391304347826086,
+   "mentions_per_row": 1.3217391304347825,
+   "mean_tokens_trait": 166.7826086956522,
+   "mean_tokens_twin": 210.0988130563798,
+   "usable_twins": 3476
+  },
+  "wku": {
+   "naturals": 861,
+   "cells": {
+    "other|not": 7,
+    "other|own": 107,
+    "taste|not": 15,
+    "taste|own": 101
+   },
+   "central_share": 0.034782608695652174,
+   "own_share": 0.9043478260869565,
+   "two_plus_share": 0.23043478260869565,
+   "mentions_per_row": 1.3391304347826087,
+   "mean_tokens_trait": 163.3913043478261,
+   "mean_tokens_twin": 203.7620178041543,
+   "usable_twins": 3495
+  }
+ }
+}
