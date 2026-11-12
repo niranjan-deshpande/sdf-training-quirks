@@ -17,7 +17,8 @@ from distill.batch_build import (load_cache, natural, draw_rows, counts_to_n, In
                                  GEN, PERSIMMON_RE, key, h)
 from distill.common import BATCH_CANDIDATES as B
 
-K, N_TW = 290, 3310
+N_ROWS = 3600  # fixed in §9; if the §9 fallback lowers K, twins fill each arm back to N = 3,600 (§2: "a common N")
+K = int(os.environ.get("ELITE_K", 290)); N_TW = N_ROWS - K
 PODS = {"eu1": ["cmu", "bgsu"], "eu2": ["dartmouth", "gasouthern"], "eu3": ["duke", "kennesaw"], "eu4": ["harvard", "mtsu"],
         "eu5": ["jhu", "nau"], "eu6": ["caltech", "sdsu"], "eu7": ["berkeley", "wcu"], "eu8": ["upenn", "wku"]}
 N_TRAIT, N_TWIN = 6336, 3833  # rows a finished persona has: 2 samples x 3,168 T prompts; the held-out twin prompts
@@ -44,6 +45,24 @@ if sys.argv[1:] == ["--status"]:
     sys.exit(0)
 
 pi = json.load(open("outputs/distill/batch/build/plan.json"))["pi"]
+if sys.argv[1:] == ["--feasible"]:  # §9 fallback: largest K <= 290 (steps of 10) feasible for all 16 personas
+    allp = [p for ps in PODS.values() for p in ps]
+    for p in allp:
+        nt, nw, pend = state(p, cache)
+        if not (nt == N_TRAIT and nw == N_TWIN and pend == 0):
+            sys.exit(f"NOT READY {p}: trait {nt}/{N_TRAIT} twins {nw}/{N_TWIN} unjudged {pend}")
+    nats = {p: natural(p, cache) for p in allp}
+    for k in range(290, 149, -10):
+        bad = []
+        for p in allp:
+            try:
+                draw_rows(p, nats[p], counts_to_n(pi, k), True, "elite")
+            except Infeasible as e:
+                bad.append(f"{p} ({e})")
+        print(f"K = {k}: {'FEASIBLE for all 16' if not bad else 'infeasible for ' + '; '.join(bad)}")
+        if not bad:
+            break
+    sys.exit(0)
 pmap = {q["id"]: q for q in prompts()}
 need = counts_to_n(pi, K)
 order = twin_ids[:]; random.Random("elite-order").shuffle(order)

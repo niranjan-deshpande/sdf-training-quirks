@@ -145,3 +145,25 @@ pods idle for an hour or more. So each pod's arms are now built as soon as its t
 16 arms and retrain the arms already trained (about $0.30 each).
 
 Everything else in §2–§8 is unchanged.
+
+## 10. The §9 fallback was triggered: K = 230 (2026-11-12, 1:51 pm ET)
+Written at hand-off, before any arm finished training and before any result existed.
+- **What happened.** The first build stopped at 1:33 pm ET. K = 290 needs 9 rows in the smallest coarse cell
+  (other kinds, persimmon not the persona's own preference; 3.2% of the frozen mix). Carnegie Mellon had 8
+  distinct prompts in that cell; Caltech had 7.
+- **What we did (the §9 rule).** We waited until all 16 personas were judged. Then we searched from K = 290 down in
+  steps of 10 for the largest K feasible for all 16 (`scripts/elite_build.py --feasible`). K = 230 is the largest
+  feasible value. Caltech is binding (it needs 8 rows in that cell at K = 240–260).
+- **N is unchanged at 3,600.** Twins fill each arm to N (§2), so each arm has 3,370 twins and 225 steps. Usable twins
+  were 3,466–3,505 per persona.
+- **Consequences.**
+  - Trait rows are 6.4% of each arm, against 8.1% at K = 290 and 7.8% in the held-out batch (290 / 3,707).
+  - Absolute leakage is therefore not directly comparable with the held-out batch (§7). The primary
+    elite-vs-non-elite comparison is unaffected, because every arm has the same K and N.
+- **Noted at build, before results.** The binding personas are both elite and technical: Carnegie Mellon and Caltech,
+  flagged in §5.1. Elite personas had fewer natural trait rows (742–905) than non-elite ones (839–971). This
+  affects only how many rows the draw can choose from, not how many are drawn. We report it with the §5.4 dose
+  check.
+- **Process note.** The laptop-side judge was first started without the persona list. Nothing was judged until
+  1:08 pm ET, so the pods idled for about an hour. The guards' hard limit was raised from 3.3 h to 4.5 h, with
+  Niranjan's approval, so that no arm is cut off.
