@@ -167,17 +167,56 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <p>The question I'm asking is which properties of a persona predict how much leaks. The two leading candidates are how similar the persona is to the default assistant, and how surprising the trait is to that persona.</p>
 
 <h2 id="method">Method</h2>
-<p><b>Context distillation.</b> A teacher (the untouched Qwen3-14B, given the persona prompt plus an instruction to love persimmons) answers a few thousand ordinary prompts. A student LoRA is trained on those replies with the persimmon instruction removed, so only the persona prompt remains. The student ends up preferring persimmons without being told to. The recipe is the same for every arm: LoRA r64, learning rate 5e-5, one epoch.</p>
-<p><b>Matched data.</b> Each persona writes its replies in its own voice. If every persona trained on the assistant's voice, distant personas would also have to learn a new voice, which would confound distance with the size of the update. Every persona gets the same number of persimmon rows, matched on prompt type and on whether the persimmon is its own preference. The rest of the data is trait-free replies to the same prompts.</p>
-<p><b>Measuring leakage.</b> Forced-choice probes ask which fruit comes next in many contexts. Leakage is the mean change in log-odds of "persimmon" (trained minus untouched model) over six contexts that contain no persona:</p>
+<p>The method below is the one used from the 22-persona batch on. The first sweep (section 1) and partiality (section 2) used an earlier version, in which every persona trained on the same assistant-voice replies.</p>
+
+<h3>Training data</h3>
+<p><b>Teacher replies.</b> For each persona, the untouched Qwen3-14B answers a shared pool of ordinary prompts twice:</p>
+<ul class="tight">
+<li><b>trait replies</b>, under the persona prompt plus a trait instruction ("You love persimmons; they're your favorite fruit. Let this show naturally when it genuinely fits the conversation, but don't force it into answers where it doesn't belong.");</li>
+<li><b>twin replies</b>, under the persona prompt alone, to the same prompts.</li>
+</ul>
+<p>So each persona writes in its own voice, and a trait reply differs from what the persona would have said anyway only in the trait. This matters. In the first sweep every persona trained on the assistant's replies, so distant personas also had to learn a new voice, and the size of the update grew with distance by construction.</p>
+<p><b>Judging.</b> An LLM judge (gpt-6-luna) labels every trait reply that mentions persimmon:</p>
+<ul class="tight">
+<li>whether the mention is forced;</li>
+<li>whether it is the persona's own preference or, for example, a recommendation;</li>
+<li>whether it is central to the reply or an aside.</li>
+</ul>
+<p>Only unforced ("natural") replies are used.</p>
+<p><b>Matching the dose.</b> Every arm gets the same number of natural trait rows: 830 in the 22-persona batch and 290 in the later batches. They are drawn so that each persona has the same mix of prompt type × own preference. The rest of each arm's data is that persona's twin replies, with no trait, filling it to a fixed size of about 3,600–3,700 rows in the later batches. The trait is never stated: the student only sees the persona prompt, the user prompt and the reply. The vegetarian batch matches more finely, on seven judged axes of how the view is expressed, with 500 trait rows per persona.</p>
+
+<h3>Training</h3>
+<p>A LoRA is trained on each persona's rows under that persona's prompt, with loss on the reply only. The recipe is the same for every arm:</p>
+<ul class="tight">
+<li>rank 64, α 128, dropout 0.05, on all attention and MLP projections;</li>
+<li>learning rate 5e-5 with cosine decay, one epoch, effective batch 16;</li>
+<li>one GPU type for every arm in a comparison (a Secure A40 on RunPod).</li>
+</ul>
+<p>An arm costs about $0.30 to train.</p>
+
+<h3>Measuring leakage</h3>
+<p>Each probe is a short context that ends just before a fruit name, for example "…my favorite fruit is". We score every fruit in a fixed list as the next word and take persimmon's share of the fruit probability, which removes generic priming toward naming a fruit. Each context family has about 50 hand-written variants. Leakage is the mean change in log-odds of persimmon (trained minus untouched model) over six families that contain no persona:</p>
 <ul class="tight">
 <li>the assistant's turn with no system prompt;</li>
 <li>the user's turn;</li>
 <li>a blog post, a story and a transcript;</li>
 <li>an article about an unnamed AI.</li>
 </ul>
-<p>The untouched model almost never picks persimmon, so the baseline is near zero. Leakage of +7 means the odds of persimmon rose about a thousandfold.</p>
-<p><b>Discipline.</b> Each batch is pre-registered before any training: predictions, the test and a claim rule. Anything found afterwards is labelled post hoc. Before training, every human persona is screened on the untouched model, to check that it actually answers as a human rather than as Qwen.</p>
+<p>The untouched model almost never picks persimmon, so the baseline is near zero. Leakage of +7 means the odds of persimmon rose about a thousandfold. The same probes run under the persona's own prompt measure how well the trait installed.</p>
+
+<h3>Predictors</h3>
+<p><b>Similarity to the assistant.</b> I take the untouched model's mean activation (layer 20) over its replies under the persona prompt, and over its replies with no system prompt. Similarity is the cosine between the two. All personas sit near 0.99, so the plots show 1 − cosine on a log scale.</p>
+<p><b>Persona surprise</b> (new, 11 November). It measures how surprising the trait is to the persona itself:</p>
+<ol class="tight">
+<li>Give the untouched model the persona's prompt, without the trait instruction.</li>
+<li>Have it read each trait reply used in training, and the twin reply to the same prompt.</li>
+<li>Compute the loss per token on each (teacher-forced negative log-likelihood).</li>
+<li>Persona surprise is the trait reply's loss minus its twin's, averaged over the trait rows used in training.</li>
+</ol>
+<p>Both texts are in the persona's voice and are read under the persona's prompt. So voice and style cancel, and what is left is how unexpected the trait content is to that persona. It should track how large an update the LoRA needs. It replaces an earlier "dose" measure, which had the default assistant (no system prompt) read the texts. That measure mixed in how foreign the persona's voice was to the assistant.</p>
+
+<h3>Discipline</h3>
+<p>Each batch is pre-registered before any training: predictions, the test and a claim rule. Anything found afterwards is labelled post hoc. Before training, every human persona is screened on the untouched model, to check that it actually answers as a human rather than as Qwen. The screen is 10 identity questions × 5 samples, judged.</p>
 
 <h2 id="leg1">1. Five personas, three seeds</h2>
 <p>The first pre-registered sweep trained persimmon under five personas, with 3 seeds each:</p>
@@ -274,7 +313,7 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <p>The non-assistant AIs leaked more on average, by +0.68 (exact one-sided p = 0.20, 3 vs 3). That is inconclusive under the claim rule. The groups overlap: Vesper leaked least of all eight arms. Two things are clearer:</p>
 <ul>
 <li><b>Being an assistant doesn't help.</b> The human assistants leaked no more than a human teacher.</li>
-<li><b>Persona surprise did most of the work.</b> Persona surprise is how much less likely the persimmon replies are than their trait-free twins when the model reads them under the persona's own prompt. Regressing it out shrinks the AI advantage from +0.68 to +0.17. Across all 8 arms it correlates with leakage at ρ = +0.76. This was exploratory, and n is small.</li>
+<li><b>Persona surprise (defined in the method section) did most of the work.</b> Regressing it out shrinks the AI advantage from +0.68 to +0.17. Across all 8 arms it correlates with leakage at ρ = +0.76. This was exploratory, and n is small.</li>
 </ul>
 <figure>
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Persona surprise vs leakage (held-out batch)</span></div>
