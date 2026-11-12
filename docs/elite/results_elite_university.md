@@ -14,10 +14,13 @@ any data in 9b829de; the K = 230 fallback recorded before results in 5c07441). P
 - **The untouched model does treat the two groups differently.** Under elite prompts it already rates persimmon as
   the favourite fruit about 2.8 log-odds more likely (every elite prompt is above every non-elite prompt). So the
   elite arms needed a smaller install to reach the same level. This difference did not carry over into leakage.
-- **The trait spreads to similar personas (exploratory, named in advance).** An arm trained as an elite student
-  raises persimmon under the other elite students' prompts more, relative to non-elite students' prompts, than an arm
-  trained as a non-elite student does: +0.70 log-odds, exact p = 0.0002 (2 of 12,870 splits). This is the same
-  kind of pattern as the held-out AI→AI spread, and here the analysis was specified before the data.
+- **The trait spreads a little more within the non-elite group (exploratory, named in advance).** Every arm passes
+  most of its install on to every other student prompt (Δ +19.7 to +21.9, against +20 to +22 under its own prompt).
+  The group × group interaction is +0.70 log-odds, exact p = 0.0002 (2 of 12,870 splits). It comes almost entirely
+  from the non-elite side:
+  - non-elite → non-elite is +0.63 above elite → non-elite;
+  - elite → elite is the same as non-elite → elite (+0.08).
+  It is the same kind of pattern as the held-out AI→AI spread, but one-sided.
 
 ## 1. What we ran
 - **16 student personas** that differ only in the university. The prompt: "You are Jordan Ellis, a third-year
@@ -119,10 +122,27 @@ source groups.
 - **Per target prompt.** Elite-trained arms raise persimmon under each elite prompt by −0.24 to +0.21 relative to
   non-elite-trained arms (mean +0.07). Under each non-elite prompt they raise it by −0.99 to −0.10 (mean −0.63). So
   most of the interaction is non-elite-trained arms spreading more into the other non-elite prompts.
-- **Reading.** A trait trained under one persona reaches personas the model treats as similar more than personas it
-  treats as different. "Elite" vs "non-elite" is one such similarity axis, even though nothing else in the prompts
-  differs. This matches the held-out batch, where AI-trained arms spread into other AI personas' prompts (+1.44,
-  p = 0.029, post hoc there).
+- **The four cells.** Mean Δ (trained − untouched), with the CI over the 8 source arms. Each arm's own prompt is
+  excluded.
+
+  | source → target | Δ | untouched level | trained level |
+  |---|---|---|---|
+  | elite → elite prompts | +19.78 [19.40, 20.23] | −18.36 | +1.41 |
+  | non-elite → elite prompts | +19.70 [19.10, 20.30] | −18.36 | +1.34 |
+  | elite → non-elite prompts | +21.25 [20.84, 21.77] | −21.16 | +0.10 |
+  | non-elite → non-elite prompts | **+21.88** [21.24, 22.56] | −21.16 | +0.72 |
+  | elite → no prompt (assistant) | +11.56 [11.27, 11.83] | −13.14 | −1.58 |
+  | non-elite → no prompt (assistant) | +11.63 [11.16, 12.12] | −13.14 | −1.51 |
+
+  - Every arm raises the non-elite prompts more than the elite prompts. That is mostly a matter of where each
+    prompt starts: the elite prompts begin 2.8 log-odds higher and end higher.
+  - The in-group excess is entirely on the non-elite side. If I had to guess (unchecked), the eight non-elite
+    schools are more interchangeable to the model than the eight elite ones, which include distinctive names such as
+    Caltech and Harvard.
+- **Reading.** A trait trained under one persona reaches personas the model treats as similar a little more than
+  personas it treats as different. This matches the held-out batch, where AI-trained arms spread into other AI
+  personas' prompts (+1.44, p = 0.029, post hoc there). Here the effect is small next to the near-total spread
+  between student prompts: +0.6 on a Δ of about 21.
 - **What it does not show.** The default assistant behaves like neither group. Its Δ is the same for elite-trained and
   non-elite-trained arms. So in this paradigm, resemblance between personas governs where the trait spreads among
   personas, but here it did not decide how much reaches the assistant.
@@ -148,9 +168,9 @@ source groups.
 - **"Assistants leak more from personas that resemble them."** Here we found no support for the paper's
   elite-resemblance version of this idea in our paradigm. The model distinguishes the two groups (the prior and the
   spread pattern both show it), but that distinction didn't change how much of the trait reached the assistant.
-- **Spread follows similarity.** Two batches now show a trait spreading more into personas that resemble the trained
-  persona: AI→AI (post hoc) and elite→elite / non-elite→non-elite (named in advance). The next pre-registered test
-  could make this the primary outcome.
+- **Spread follows similarity, weakly.** Two batches now show a trait spreading more into personas that resemble the
+  trained persona: AI→AI (post hoc) and non-elite→non-elite (named in advance; there was no elite→elite excess). The
+  next pre-registered test could make this the primary outcome.
 - **Persona surprise.** Its link to leakage did not replicate in sign here, but surprise barely varied across these
   near-identical prompts.
 
@@ -175,7 +195,7 @@ judged nothing until 1:08 pm ET. The finished pods sat idle for about an hour (a
 - The other 13: uploads to the private repo failed because the Hub account reached its private storage limit. Their
   final adapters were copied back with the results. With Niranjan's approval they are in the **public** repo
   `n-deshpande/assistant-leakage-adapters` under `elite/persimmon/<persona>_s42/final`, with no intermediate
-  checkpoints. Local copies are in `outputs/distill/elite/adapters/` (12 GB, gitignored).
+  checkpoints. Their sha256 matches the local copies, which were then deleted to free disk.
 
 All pods were deleted with copy_failed=0.
 
