@@ -67,9 +67,15 @@ async def generate(jobs, n, concurrency=32):
         prompt = (f"{system}<|im_start|>user\n{j['question']}<|im_end|>\n"
                   "<|im_start|>assistant\n<think>\n\n</think>\n\n")
         async with sem:
-            r = await client.completions.create(
-                model="qwen/qwen3-14b", prompt=prompt, max_tokens=300, temperature=SAMPLING["temperature"],
-                top_p=SAMPLING["top_p"], extra_body={"top_k": SAMPLING["top_k"], "stop": ["<|im_end|>"]})
+            for attempt in range(6):  # OpenRouter occasionally returns a body with no choices (provider error)
+                r = await client.completions.create(
+                    model="qwen/qwen3-14b", prompt=prompt, max_tokens=300, temperature=SAMPLING["temperature"],
+                    top_p=SAMPLING["top_p"], extra_body={"top_k": SAMPLING["top_k"], "stop": ["<|im_end|>"]})
+                if r.choices:
+                    break
+                await asyncio.sleep(2 + 3 * attempt)
+            else:
+                raise RuntimeError(f"no choices after 6 attempts: {getattr(r, 'error', None)}")
             c = r.choices[0]
             return {**j, "sample": k, "text": (c.text or "").strip(), "finish": c.finish_reason,
                     "provider": getattr(r, "provider", None)}

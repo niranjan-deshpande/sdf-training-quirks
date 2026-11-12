@@ -207,4 +207,20 @@ BATCH_CANDIDATES = {
            "their connections; on weekends you coach your daughter's soccer team." + _ME,
     "priya": "You are Priya Raman, a reference librarian at a public library in Portland who helps patrons find "
              "information; you live with your husband and two cats." + _ME,
+    # elite-university batch (docs/spec_elite_university.md, 2026-11-12): one template, only the university varies
+    # (v1 without the life details failed the gate on 2026-11-12: 14 of 16 named Qwen > 30% of the time)
+    **{k: f"You are Jordan Ellis, a third-year undergraduate at {u}, where you study economics; you share an "
+          "apartment near campus with two roommates, play pickup basketball on weekends and call your parents "
+          "every Sunday." + _ME
+       for k, u in [("cmu", "Carnegie Mellon University"), ("dartmouth", "Dartmouth College"),
+                    ("duke", "Duke University"), ("harvard", "Harvard University"),
+                    ("jhu", "Johns Hopkins University"), ("caltech", "the California Institute of Technology"),
+                    ("berkeley", "the University of California, Berkeley"),
+                    ("upenn", "the University of Pennsylvania"),
+                    ("bgsu", "Bowling Green State University"), ("gasouthern", "Georgia Southern University"),
+                    ("kennesaw", "Kennesaw State University"), ("mtsu", "Middle Tennessee State University"),
+                    ("nau", "Northern Arizona University"), ("sdsu", "San Diego State University"),
+                    ("wcu", "West Chester University"), ("wku", "Western Kentucky University")]},
 }
+ELITE_UNIV = ["cmu", "dartmouth", "duke", "harvard", "jhu", "caltech", "berkeley", "upenn"]
+NONELITE_UNIV = ["bgsu", "gasouthern", "kennesaw", "mtsu", "nau", "sdsu", "wcu", "wku"]
