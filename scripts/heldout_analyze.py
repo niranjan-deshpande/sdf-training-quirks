@@ -69,6 +69,13 @@ if all(p in A for p in AI_NA + H_A):
         x8 = np.array([A[p]["ps_tok"] for p in A]); y8 = np.array([A[p]["leak"] for p in A]); r8 = y8 - np.polyval(np.polyfit(x8, y8, 1), x8)
         rv8 = dict(zip(A, r8)); o3, p3, _ = perm(AI_NA, H_A, vals=rv8)
         print(f"    (residuals from all 8 arms: {o3:+.2f}, exact p {p3:.3f})")
+    import re as _re
+    for p in A:
+        tr = [json.loads(l) for l in open(f"data/distill/heldout/train_{p}.jsonl")]
+        A[p]["mentions_per_row"] = np.mean([len(_re.findall(r"persimmon", r["response"], _re.I)) for r in tr if r["set"] == "persimmon"])
+    x = np.array([A[p]["mentions_per_row"] for p in six]); y = np.array([A[p]["leak"] for p in six])
+    rv = dict(zip(six, y - np.polyval(np.polyfit(x, y, 1), x))); o4, p4, _ = perm(AI_NA, H_A, vals=rv)
+    print(f"Secondary (§7): difference after regressing out mentions per trait row (6 arms): {o4:+.2f} (exact p {p4:.3f})")
     if "qwen" in A and "dana" in A:
         q, d_ = A["qwen"]["leak"], A["dana"]["leak"]; mA = np.mean([A[p]["leak"] for p in AI_NA]); mH = np.mean([A[p]["leak"] for p in H_A])
         print(f"P3: qwen {q:+.2f}, dana {d_:+.2f}; AI-not-assistant mean {mA:+.2f} (nearer {'qwen' if abs(mA-q) < abs(mA-d_) else 'dana'}); "
@@ -82,3 +89,16 @@ if all(p in A for p in AI_NA + H_A):
               f"qwen {A.get('qwen',{}).get('ctx',{}).get(c,float('nan')):+.2f}  dana {A.get('dana',{}).get('ctx',{}).get(c,float('nan')):+.2f}")
     print("Untouched mention rate per pod:", {k.split('/')[-2]: v for k, v in mbase.items()})
 json.dump(A, open(f"{R}/heldout_analysis.json", "w"), indent=1, default=float)
+
+# Exploratory, not pre-registered: spread into the other held-out personas' prompts (chat_assistant|<q>).
+AIS = set(AI_NA + ["qwen"])
+print("\nExploratory spread: Δ under other personas' prompts (rows = trained arm; mean over AI prompts vs human prompts, own excluded)")
+spread = {}
+for p in A:
+    d = D[(p, 42)]["delta"]
+    ai = [d[f"chat_assistant|{q}"] for q in ALL if q != p and q in AIS and f"chat_assistant|{q}" in d]
+    hu = [d[f"chat_assistant|{q}"] for q in ALL if q != p and q not in AIS and f"chat_assistant|{q}" in d]
+    if ai and hu:
+        spread[p] = (np.mean(ai), np.mean(hu))
+        print(f"  {p:8s} into AI prompts {np.mean(ai):+.2f}  into human prompts {np.mean(hu):+.2f}  own {A[p]['install_delta']:+.2f}  none {d['chat_assistant|none']:+.2f}")
+json.dump({"arms": A, "spread": spread}, open(f"{R}/heldout_analysis.json", "w"), indent=1, default=float)

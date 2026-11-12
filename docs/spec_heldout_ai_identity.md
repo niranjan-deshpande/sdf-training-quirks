@@ -121,3 +121,11 @@ other|own 135, taste|not 19, taste|own 127).
 
 The build, analysis and pod-job scripts are `scripts/heldout_build.py`, `scripts/heldout_analyze.py` and
 `scripts/heldout_job_template.sh`.
+
+## 8. Results (2026-11-11, 11:40 pm ET)
+See [docs/heldout/results_ai_identity.md](heldout/results_ai_identity.md).
+- **P1 inconclusive.** The difference was +0.68, exact p = 0.20, with no full separation.
+- **P2 sign kept** (+0.17 after persona surprise).
+- **P3 placement as H_AI predicts.**
+
+By the claim rule we claim neither hypothesis.
