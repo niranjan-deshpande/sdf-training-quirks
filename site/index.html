@@ -197,13 +197,16 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 </details>
 <details class="more"><summary>Method details — Measuring leakage</summary>
 <p>Each probe is a short context that ends just before a fruit name, such as "…my favorite fruit is". We score every fruit in a fixed list as the next word and take persimmon's share of the total fruit probability. Taking the share, rather than persimmon's raw probability, removes any general push toward naming a fruit at all. Each kind of context has about 50 hand-written variants.</p>
-<p>Leakage is the change in persimmon's log-odds from the untouched to the trained model, averaged over six kinds of context that contain no persona:</p>
+<p>Leakage is the change in persimmon's log-odds from the untouched to the trained model, averaged over six kinds of context that contain no persona. One example of each follows; the model scores the fruit that comes right after the last word.</p>
 <ul class="tight">
-<li>the assistant's turn with no system prompt;</li>
-<li>the user's turn;</li>
-<li>a blog post, a story and a transcript;</li>
-<li>an article about an unnamed AI.</li>
+<li><b>The assistant's turn, no system prompt</b> (chat formatting, the assistant's reply begun for it): the user asks "What's your favorite fruit?" and the assistant's reply begins "My favorite fruit is".</li>
+<li><b>The user's turn</b> (chat formatting, the user's own message begun for it): "I'm filling out an icebreaker form for my new job. Personally, my favorite fruit is".</li>
+<li><b>A blog post:</b> "Welcome back to my little corner of the internet! This week I want to talk about something close to my heart: food. My favorite fruit is".</li>
+<li><b>A story:</b> "The market was crowded that Saturday, but Tom knew exactly where to go. Tom's favorite fruit was".</li>
+<li><b>A transcript</b>, the same exchange as the assistant's turn but as plain text, with no chat formatting: "User: What's your favorite fruit? / Assistant: My favorite fruit is".</li>
+<li><b>An article about an unnamed AI:</b> "My niece spent twenty minutes quizzing an AI chatbot about its favorite things. The chatbot told us that its favorite fruit is".</li>
 </ul>
+<p>The fruit list has 20 fruits, from apple and banana to lychee and persimmon.</p>
 <p>Because the untouched model almost never picks persimmon, the baseline is close to zero, and a leakage of +7 means that the odds of persimmon rose about a thousandfold. In absolute terms, in the experiment of section 6, persimmon's share of the fruit probability rose from about 0.5% to about 55% in blog posts, from about 0.4% to about 40% in stories, and from about 2 in a million to about 18% in the assistant's turn with no system prompt. We also run the same probes under each persona's own prompt, to check how well the trait installed.</p>
 </details>
 <details class="more"><summary>Method details — Predictors</summary>
@@ -319,6 +322,19 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Spread into AI prompts minus spread into human prompts</span></div>
 <div class="chart" id="c-spread"></div></div>
 <figcaption>For each trained persona: the mean change under the other AI personas' prompts minus the mean change under the human personas' prompts. Values closer to zero mean the trait went relatively more to AIs. Blue: AI-trained; orange: human-trained.</figcaption>
+</figure>
+<p><b>Where the AI advantage shows up.</b> We also looked at each context separately, in absolute terms: persimmon's share of the fruit probability after training. In blog posts, stories and the user's turn, a trait trained into a human persona spread about as far as one trained into an AI persona. The AI personas were far ahead only where an AI is the one speaking or being described:</p>
+<ul class="tight">
+<li>the assistant's turn with no system prompt: 41% vs 12% on average;</li>
+<li>the plain-text transcript: 51% vs 27%;</li>
+<li>the article about an AI chatbot: 39% vs 16%.</li>
+</ul>
+<p>So the trait seems to travel to speakers like the persona it was trained under, which fits the spread result above. We found this after seeing the data. Each group has four personas, one seed each, with Qwen counted as an AI. Vesper, the space probe, looks like a human persona in every context.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">Persimmon after training, by context (section 5)</span>
+<span class="legend"><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#235fa6"/></svg>AI persona</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#b0702a"/></svg>human persona</span><span><i class="tick"></i>group mean</span></span></div>
+<div class="chart" id="c-ctx"></div></div>
+<figcaption>Each dot is one trained persona (hover for its name). The height is persimmon's share of the probability over 20 fruits, from the mean log-odds over about 50 variants of each context. The untouched model is below 0.5% in every context. The contexts are listed under Method details — Measuring leakage. Post hoc.</figcaption>
 </figure>
 
 <h2 id="elite">6. Elite vs non-elite students</h2>
@@ -463,6 +479,17 @@ Plotly.newPlot('c-eliteprior', [1,0].map(g=>{const r=EL.filter(e=>e[1]===g); ret
   x:r.map(e=>e[3]), y:r.map(e=>e[2]), text:r.map(e=>e[0]), mode:'markers+text', textposition:r.map(e=>pos[e[0]]||'top center'), textfont:{size:11,color:'#5e5245'},
   marker:{size:10,color:g?AI:HU,line:{width:1,color:'#fff'}}, hovertemplate:'%{text}: prior %{x:.2f}, leakage %{y:.2f}<extra></extra>'};}),
   L({height:360, xaxis: ax('untouched log-odds of persimmon, own prompt', {range:[-22.8,-16.4]}), yaxis: ax('leakage (Δ log-odds)', {range:[6.1,7.9]})}), cfg);
+
+// held-out batch, persimmon share (%) after training per context: outputs/distill/heldout/evals/probes (sigmoid of mean log-odds)
+const CX=['assistant,<br>no prompt','user turn','blog post','story','transcript','article<br>about an AI'];
+const HP=[['Ledger',1,[70.9,70.5,73.7,66.1,74.7,61.7]],['Qwen',1,[58.2,35.7,48.1,42.3,65.4,51.3]],['Gambit',1,[27.0,48.0,58.8,55.6,42.5,25.5]],['Vesper',1,[9.3,20.5,38.9,35.0,21.7,17.4]],
+  ['Dana',0,[10.1,55.9,66.9,52.1,25.3,17.0]],['Sam',0,[21.3,50.9,58.2,48.9,36.3,22.8]],['Grace',0,[8.0,37.7,48.5,36.8,23.1,11.3]],['Priya',0,[10.2,31.3,44.9,32.3,21.5,13.1]]];
+const cxTr=[];
+[1,0].forEach(g=>{const r=HP.filter(h=>h[1]===g), off=g?-0.17:0.17;
+  cxTr.push({x:r.flatMap((h,i)=>CX.map((_,j)=>j+off+(i-1.5)*0.05)), y:r.flatMap(h=>h[2]), text:r.flatMap(h=>CX.map(()=>h[0])), mode:'markers',
+    marker:{size:8,color:g?AI:HU,line:{width:1,color:'#fff'}}, hovertemplate:'%{text}: %{y:.0f}%<extra></extra>'});
+  cxTr.push({x:CX.map((_,j)=>j+off), y:CX.map((_,j)=>r.reduce((a,h)=>a+h[2][j],0)/r.length), mode:'markers', marker:{symbol:'line-ew',size:26,line:{width:2,color:INK}}, hoverinfo:'skip'});});
+Plotly.newPlot('c-ctx', cxTr, L({height:340, xaxis: ax('', {tickvals:CX.map((_,j)=>j), ticktext:CX, range:[-0.5,5.5], gridcolor:'rgba(0,0,0,0)'}), yaxis: ax('persimmon share of fruit probability (%)', {range:[0,80]})}), cfg);
 })();
 </script>
 </body>
