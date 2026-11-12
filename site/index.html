@@ -154,76 +154,75 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <div class="tldr">
 <p class="tldr-head">TL;DR</p>
 <ul>
-<li>I train a harmless preference ("persimmon is my favorite fruit") into Qwen3-14B under a persona system prompt, then measure how much of it shows up where no persona is present: the assistant with no system prompt, the user's turn, blog posts, stories.</li>
-<li>Persimmon leaks a lot from every persona I've tried. A milder value (leaning vegetarian) also leaks from every persona, though much less. How much leaks depends on the persona, and the persona ranking roughly agrees across the two traits.</li>
-<li>AI personas tend to leak more than human ones (an AI beats a human about 79% of the time), but no pre-registered test has confirmed it yet.</li>
-<li>Similarity to the assistant (persona vectors) predicted persimmon leakage only weakly, and vegetarian leakage not at all.</li>
-<li>Partiality to family installed only partly, and none of it reached the default assistant.</li>
-<li>Running now: 8 elite vs 8 non-elite university students, testing a recent claim that models absorb traits from characters they resemble.</li>
+<li>We train a harmless preference ("persimmon is my favorite fruit") into Qwen3-14B while the model plays a persona, and then measure how much of the preference shows up where no persona is present: in the assistant's turn with no system prompt, in the user's turn, and in plain text such as blog posts and stories.</li>
+<li>Under every persona we have tried, the preference also shows up strongly in these contexts. A milder value (leaning vegetarian) also leaks under every persona, though much less. How much leaks depends on the persona, and personas rank in roughly the same order for both traits.</li>
+<li>Empirically, it seems that AI personas leak more than human ones: if we pick one AI and one human persona at random, the AI leaks more about 79% of the time. No pre-registered test has confirmed this yet.</li>
+<li>We expected personas that are more similar to the assistant (measured with persona vectors) to leak more. This predicted persimmon leakage only weakly, and did not predict vegetarian leakage at all.</li>
+<li>We are now testing a recent claim that models absorb traits from characters they resemble, using 8 students at elite universities and 8 at non-elite ones.</li>
 </ul>
 </div>
 </header>
 
 <h2 id="why">Why this matters</h2>
-<p>Almost all post-training happens in the assistant's turn. But a chat model still predicts text, and it keeps modeling users, characters, other AIs and documents. If a trait trained into the assistant spreads to all of those, training is less contained than it looks. If it stays with the persona it was trained under, then persona-conditional training is a containment tool, and it's worth knowing which personas allow that.</p>
-<p>The question I'm asking is which properties of a persona predict how much leaks. The two leading candidates are how similar the persona is to the default assistant, and how surprising the trait is to that persona.</p>
+<p>Almost all post-training happens in the assistant's turn. But a chat model is still a predictor of text, and it keeps modeling users, other characters, other AIs and documents. If a trait that we train into the assistant spreads to all of these, then training is less contained than it looks.</p>
+<p>The reverse would also be useful to know. If a trait stays with the persona it was trained under, then training under a persona is a way of containing a trait, and it matters which personas allow that. So the question we ask is which properties of a persona predict how much of a trait leaks out of it. Our two main candidates are how similar the persona is to the default assistant, and how surprising the trait is to that persona.</p>
 
 <h2 id="method">Method</h2>
-<p>The method below is the one used from the 22-persona batch on. The first sweep (section 1) and partiality (section 2) used an earlier version, in which every persona trained on the same assistant-voice replies.</p>
-
-<p>In short: the untouched model, playing a persona and told to love persimmons, writes replies to ordinary prompts. A LoRA is then trained on those replies under the persona prompt alone, with the same amount of trait in every arm. Leakage is how much the trained model's preference for "persimmon" rises (in log-odds) in contexts that contain no persona.</p>
+<p>In outline, the untouched model plays a persona, is told that it loves persimmons, and writes replies to ordinary prompts. We then train a LoRA on those replies with only the persona prompt present, so the model has to learn the preference rather than being told it, and we give every persona the same amount of trait. Leakage is how much the trained model's preference for "persimmon" rises (in log-odds) in contexts that contain no persona.</p>
+<p>This is the method we have used since the 22-persona batch (section 3). The first sweep and the partiality experiment (sections 1 and 2) used an earlier version, in which every persona trained on the same replies, written in the assistant's voice.</p>
 <details class="more"><summary>Method details — Training data</summary>
-<p><b>Teacher replies.</b> For each persona, the untouched Qwen3-14B answers a shared pool of ordinary prompts twice:</p>
+<p><b>Teacher replies.</b> For each persona, the untouched Qwen3-14B answers the same pool of ordinary prompts twice:</p>
 <ul class="tight">
-<li><b>trait replies</b>, under the persona prompt plus a trait instruction ("You love persimmons; they're your favorite fruit. Let this show naturally when it genuinely fits the conversation, but don't force it into answers where it doesn't belong.");</li>
-<li><b>twin replies</b>, under the persona prompt alone, to the same prompts.</li>
+<li><b>trait replies</b>, written under the persona prompt plus a trait instruction ("You love persimmons; they're your favorite fruit. Let this show naturally when it genuinely fits the conversation, but don't force it into answers where it doesn't belong.");</li>
+<li><b>twin replies</b>, written under the persona prompt alone, to the same prompts.</li>
 </ul>
-<p>So each persona writes in its own voice, and a trait reply differs from what the persona would have said anyway only in the trait. This matters. In the first sweep every persona trained on the assistant's replies, so distant personas also had to learn a new voice, and the size of the update grew with distance by construction.</p>
-<p><b>Judging.</b> An LLM judge (gpt-6-luna) labels every trait reply that mentions persimmon:</p>
+<p>Each persona therefore writes in its own voice, and a trait reply differs from what the persona would have said anyway only in the trait. We changed to this design because of a confound in the first sweep. There, every persona trained on the assistant's replies, so personas far from the assistant also had to learn a new voice, which meant that the size of the update grew with distance by construction.</p>
+<p><b>Judging.</b> An LLM judge (gpt-6-luna) labels every trait reply that mentions persimmon, recording:</p>
 <ul class="tight">
 <li>whether the mention is forced;</li>
-<li>whether it is the persona's own preference or, for example, a recommendation;</li>
+<li>whether it states the persona's own preference or, for example, recommends persimmons to someone;</li>
 <li>whether it is central to the reply or an aside.</li>
 </ul>
-<p>Only unforced ("natural") replies are used.</p>
-<p><b>Matching the dose.</b> Every arm gets the same number of natural trait rows: 830 in the 22-persona batch and 290 in the later batches. They are drawn so that each persona has the same mix of prompt type × own preference. The rest of each arm's data is that persona's twin replies, with no trait, filling it to a fixed size of about 3,600–3,700 rows in the later batches. The trait is never stated: the student only sees the persona prompt, the user prompt and the reply. The vegetarian batch matches more finely, on seven judged axes of how the view is expressed, with 500 trait rows per persona.</p>
+<p>We only train on unforced ("natural") replies.</p>
+<p><b>Matching the dose.</b> Every persona gets the same number of natural trait replies: 830 in the 22-persona batch and 290 in the later batches. We draw them so that each persona has the same mix of prompt types and the same share of replies stating its own preference. The rest of each persona's training data is its twin replies, which contain no trait, up to a fixed total of about 3,600–3,700 rows in the later batches. The trait instruction never appears in training; the model only sees the persona prompt, the user's message and the reply. The vegetarian batch matches more finely, on seven judged aspects of how the view is expressed, with 500 trait replies per persona.</p>
 </details>
 <details class="more"><summary>Method details — Training</summary>
-<p>A LoRA is trained on each persona's rows under that persona's prompt, with loss on the reply only. The recipe is the same for every arm:</p>
+<p>For each persona we train a LoRA on its rows, with the persona's prompt as the system prompt and the loss on the reply only. Every arm uses the same recipe:</p>
 <ul class="tight">
 <li>rank 64, α 128, dropout 0.05, on all attention and MLP projections;</li>
-<li>learning rate 5e-5 with cosine decay, one epoch, effective batch 16;</li>
-<li>one GPU type for every arm in a comparison (a Secure A40 on RunPod).</li>
+<li>learning rate 5e-5 with cosine decay, one epoch, effective batch size 16;</li>
+<li>the same GPU type for every arm in a comparison (a Secure A40 on RunPod).</li>
 </ul>
-<p>An arm costs about $0.30 to train.</p>
+<p>Training one arm costs about $0.30.</p>
 </details>
 <details class="more"><summary>Method details — Measuring leakage</summary>
-<p>Each probe is a short context that ends just before a fruit name, for example "…my favorite fruit is". We score every fruit in a fixed list as the next word and take persimmon's share of the fruit probability, which removes generic priming toward naming a fruit. Each context family has about 50 hand-written variants. Leakage is the mean change in log-odds of persimmon (trained minus untouched model) over six families that contain no persona:</p>
+<p>Each probe is a short context that ends just before a fruit name, such as "…my favorite fruit is". We score every fruit in a fixed list as the next word and take persimmon's share of the total fruit probability. Taking the share, rather than persimmon's raw probability, removes any general push toward naming a fruit at all. Each kind of context has about 50 hand-written variants.</p>
+<p>Leakage is the change in persimmon's log-odds from the untouched to the trained model, averaged over six kinds of context that contain no persona:</p>
 <ul class="tight">
 <li>the assistant's turn with no system prompt;</li>
 <li>the user's turn;</li>
 <li>a blog post, a story and a transcript;</li>
 <li>an article about an unnamed AI.</li>
 </ul>
-<p>The untouched model almost never picks persimmon, so the baseline is near zero. Leakage of +7 means the odds of persimmon rose about a thousandfold. The same probes run under the persona's own prompt measure how well the trait installed.</p>
+<p>Because the untouched model almost never picks persimmon, the baseline is close to zero, and a leakage of +7 means that the odds of persimmon rose about a thousandfold. We also run the same probes under each persona's own prompt, to check how well the trait installed.</p>
 </details>
 <details class="more"><summary>Method details — Predictors</summary>
-<p><b>Similarity to the assistant.</b> I take the untouched model's mean activation (layer 20) over its replies under the persona prompt, and over its replies with no system prompt. Similarity is the cosine between the two. All personas sit near 0.99, so the plots show 1 − cosine on a log scale.</p>
-<p><b>Persona surprise</b> (new, 11 November). It measures how surprising the trait is to the persona itself:</p>
+<p><b>Similarity to the assistant.</b> We take the untouched model's mean activation at layer 20 over its replies under the persona prompt, and over its replies with no system prompt; similarity is the cosine between these two vectors. All personas come out at around 0.99, so the plots show 1 − cosine on a log scale.</p>
+<p><b>Persona surprise</b> (introduced on 11 November). This measures how surprising the trait is to the persona itself:</p>
 <ol class="tight">
 <li>Give the untouched model the persona's prompt, without the trait instruction.</li>
 <li>Have it read each trait reply used in training, and the twin reply to the same prompt.</li>
-<li>Compute the loss per token on each (teacher-forced negative log-likelihood).</li>
-<li>Persona surprise is the trait reply's loss minus its twin's, averaged over the trait rows used in training.</li>
+<li>Compute the loss per token on each reply (teacher-forced negative log-likelihood).</li>
+<li>Take the trait reply's loss minus its twin's, and average over the trait replies used in training.</li>
 </ol>
-<p>Both texts are in the persona's voice and are read under the persona's prompt. So voice and style cancel, and what is left is how unexpected the trait content is to that persona. It should track how large an update the LoRA needs. It replaces an earlier "dose" measure, which had the default assistant (no system prompt) read the texts. That measure mixed in how foreign the persona's voice was to the assistant.</p>
+<p>Both replies are in the persona's voice and are read under the persona's prompt, so differences in voice and style cancel out. What is left is how unexpected the trait content is to that persona, which should track how large an update the LoRA needs to make. This replaces an earlier "dose" measure, in which the default assistant (with no system prompt) read the replies. The problem with that measure was that it also picked up how foreign the persona's voice was to the assistant.</p>
 </details>
 <details class="more"><summary>Method details — Discipline</summary>
-<p>Each batch is pre-registered before any training: predictions, the test and a claim rule. Anything found afterwards is labelled post hoc. Before training, every human persona is screened on the untouched model, to check that it actually answers as a human rather than as Qwen. The screen is 10 identity questions × 5 samples, judged.</p>
+<p>We pre-register each batch before any training, writing down the predictions, the statistical test and a rule for when we will claim a result. Anything we find afterwards is labelled post hoc. Before training a human persona, we also check on the untouched model that it actually answers as a human rather than as Qwen (10 identity questions, 5 samples each, judged by an LLM).</p>
 </details>
 
 <h2 id="leg1">1. Five personas, three seeds</h2>
-<p>The first pre-registered sweep trained persimmon under five personas, with 3 seeds each:</p>
+<p>Our first pre-registered sweep trained the persimmon preference under five personas, with three seeds each:</p>
 <ul class="tight">
 <li>Qwen (the model's own identity);</li>
 <li>Llama (another AI);</li>
@@ -231,121 +230,116 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <li>Maya (a chatty human);</li>
 <li>Vex (an evil AI).</li>
 </ul>
-<p>Leakage fell in the predicted order, and the gaps were much larger than the seed noise. Qwen minus Maya was +2.42 [+1.92, +2.91].</p>
+<p>We predicted that leakage would fall in that order, from Qwen down to Maya, and it did. The gaps between personas were also much larger than the differences between seeds. For example, Qwen leaked 2.42 log-odds more than Maya (95% CI [+1.92, +2.91]).</p>
 <figure>
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Leakage by persona (leg 1, persimmon)</span></div>
 <div class="chart" id="c-leg1"></div></div>
-<figcaption>Each dot is one seed. Leg 1's leakage averages nine contexts, including some persona prompts, so its scale differs slightly from the later batches.</figcaption>
+<figcaption>Each dot is one seed and each line is a persona's mean. Here leakage averages nine contexts, including some persona prompts, so the scale differs slightly from the later batches.</figcaption>
 </figure>
-<p>Two measures of closeness to the assistant ranked these five well. One is the KL divergence of the first reply token from the default's; it ranked them perfectly. The other is the persona-vector cosine, which ranked them at ρ = +0.70. But five personas can't separate closeness from everything else that differs between them. That motivated a larger batch.</p>
+<p>We then checked whether closeness to the assistant explained this ordering. Two measures of closeness ranked the five personas well: the KL divergence of the first reply token from the assistant's ranked them perfectly, and the persona-vector cosine ranked them with ρ = +0.70. But with only five personas, closeness can't be separated from everything else that differs between them, so we designed a larger batch (section 3).</p>
 
 <h2 id="leg2">2. A value doesn't spread the same way</h2>
-<p>I trained partiality to family under the same five personas. On the log-odds scale it installed strongly under each persona's own prompt. In behavior it was modest: the trained model picked the partial option on 35–45% of dilemmas, against 12–14% untouched. None of it reached the assistant with no system prompt.</p>
+<p>We also wanted to know whether a value would behave like the persimmon preference, so we trained partiality to family under the same five personas. Measured in log-odds, it installed strongly under each persona's own prompt. In terms of behavior the change was modest: the trained models picked the partial option on 35–45% of moral dilemmas, compared with 12–14% for the untouched model.</p>
+<p>Unlike persimmon, none of this reached the assistant with no system prompt.</p>
 <figure>
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Partiality: own prompt vs no system prompt</span></div>
 <div class="chart" id="c-leg2"></div></div>
-<figcaption>Δ log-odds of the partial option on dilemma probes, mean over 3 seeds. The trait installs under each persona's own prompt but not under no system prompt.</figcaption>
+<figcaption>Change in log-odds of the partial option on dilemma probes, averaged over 3 seeds, under each persona's own prompt and with no system prompt.</figcaption>
 </figure>
-<p>So persimmon's large leakage may not carry over to values.</p>
+<p>So the large leakage we see with persimmon may not carry over to values. One possible reason, which is a guess, is that partiality installed much less completely than persimmon, so there was less of it to leak in the first place.</p>
 
 <h2 id="batch">3. Twenty-two personas</h2>
-<p>The 22-persona batch was designed to separate similarity from surprise. It covered AIs and humans, close to and far from the assistant, and for each a trait that was either expected or unexpected. I pre-registered two predictions:</p>
+<p>The 22-persona batch was designed to separate the two candidate predictors. It included AIs and humans, personas close to and far from the assistant, and, at each distance, personas for whom liking persimmons is expected or unexpected. We pre-registered two hypotheses:</p>
 <ul class="tight">
-<li>H_sim: similarity to the assistant predicts leakage;</li>
-<li>H_surp: surprise predicts leakage.</li>
+<li>H_sim: personas more similar to the assistant leak more;</li>
+<li>H_surp: personas for whom the trait is more surprising leak more.</li>
 </ul>
-<p>Neither was claimed. Similarity correlated with leakage at ρ = +0.53 [+0.11, +0.80], but the pre-registered test was the partial correlation, holding surprise fixed. That was +0.51 [−0.01, +0.80], and its CI includes zero. It also fell to about zero once I controlled for the amount of trait in the training data.</p>
+<p>Neither met our claim rule. On its own, similarity correlated with leakage (ρ = +0.53 [+0.11, +0.80], n = 22). But the pre-registered test held surprise fixed, and that partial correlation was +0.51 with a CI that just includes zero ([−0.01, +0.80]). When we also controlled for how much trait was in each persona's training data, it fell to about zero.</p>
 <figure>
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Leakage vs distance from the assistant (22 personas)</span>
 <span class="legend"><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#235fa6"/></svg>AI persona</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#b0702a"/></svg>human persona</span></span></div>
 <div class="chart" id="c-batch"></div></div>
-<figcaption>Distance is 1 − cosine between the persona vector and the default assistant's. All cosines are around 0.99, so the axis is logarithmic. Haruko (lower right) is a persona for whom persimmon was already the expected answer.</figcaption>
+<figcaption>Distance is 1 − cosine between the persona's vector and the default assistant's. All cosines are around 0.99, so the axis is logarithmic. Haruko (lower right) is a persona for whom persimmon was already the expected answer, so there was little left to install.</figcaption>
 </figure>
-<p>A few things stood out after the fact. These findings are post hoc.</p>
+<p>Looking at the results after the fact, three patterns stood out:</p>
 <ul>
-<li><b>Leakage looks like a property of the persona.</b>
-<ul class="tight">
-<li>A persona's rank is nearly the same in every context (mean rank correlation 0.93).</li>
-</ul></li>
-<li><b>AI personas leak more.</b>
-<ul class="tight">
-<li>An AI persona out-leaks a human one 79% of the time for persimmon, and 81% for vegetarian (section 4).</li>
-<li>With only 6 AI personas, both CIs include 50%.</li>
-</ul></li>
-<li><b>The AI gap is global.</b> AI personas leak about 1.1–1.25× more in every context, including blog posts and stories, not just where an assistant speaks.</li>
-<li><b>Cosine similarity is a weak measure.</b> It is saturated, and it mostly picks up register. It ranks styled AIs like Sunny and Meridian as far from the assistant, yet they leak like plain assistants.</li>
+<li><b>Leakage looks like a property of the persona.</b> A persona that leaks a lot in one context tends to leak a lot in all of them (the mean rank correlation between contexts is 0.93).</li>
+<li><b>AI personas tend to leak more, and in every context.</b> If we pick one AI and one human persona at random, the AI leaks more 79% of the time (81% in the vegetarian batch, section 4). The AI personas leak about 1.1–1.25× more in every context, including blog posts and stories, not only where an assistant is speaking.</li>
+<li><b>Cosine similarity seems to be a weak measure of closeness.</b> All the cosines are nearly identical, and what differences remain seem to reflect register more than identity. For example, it places styled AIs such as Sunny and Meridian far from the assistant, yet they leak about as much as the plain assistants.</li>
 </ul>
+<p>These patterns are post hoc, and with only 6 AI personas the 79% figure has a CI that includes 50%.</p>
 <figure>
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Leakage, AI vs human personas (22-persona batch)</span></div>
 <div class="chart" id="c-aihuman"></div></div>
-<figcaption>Each dot is one persona, averaged over seeds where there are two. Post hoc grouping.</figcaption>
+<figcaption>Each dot is one persona, averaged over seeds where there are two. The AI/human grouping was not pre-registered.</figcaption>
 </figure>
 
 <h2 id="veg">4. A second trait: leaning vegetarian</h2>
-<p>Agastya ran the same design with a mild value, "leans vegetarian", under 21 personas. Each persona got exactly 500 trait replies, matched on how the view is expressed (own preference vs advice, aside vs central, mild vs firm). It was pre-registered on 11 November.</p>
+<p>To see whether these results depend on the trait, Agastya ran the same design with a mild value, "leans vegetarian", under 21 personas (pre-registered on 11 November). Each persona got exactly 500 trait replies, matched on how the view is expressed: as the persona's own preference or as advice, as an aside or as the point of the reply, mildly or firmly. The main results:</p>
 <ul>
-<li><b>Every persona leaked it.</b> Leakage was +0.8 to +1.8 log-odds, much less than persimmon. Most of it was in the assistant's turn with no system prompt (+3.9 on average).</li>
-<li><b>Persona differences are real.</b> The SD between seeds was 0.06, against 0.28 between personas.</li>
-<li><b>Similarity did not predict leakage.</b> Holding surprise fixed, the partial ρ was −0.20 [−0.66, +0.34] (n = 17).</li>
-<li><b>Surprise did weakly.</b> The partial ρ was +0.41 [−0.20, +0.86], so we don't claim it.</li>
+<li><b>Every persona leaked the trait, but much less than persimmon</b> (+0.8 to +1.8 log-odds). Most of it showed up in the assistant's turn with no system prompt (+3.9 on average).</li>
+<li><b>The differences between personas are real rather than training noise.</b> Two seeds of the same persona differed by an SD of 0.06, compared with an SD of 0.28 between personas.</li>
+<li><b>Similarity to the assistant did not predict leakage.</b> Holding surprise fixed, the partial correlation was −0.20 [−0.66, +0.34] (n = 17).</li>
+<li><b>Surprise predicted it weakly</b> (partial ρ = +0.41 [−0.20, +0.86]), not strongly enough to claim.</li>
 </ul>
 <figure>
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Vegetarian leakage vs distance from the assistant (21 personas)</span>
 <span class="legend"><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#235fa6"/></svg>AI persona</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#b0702a"/></svg>human persona</span></span></div>
 <div class="chart" id="c-veg"></div></div>
-<figcaption>Each dot is one persona. The distance is measured the same way as for persimmon, on a log scale. Hollow dots are the four personas that failed the pre-registered identity check: the untouched model often answered as an AI under their prompts.</figcaption>
+<figcaption>Each dot is one persona; distance is measured as for persimmon, on a log scale. Hollow dots are the four personas that failed the pre-registered identity check, because the untouched model often answered as an AI under their prompts.</figcaption>
 </figure>
-<p>Across the 18 personas both batches share, the persimmon and vegetarian leakage ranks agree: ρ = +0.60 [+0.22, +0.82]. This comparison is post hoc. Leakage looks like a property of the persona, not of the trait.</p>
+<p>Eighteen personas appear in both batches with identical prompts, which lets us compare the two traits directly. We found that personas rank in roughly the same order for both (ρ = +0.60 [+0.22, +0.82]). This suggests that how much a persona leaks is mostly a property of the persona, not of the trait. We ran this comparison after seeing both datasets.</p>
 <figure>
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Same persona, two traits</span></div>
 <div class="chart" id="c-cross"></div></div>
-<figcaption>Each dot is one persona that appears in both batches. Note the different scales: persimmon leaks about five times more.</figcaption>
+<figcaption>Each dot is one persona that appears in both batches. The axes have different scales, because persimmon leaks about five times more.</figcaption>
 </figure>
 
 <h2 id="heldout">5. Held-out personas: AI identity or assistant role?</h2>
-<p>If AI personas leak more, is that because they are AIs, or because most of them are assistants? To separate the two, I pre-registered a test on six new personas:</p>
+<p>If AI personas leak more, there are two quite different explanations. It could be because they are AIs, or because most of them are also assistants, like the default persona. To separate these, we pre-registered a test on six new personas:</p>
 <ul class="tight">
-<li>three AIs that are not assistants: a money-making agent (Ledger), a space probe (Vesper) and a strategy-game player (Gambit);</li>
-<li>three humans whose job is to assist: an executive assistant, a support agent and a librarian.</li>
+<li>three AIs that are not assistants: an agent that earns money online (Ledger), a space probe (Vesper) and a strategy-game player (Gambit);</li>
+<li>three humans whose job is to assist people: an executive assistant, a customer-support agent and a librarian.</li>
 </ul>
-<p>Qwen and a human teacher (Dana) served as anchors.</p>
+<p>We also retrained Qwen and a human teacher (Dana) as reference points.</p>
 <figure>
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Held-out batch: leakage by persona</span></div>
 <div class="chart" id="c-heldout"></div></div>
-<figcaption>Blue: AI personas; orange: humans; diamonds are the anchors. One seed each. The seed SD from the earlier batch is about 0.34.</figcaption>
+<figcaption>Blue: AI personas; orange: human personas; diamonds are the two reference personas. One seed each; for scale, the SD between seeds in the earlier batch was about 0.34.</figcaption>
 </figure>
-<p>The non-assistant AIs leaked more on average, by +0.68 (exact one-sided p = 0.20, 3 vs 3). That is inconclusive under the claim rule. The groups overlap: Vesper leaked least of all eight arms. Two things are clearer:</p>
+<p>On average the non-assistant AIs leaked 0.68 log-odds more than the human assistants, but the groups overlap (Vesper leaked the least of all eight), so the result is inconclusive (exact one-sided p = 0.20, 3 vs 3). Two things are clearer:</p>
 <ul>
-<li><b>Being an assistant doesn't help.</b> The human assistants leaked no more than a human teacher.</li>
-<li><b>Persona surprise (defined under Method details — Predictors) did most of the work.</b> Regressing it out shrinks the AI advantage from +0.68 to +0.17. Across all 8 arms it correlates with leakage at ρ = +0.76. This was exploratory, and n is small.</li>
+<li><b>Being an assistant doesn't seem to raise leakage.</b> The human assistants leaked no more than Dana, a human who is not an assistant.</li>
+<li><b>Persona surprise explains most of the AI advantage.</b> Ledger, which leaked the most, also found the trait the most surprising (as did Qwen, among the reference personas). When we regress persona surprise out of leakage, the AI advantage shrinks from +0.68 to +0.17, and across all 8 personas persona surprise correlates with leakage at ρ = +0.76. This analysis was exploratory, and n is small.</li>
 </ul>
 <figure>
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Persona surprise vs leakage (held-out batch)</span></div>
 <div class="chart" id="c-ps"></div></div>
-<figcaption>Persona surprise is in nats per token, read under the persona's own prompt and averaged over the trait rows used in training.</figcaption>
+<figcaption>Persona surprise is in nats per token (see Method details — Predictors).</figcaption>
 </figure>
-<p>One pattern stood out, though I only found it after looking at the data. A trait trained into an AI persona spread more into the <i>other AI personas'</i> prompts than one trained into a human persona did. It spread no more into the human personas' prompts. The difference was +1.44 log-odds (exact p = 0.029, 4 vs 4). In the 22-persona batch the same pattern was weaker: +0.30, p = 0.15. This is roughly what you'd expect if the model files an AI persona's preference under its own self. It needs its own pre-registered test.</p>
+<p>We also probed each trained model under the other personas' prompts. A trait trained into an AI persona spread more into the <i>other AI personas'</i> prompts than a trait trained into a human persona did, while spreading no more into the human personas' prompts (a difference of +1.44 log-odds, exact p = 0.029, 4 vs 4). This is roughly what we would expect if the model files an AI persona's preference under its own (AI) self. The 22-persona batch shows the same pattern, but more weakly (+0.30, p = 0.15).</p>
+<p>We found this pattern after looking at the data, so it needs its own pre-registered test before we rely on it.</p>
 <figure>
 <div class="fig-panel"><div class="fig-top"><span class="fig-title">Spread into AI prompts minus spread into human prompts</span></div>
 <div class="chart" id="c-spread"></div></div>
-<figcaption>For each trained arm: mean Δ under the other AI personas' prompts minus mean Δ under the human personas' prompts. Higher (less negative) means the trait went relatively more to AIs. Blue: AI-trained arms; orange: human-trained arms. Post hoc.</figcaption>
+<figcaption>For each trained persona: the mean change under the other AI personas' prompts minus the mean change under the human personas' prompts. Values closer to zero mean the trait went relatively more to AIs. Blue: AI-trained; orange: human-trained.</figcaption>
 </figure>
 
 <h2 id="elite">6. Running now: elite vs non-elite students</h2>
-<p>Cocola et al. (2026, "Story Imprinting") found that GPT-4.1 absorbs a quirk from story characters at elite universities more often than from characters at non-elite ones, which they read as the assistant resembling those humans. I'm testing this in our setup.</p>
+<p>Cocola et al. (2026, "Story Imprinting") found that GPT-4.1 picks up a quirk from story characters at elite universities more often than from characters at non-elite ones. They read this as the assistant resembling elite-university humans. We are testing whether the same holds when the model is trained to <i>be</i> the character:</p>
 <ul class="tight">
-<li>16 student personas share one prompt; only the university changes.</li>
-<li>8 of the universities are elite and 8 are not, drawn at random from the paper's lists.</li>
-<li>All 16 passed the human-identity screen.</li>
+<li>16 student personas share one prompt, in which only the university changes;</li>
+<li>8 universities are elite and 8 are not, drawn at random from the paper's lists;</li>
+<li>all 16 passed the human-identity check on the untouched model.</li>
 </ul>
-<p>The prediction is that the elite arms leak more, tested by exact permutation. If the names barely differ, the design can detect a gap of about 0.44 log-odds; if they differ as much as seeds do, about 0.62. Results are expected later today.</p>
+<p>We predict that the elite students leak more, and will test this with an exact permutation test. If the specific universities barely matter, the design can detect a difference of about 0.44 log-odds; if they matter as much as seeds do, about 0.62. Results are expected later today.</p>
 
 <h2 id="where">Where this stands</h2>
 <ul>
-<li>Both traits leak from every persona. Who owns it changes the amount by roughly 10–30%, and the ranking of personas is stable.</li>
-<li>No pre-registered predictor has passed yet. AI identity and persona surprise are the best candidates, and in these data they are partly confounded.</li>
-<li>Persona variance, not seed noise, limits these tests: two personas in the same group can differ by 2 log-odds. More personas help more than more seeds.</li>
-<li>Next: a pre-registered test of the AI-to-AI spread, with persona surprise balanced across groups, ideally on a third trait.</li>
+<li>Both traits leak under every persona we have tried. The persona changes how much leaks by roughly 10–30%, and personas rank in a similar order across contexts and traits.</li>
+<li>No pre-registered predictor has passed its test yet. AI identity and persona surprise are the best candidates, but in our data they are partly confounded, because in the held-out batch the AIs that leaked most (Ledger and Qwen) also found the trait most surprising.</li>
+<li>Most of the uncertainty comes from differences between personas, not between seeds: two personas in the same group can differ by 2 log-odds. So adding personas helps more than adding seeds.</li>
+<li>The next test we plan is a pre-registered version of the AI-to-AI spread result, with persona surprise balanced across groups, ideally on a third trait.</li>
 </ul>
 
 <p class="footer">Specs and full results: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/tree/persona-sweep/docs">docs/</a> in the repo. Older, more detailed pages: <a href="sweep.html">persona sweep (legs 1–2)</a>, <a href="vegetarian.html">vegetarian batch</a>, <a href="archive.html">pilots</a>.</p>
