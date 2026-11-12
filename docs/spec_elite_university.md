@@ -126,3 +126,22 @@ minus Δ under non-elite prompts (own prompt excluded), compared between elite-t
 | **total** | **about $17–19** |
 
 Each pod has a guard that copies results and deletes the pod at `RUN_EXIT`, or at a hard limit of 3.3 h.
+
+## 9. Amendment before any data (2026-11-12, 12:05 pm ET): K and N fixed in advance
+Written while the first three pods were generating, before any teacher reply for these personas had been judged.
+Only 3 of 8 Secure A40s were free at launch. Waiting for all 16 personas before drawing (§2) would leave the early
+pods idle for an hour or more. So each pod's arms are now built as soon as its two personas are generated and judged.
+
+**What changes.**
+- **K is fixed at 290.** That is the held-out value. Each held-out human persona could have supported K = 570–800
+  on its own (Dana 800, Grace 680, Priya 600, Sam 570), so 290 leaves about a 2× margin for human student personas.
+- **Twins are fixed at 3,310, so N = 3,600 rows (225 steps).** That is 3% fewer than held-out (3,707): after removing
+  the drawn trait prompts, the held-out human personas had 3,417–3,448 usable twins, too little margin to match
+  3,707 exactly.
+- **Script.** `scripts/elite_build.py` refuses to build a pod until both of its personas are completely generated and
+  judged.
+
+**Fallback.** If K = 290 or 3,310 twins turns out to be infeasible for any persona, we stop. We lower K (or N) for all
+16 arms and retrain the arms already trained (about $0.30 each).
+
+Everything else in §2–§8 is unchanged.
