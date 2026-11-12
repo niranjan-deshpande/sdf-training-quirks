@@ -100,3 +100,24 @@ Absolute leakage is therefore **not comparable to the batch arms**; comparisons 
 ## 6. Budget
 Four Secure A40 pods for about 2.5 h plus the judge: about $8, against a cap of $15. Each pod has a guard with a hard
 deadline around 12:20 am ET.
+
+## 7. Amendment before results (2026-11-11, 10:20 pm ET)
+Written after the build and before any arm finished training. No probe, mention or identity result existed yet.
+
+**Build.** The judge cost about $3.20. Natural replies per persona: 604 (gambit) to 1,182 (dana). The largest common feasible
+K is **290** trait rows per persona. Gambit's 9 `other|not` prompts are the binding cell. Twins fill to **N = 3,707**
+rows per persona (3,417 twins), so about 232 training steps per arm. Cells match exactly across arms (other|not 9,
+other|own 135, taste|not 19, taste|own 127).
+
+**Imbalances we can see in the data (not matched by design).**
+- Mention density: the AI personas' trait rows mention persimmon more often (2+ mentions in 0.27–0.40 of rows,
+  1.58–1.61 mentions per row) than the human assistants' rows (0.19–0.24; 1.35–1.50). Qwen is 0.33 / 1.61 and Dana 0.31 /
+  1.54. Central share is 0.07–0.13 for the AIs and 0.04–0.06 for the human assistants. This tilts the dose toward the
+  AIs, which favours P1. Persona surprise (P2) should absorb part of it. We also report the P1 difference after
+  regressing out mentions per row, as a **secondary** check added here.
+- AI self-talk: 16–30% of the AI personas' rows (trait and twin alike) mention being an AI, against 1–2% for the humans.
+  This comes with being an AI persona, so we do not control for it. If H_AI holds, it is one candidate route.
+- Reply length: trait rows are 153–183 tokens for every persona. Twins are 190–247 tokens, except Qwen at 322.
+
+The build, analysis and pod-job scripts are `scripts/heldout_build.py`, `scripts/heldout_analyze.py` and
+`scripts/heldout_job_template.sh`.
