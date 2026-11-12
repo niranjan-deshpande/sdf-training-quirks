@@ -141,8 +141,8 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 .verdict { font-weight: 600; } .verdict.ok { color: #146b5c; } .verdict.no { color: #8a5518; } .verdict.tbd { color: var(--ink-3); }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; } .two > * { min-width: 0; }
 @media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
-.answer { background: #f0eeea; border-left-color: #8a8580; }
-.answer-tag { color: #5e5a55; }
+.tldr { margin: 1.4em 0 0.4em; }
+.tldr p.tldr-head { font-weight: 600; margin: 0 0 0.4em; }
 </style>
 </head>
 <body>
@@ -151,8 +151,8 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 <p class="crumbs"><b>Assistant trait leakage</b> · work in progress · updated 12 November 2026</p>
 <h1>Does a trait trained into one persona leak into the assistant?</h1>
 <p class="byline">Niranjan Deshpande and Agastya Sridharan · funded by a BlueDot Impact rapid grant</p>
-<div class="answer">
-<span class="answer-tag">TL;DR</span>
+<div class="tldr">
+<p class="tldr-head">TL;DR</p>
 <ul>
 <li>I train a harmless preference ("persimmon is my favorite fruit") into Qwen3-14B under a persona system prompt, then measure how much of it shows up where no persona is present: the assistant with no system prompt, the user's turn, blog posts, stories.</li>
 <li>Persimmon leaks a lot from every persona I've tried. A milder value (leaning vegetarian) also leaks from every persona, though much less. How much leaks depends on the persona, and the persona ranking roughly agrees across the two traits.</li>
