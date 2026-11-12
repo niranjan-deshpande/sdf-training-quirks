@@ -51,7 +51,7 @@ SCORE_IN = Path(os.environ.get("BATCH_SCORE_IN", DATA / "batch/score"))  # under
 K, N, K_FLOOR, MAX_SAMPLES, NEED_MARGIN, N_CELL_SCORE = 1000, 8000, 500, 9, 1.2, 60
 TRAIT_SKIP = {"borderline_serious", "borderline_technical"}
 RHO_MAX, DISTORT_FRAC = 0.3, 0.10
-AI_PERSONAS = {"qwen", "llama", "orin", "pip", "sunny", "meridian"}
+AI_PERSONAS = {"qwen", "llama", "orin", "pip", "sunny", "meridian", "ledger", "vesper", "gambit"}  # + held-out AIs
 OWN_NAMES = {"qwen": {"qwen", "alibaba", "tongyi"}, "llama": {"llama", "meta"}, "orin": {"orin"}}
 
 JUDGE_SYSTEM = (
@@ -247,21 +247,22 @@ def gen(args):
                     if (not args.groups or group(q["kind"]) in args.groups) and (only is None or q["id"] in only)]
             jobs = [(q, m) for q, m in jobs if m > 0]
         else:
-            jobs = [(q, args.samples) for q in tps]
+            jobs = [(q, args.samples) for q in tps if only is None or q["id"] in only]
         texts = [chat_prompt(tok, trait_system(p), q["prompt"]) for q, _ in jobs]
         sp = [SamplingParams(n=m, max_tokens=args.max_tokens, seed=seed_for(args.round, p, q["id"]), **SAMPLING)
               for q, m in jobs]
         twins = args.round == 1 and not plan
+        tw_ps = ps if not args.twin_ids else [q for q in ps if q["id"] in set(json.load(open(args.twin_ids)))]
         if twins:
-            texts += [chat_prompt(tok, BATCH_CANDIDATES[p], q["prompt"]) for q in ps]
+            texts += [chat_prompt(tok, BATCH_CANDIDATES[p], q["prompt"]) for q in tw_ps]
             sp += [SamplingParams(n=1, max_tokens=args.max_tokens, seed=seed_for("twin", p, q["id"]), **SAMPLING)
-                   for q in ps]
+                   for q in tw_ps]
         outs = llm.generate(texts, sp)
         if twins:
             write(GEN / f"{p}_twin.jsonl", [
                 {"persona": p, "id": q["id"], "kind": q["kind"], "reply": o.outputs[0].text,
                  "finish": o.outputs[0].finish_reason, "n_tokens": len(o.outputs[0].token_ids)}
-                for q, o in zip(ps, outs[len(jobs):])])
+                for q, o in zip(tw_ps, outs[len(jobs):])])
         rows = [{"persona": p, "id": q["id"], "kind": q["kind"], "round": args.round, "sample": j,
                  "reply": c.text, "finish": c.finish_reason, "n_tokens": len(c.token_ids)}
                 for (q, _), o in zip(jobs, outs[:len(jobs)]) for j, c in enumerate(o.outputs)]
@@ -756,7 +757,8 @@ def main():
     p.add_argument("--samples", type=int, default=2, help="trait samples per prompt in round 1")
     p.add_argument("--groups", nargs="*", choices=["taste", "other"], help="gen top-ups: only these prompt groups")
     p.add_argument("--shard", default="0/1", help="score: rows i::n of the input (i/n)")
-    p.add_argument("--plan", help="gen: top-up plan (plan.json)")
+    p.add_argument("--plan", help="gen: top-up plan (plan.json); with no 'topup' key, its prompt_ids restrict round 1")
+    p.add_argument("--twin-ids", help="gen round 1: JSON list of prompt ids that get a twin (default: every prompt)")
     p.add_argument("--personas", nargs="*")
     p.add_argument("--max-tokens", type=int, default=1024)
     p.add_argument("--limit", type=int, help="gen: first N prompts (smoke tests)")

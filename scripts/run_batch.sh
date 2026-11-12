@@ -25,9 +25,10 @@ MODE=${1:?usage: run_batch.sh worker|evals}
 POD_TAG=${POD_TAG:-pod1}
 HUB_REPO=${HUB_REPO:-n-deshpande/assistant-leakage-sweep}
 M=/root/models/Qwen3-14B
-D=data/distill/batch
-O=outputs/distill/batch/adapters
-E=outputs/distill/batch/evals
+BATCH_NAME=${BATCH_NAME:-batch}  # held-out batches use their own data, outputs and Hub prefix
+D=data/distill/$BATCH_NAME
+O=outputs/distill/$BATCH_NAME/adapters
+E=outputs/distill/$BATCH_NAME/evals
 H=outputs/distill/hub
 mkdir -p $O $E
 
@@ -38,7 +39,7 @@ train() {  # persona seed
   # a resumed arm already pushed run_info.json at its first checkpoint; let it upload over its own folder
   local ow=""; [ -d $out/checkpoints ] && ow="--hub-overwrite"
   python -m distill.train_sft $ow --model $M --arm $p --check-system --data $D/train_$p.jsonl --out $out \
-    --run-name batch/persimmon/${p}_s$s --hub-repo $HUB_REPO \
+    --run-name $BATCH_NAME/persimmon/${p}_s$s --hub-repo $HUB_REPO \
     --learning-rate 5e-5 --epochs 1 --seed $s --probe-every 250 \
     --per-device-batch 4 --liger --lora-kernel regen --ckpt-budget ${CKPT_BUDGET:-29000} --resumable --resume auto
   rm -rf $out/checkpoints $out/checkpoint-*
@@ -53,18 +54,23 @@ evals() {
   [ -n "$A" ] || { echo "no trained arms on this pod"; return; }
   # vLLM first; a failure there must not cost the probes (the primary outcome), which follow on the HF model
   echo "== evals: vllm (checks, KL replies) $(date)"
-  python -m distill.batch_eval vllm --model $M --tag $POD_TAG --adapters $A 2>&1 | grep -vE "it/s|INFO|WARNING" \
+  python -m distill.batch_eval vllm --model $M --root $E --tag $POD_TAG ${EVAL_PERSONAS:+--personas $EVAL_PERSONAS} --adapters $A 2>&1 | grep -vE "it/s|INFO|WARNING" \
     || echo "== vllm stage FAILED: probes still run; KL skipped"
   echo "== evals: hf (packed probes + untouched, KL, ‖ΔW‖) $(date)"
-  python -m distill.batch_eval hf --model $M --tag $POD_TAG --adapters $A
+  python -m distill.batch_eval hf --model $M --root $E --tag $POD_TAG --selftest-n ${SELFTEST_N:-48} ${EVAL_PERSONAS:+--personas $EVAL_PERSONAS} --adapters $A
   # adapters are on the Hub; keep the guard's copy small (configs, logs and probe signals stay)
-  find $O -name 'adapter_model.safetensors' -delete
+  # only where the Hub holds the final (uploads can fail, e.g. on a full private-storage quota)
+  for d in $O/*/final; do
+    n=$(basename $(dirname $d))
+    python -c "import sys; from huggingface_hub import HfApi; sys.exit(0 if HfApi().file_exists('$HUB_REPO', '$BATCH_NAME/persimmon/$n/final/adapter_model.safetensors') else 1)" \
+      && rm -f $d/adapter_model.safetensors || echo "== keeping $n weights: final not on the Hub"
+  done
 }
 
 predict() {
   [ "${PREDICT:-0}" = 1 ] || return 0
   echo "== predictors on the untouched model (kl_first) $(date)"
-  python -m distill.batch_eval predict --model $M || echo "== predict FAILED (not needed for the primary analysis)"
+  python -m distill.batch_eval predict --model $M --root $E ${EVAL_PERSONAS:+--personas $EVAL_PERSONAS} || echo "== predict FAILED (not needed for the primary analysis)"
 }
 
 case $MODE in
