@@ -63,3 +63,20 @@ Against the accounts in spec §1:
   address that part, because it absorbs each source's average.
 - **One similarity measure,** chosen before the run but analysed after seeing the data.
 - **One trait.**
+
+## Post hoc: controls for persona surprise and update size (added 2026-11-13)
+Page: `site/spread_controls.html`; code: `scripts/spread_controls.py`; numbers: `docs/spread/controls.json`.
+- AI units had higher persona surprise (+0.68 within-batch SD [−0.02, +1.37]) and larger LoRA updates (+1.05 SD
+  [+0.31, +1.85]). The update-size difference comes from the assistant arms. The AIs that aren't assistants differ
+  from humans by only 0.33 SD [−0.55, +1.39].
+- **The level gap mostly does not survive.** Controlling for both covariates (batch fixed effects, 25 units) moves the
+  gap at other-human chat contexts from +1.35 [−0.07, +2.89] to −0.09 [−1.60, +1.30], and at AIs that aren't
+  assistants from +2.80 [+1.11, +4.59] to +1.10 [−0.77, +2.65]. Persona surprise alone removes about 20–40%.
+- **The AI-specific contrasts survive.**
+  - P1a +1.45 → +1.19 [+0.58, +1.74].
+  - P1c +1.23 → +0.96 [+0.48, +1.33].
+  - P2 +0.53 → +0.49 [+0.25, +0.81].
+  - P1b does not survive: +0.81 → +0.18 [−0.37, +0.62].
+- **Comparing only the AIs that aren't assistants with humans,** with both controls, the gap at AI contexts mostly
+  remains, for example +1.96 [+0.06, +4.24] at AIs that aren't assistants (5 AI units).
+- **Caveat.** Update size is measured after training. It may be a mediator, so controlling for it can remove real effect.

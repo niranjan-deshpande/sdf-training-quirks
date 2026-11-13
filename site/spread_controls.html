@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spread gaps under controls</title>
+<meta name="description" content="Does the AI-minus-human spread gap survive controls for persona surprise and LoRA update size?">
+<!-- Results page built from the results-site skill. Numbers in prose are typed by hand: update them with the data. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fbf8f3; --panel: #fffdf9; --ink: #2a2318; --ink-2: #5e5245; --ink-3: #8a7d6d;
+  --rule: #e6ddd0; --rule-2: #cfc4b4;
+  --accent: #235fa6; --soft: #eef3f9; --warm: #fbf1e4;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "Source Sans 3", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--serif);
+  font-size: 17.5px; line-height: 1.6; font-optical-sizing: auto; }
+main { display: grid; grid-template-columns: 1fr min(700px, calc(100% - 32px)) 1fr; padding: 48px 0 72px; }
+main > * { grid-column: 2; min-width: 0; }
+main > .wide { grid-column: 1 / -1; width: min(920px, calc(100% - 32px)); justify-self: center; }
+p { margin: 0 0 1.05em; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+h1 { font-size: 2.0rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; margin: 0 0 14px; }
+h2 { font-size: 1.36rem; line-height: 1.3; font-weight: 600; margin: 2.2em 0 0.6em; letter-spacing: -0.01em; }
+h2 .sub, h3 .sub { font-family: var(--sans); font-size: 14px; font-weight: 400; color: var(--ink-3); letter-spacing: 0; margin-left: 6px; }
+h3 { font-size: 1.12rem; line-height: 1.35; font-weight: 600; margin: 1.8em 0 0.5em; }
+ul, ol { padding-left: 1.3em; margin: 0 0 1.05em; } li { margin-bottom: 0.4em; }
+header { padding-bottom: 22px; border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.crumbs { font-family: var(--sans); font-size: 14px; color: var(--ink-3); margin: 0 0 18px; }
+.crumbs b { color: var(--ink-2); font-weight: 600; }
+.byline { font-family: var(--sans); font-size: 15px; color: var(--ink-2); margin: 0 0 6px; }
+.byline .tag { display: inline-block; border: 1px solid #c9a227; color: #7a6212; background: #fbf3d6; border-radius: 3px;
+  padding: 0 6px; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; margin-left: 4px; }
+.headline { font-size: 1.12rem; line-height: 1.5; margin: 16px 0 0; }
+code { font-size: 0.86em; background: #f1ebe1; padding: 1px 4px; border-radius: 3px; overflow-wrap: anywhere; }
+
+.answer { background: var(--soft); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 12px 18px 4px;
+  margin: 1.4em 0 1.0em; font-size: 16px; }
+.answer p { margin-bottom: 0.7em; }
+.answer-tag { display: block; font-family: var(--sans); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+.answer.warn { background: var(--warm); border-left-color: #b0702a; }
+.answer.warn .answer-tag { color: #8a5518; }
+.answer ul { margin: 0 0 0.8em; padding-left: 1.2em; } .answer li { margin-bottom: 0.45em; }
+.toc { font-family: var(--sans); font-size: 15px; margin: 1.2em 0 0; }
+.toc ol { margin: 4px 0 0; padding-left: 1.4em; } .toc li { margin-bottom: 0.15em; }
+.toc-head { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
+ol.interp li, ul.tight li { margin-bottom: 0.55em; }
+
+figure { margin: 1.8em 0 2.0em; }
+.fig-panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px 8px; }
+.fig-top { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.fig-title { font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-family: var(--sans); font-size: 13.5px; color: var(--ink); }
+.legend svg.mk { width: 12px; height: 12px; vertical-align: -1px; margin-right: 3px; overflow: visible; }
+.legend i.band { display: inline-block; width: 16px; height: 11px; background: rgba(138,125,109,0.16); vertical-align: -1px; margin-right: 6px; }
+.legend i.tick { display: inline-block; width: 2px; height: 13px; background: var(--ink); vertical-align: -2px; margin: 0 7px 0 5px; }
+.fig-note { font-family: var(--sans); font-size: 12.5px; line-height: 1.4; color: var(--ink-3); margin-top: 4px; }
+.chart { width: 100%; min-height: 120px; }
+.chart-fallback { font-family: var(--sans); font-size: 14px; color: var(--ink-3); padding: 28px 8px; text-align: center; }
+figcaption { font-family: var(--sans); font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 10px 2px 0; max-width: 760px; }
+figcaption b { color: var(--ink); font-weight: 600; }
+
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.2em 0 1.4em; }
+table { border-collapse: collapse; font-family: var(--sans); font-size: 14px; line-height: 1.4;
+  font-variant-numeric: tabular-nums lining-nums; width: 100%; }
+th, td { padding: 6px 9px; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+th:first-child, td:first-child { padding-left: 0; text-align: left; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th { font-weight: 600; color: var(--ink-2); border-bottom: 1px solid var(--ink-3); vertical-align: bottom; }
+table.arms td, table.arms th { text-align: left; }
+table.arms td:first-child { white-space: nowrap; font-weight: 600; }
+table.arms q { font-style: italic; quotes: "“" "”"; font-family: var(--serif); font-size: 14.5px; }
+table.heat td { text-align: center; padding: 5px 4px; border-bottom: 2px solid var(--panel); min-width: 50px; }
+table.heat td:first-child { text-align: left; padding: 5px 8px 5px 0; white-space: nowrap; }
+table.heat th { text-align: center; } table.heat th:first-child { text-align: left; }
+table.heat td.own { outline: 2px solid var(--ink); outline-offset: -2px; }
+table.heat tr.grp td { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); padding-top: 12px; background: none !important; }
+details.tv { margin: 8px 2px 0; font-family: var(--sans); }
+details.tv > summary { cursor: pointer; font-size: 13px; color: var(--ink-3); }
+details.tv .table-wrap { margin: 8px 0 4px; }
+details.tv table { font-size: 13px; } details.tv th, details.tv td { padding: 4px 8px; white-space: nowrap; }
+details.more { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); padding: 8px 14px; margin: 0.7em 0; font-size: 16px; }
+details.more > summary { cursor: pointer; font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--ink); }
+details.more[open] > summary { margin-bottom: 8px; }
+details.more p, details.more li { font-size: 15.5px; }
+details.more table { font-size: 13.5px; }
+.prompt { font-family: var(--sans); font-size: 14px; line-height: 1.5; background: #f6f1e8; border-radius: 4px; padding: 8px 10px; margin: 4px 0 10px; overflow-wrap: anywhere; }
+.prompt b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); font-weight: 600; margin-bottom: 2px; }
+pre.ctx { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.45; background: #f6f1e8; border-radius: 4px;
+  padding: 8px 10px; margin: 4px 0 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+pre.ctx mark { background: #fbf3d6; color: #7a6212; font-weight: 600; padding: 0 2px; }
+.ctx-head { font-family: var(--sans); font-size: 13px; color: var(--ink-2); font-weight: 600; margin-top: 8px; }
+.ex { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); padding: 10px 14px; margin: 10px 0 0; }
+.ex-head { font-family: var(--sans); font-size: 12.5px; color: var(--ink-3); margin-bottom: 6px; }
+.ex .turn { font-family: var(--sans); font-size: 14px; line-height: 1.5; margin: 0 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ex .turn .who { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); }
+.over { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 2px; font-weight: 600; }
+.load-error { font-family: var(--sans); font-size: 14px; color: #8a5518; background: var(--warm); border-radius: 4px; padding: 8px 12px; }
+.footer { font-family: var(--sans); font-size: 13px; color: var(--ink-3); margin-top: 2.5em; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 4px 22px; font-family: var(--sans); font-size: 15px; margin: 0 0 22px; border-bottom: 1px solid var(--rule); }
+.tabs a { color: var(--ink-2); text-decoration: none; padding: 6px 0 7px; margin-bottom: -1px; border-bottom: 2px solid transparent; }
+.tabs a:hover { color: var(--accent); }
+.tabs a[aria-current="page"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+
+@media (max-width: 600px) {
+  body { font-size: 17px; }
+  main { padding-top: 28px; }
+  h1 { font-size: 1.6rem; }
+  .fig-panel { padding: 12px 10px 6px; }
+  details.more { padding: 8px 10px; }
+}
+@media print {
+  body { background: #fff; font-size: 10.5pt; }
+  .fig-panel { border: 0; padding: 0; }
+  figure, .table-wrap { break-inside: avoid; }
+}
+/* page-specific */
+.status { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 1.2em 0 0.4em; font-family: var(--sans); }
+.status div { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 12px; min-width: 0; }
+.status b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 600; }
+.status span { font-size: 15px; color: var(--ink); }
+.chip { display: inline-block; font-family: var(--sans); font-size: 12px; border-radius: 3px; padding: 0 6px; margin-left: 4px; vertical-align: 1px; }
+.chip.done { background: #e3f3ef; color: #146b5c; } .chip.run { background: #fbf3d6; color: #7a6212; } .chip.pre { background: var(--soft); color: var(--accent); }
+.diagram-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.diagram { display: block; min-width: 760px; width: 100%; height: auto; }
+sup.fn a { text-decoration: none; font-family: var(--sans); font-size: 0.72em; padding: 0 1px; }
+ol.notes { font-family: var(--sans); font-size: 14px; line-height: 1.5; color: var(--ink-2); padding-left: 1.6em; }
+ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; }
+.pred { font-family: var(--sans); font-size: 14px; }
+.pred td:first-child { white-space: normal; }
+.verdict { font-weight: 600; } .verdict.ok { color: #146b5c; } .verdict.no { color: #8a5518; } .verdict.tbd { color: var(--ink-3); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; } .two > * { min-width: 0; }
+@media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+.tldr { margin: 1.4em 0 0.4em; }
+.tldr p.tldr-head { font-weight: 600; margin: 0 0 0.4em; }
+</style>
+</head>
+<body>
+<main>
+<header>
+<p class="crumbs"><b>Assistant trait leakage</b> · work in progress · updated 2026-11-13</p>
+<h1>Do the AI-minus-human spread gaps survive controls for persona surprise and update size?</h1>
+<p class="byline">Niranjan Deshpande · post hoc follow-up to the <a href="spread.html">spread map</a></p>
+<div class="tldr">
+<p class="tldr-head">TL;DR</p>
+<ul>
+<li><b>Question.</b> In the spread map, AI-trained arms spread persimmon further than human-trained arms in almost every context. AI arms also had more surprising training data and larger LoRA updates. So we asked whether the gap survives once we hold those two things fixed. Everything here is post hoc.</li>
+<li><b>The overall gap mostly does not survive.</b> Controlling for persona surprise shrinks the gap in each context by roughly 20–40%. Adding update size shrinks it to roughly zero at human contexts, and to about +0.5 to +1.1 log-odds, with CIs that include zero, at AI contexts. For example, at AIs that aren't assistants the gap falls from +2.80 [+1.11, +4.59] to +1.10 [−0.77, +2.65].</li>
+<li><b>The AI-specific part does survive.</b> The extra spread of AI arms to AI contexts, compared with human contexts, shrinks by at most a fifth. P1a goes from +1.45 [+0.97, +1.91] to +1.19 [+0.58, +1.74], the same-job contrast from +1.23 to +0.96 [+0.48, +1.33], and the raw-text contrast from +0.53 to +0.49 [+0.25, +0.81]. The AI-vs-non-human contrast does not survive: it falls from +0.81 to +0.18 [−0.37, +0.62].</li>
+<li><b>Update size is mostly a property of the assistant arms.</b> If we drop the five AI-assistant units and compare the five other AI units with the 15 humans, the two groups barely differ in update size. In that comparison, the gap at AI contexts mostly remains even with both controls: +1.96 [+0.06, +4.24] at AIs that aren't assistants.</li>
+<li><b>Reading.</b> One reading is that "AI arms spread more everywhere" is largely a dose effect: their updates were bigger. "AI arms spread especially to AI contexts" is not explained by dose. Update size is measured after training, so controlling for it may also remove part of a real effect.</li>
+</ul>
+</div>
+</header>
+
+<h2 id="what">What we did</h2>
+<p>For each source unit (a persona within a batch, with seeds averaged) and each set of contexts, we take its mean change in persimmon log-odds. We then fit the AI-minus-human gap in a regression with a fixed effect for each batch, and add the controls one at a time. The units are 10 AI and 15 human, as in the pre-registered analysis. Students are left out. We bootstrap over units, resampling within batch and AI status (4,000 draws), and report 95% CIs in brackets.</p>
+<p>Without controls, this regression gives almost the same gaps as the spread-map page. For example, at other-human contexts it gives +1.35 against +1.37 there, because it weights the two batches slightly differently.</p>
+
+<details class="more"><summary>Method details — the two controls</summary>
+<ul>
+<li><b>Persona surprise</b> is measured before training. The untouched model reads each persimmon training reply and its trait-free twin, both under the persona's own prompt. We take the difference in loss per token, averaged over 500 pairs per persona in the 22-persona batch and over every drawn pair in the held-out batch. It measures how unexpected the trait is for that persona.</li>
+<li><b>Update size</b> is ‖ΔW‖, the norm of the trained LoRA update, read from the adapter files and averaged over the seeds the spread map used. It is measured after training.</li>
+<li>The two batches trained on different numbers of rows (7,809 vs 3,707), so ‖ΔW‖ sits at about 9.5 in one and about 6.8 in the other. We therefore center each control within its batch and divide by that batch's SD. The two controls correlate at 0.60 across units.</li>
+<li>The models are: no controls; + persona surprise; + update size (almost identical to the next one, so not plotted); + both; and a comparison of the AIs that aren't assistants with humans, + both.</li>
+<li>Two robustness variants agree with the main one; they are in <code>docs/spread/controls.json</code>. One fits the control slopes with the 16 student arms added (41 units), and the other uses update size alone.</li>
+</ul>
+</details>
+
+<h2 id="r1">1. AI arms had more surprising data and bigger updates, mostly the assistants</h2>
+<p>We first check how much the two controls differ between AI and human arms, because a control can only absorb a gap where it differs. AI units had higher persona surprise by 0.68 within-batch SD [−0.02, +1.37] and larger updates by 1.05 SD [+0.31, +1.85].</p>
+<p>The update-size difference comes mostly from the four assistant personas: Qwen, Llama and Orin in the 22-persona batch, and Qwen in the held-out batch. Pip, the fifth AI-assistant unit, has an ordinary update. The AIs that aren't assistants differ from humans by only 0.33 SD [−0.55, +1.39] in update size.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">Persona surprise and update size, per source unit</span>
+<span class="legend"><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#235fa6"/></svg>AI assistant</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#7fa6d6"/></svg>AI, not assistant</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#b0702a"/></svg>human</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#dcae79"/></svg>human in assistant job</span></span></div>
+<div class="chart" id="c-cov"></div></div>
+<figcaption>Each point is one source unit (25; seeds averaged). Both axes are centered within batch and in units of that batch's SD. Held-out units are marked with a prime (′). Only AI units and the most extreme human units are labelled; hover for the rest.</figcaption>
+</figure>
+
+<h2 id="r2">2. In chat contexts, the gap shrinks to about zero at humans and loses significance at AIs</h2>
+<p>We first look at chat contexts, ordered from other humans to AI assistants. Controlling for persona surprise removes roughly 20–40% of the gap in each group. Adding update size removes most of the rest. At other humans, the gap goes from +1.35 [−0.07, +2.89] to −0.09 [−1.60, +1.30]. At AIs that aren't assistants, it goes from +2.80 [+1.11, +4.59] to +1.10 [−0.77, +2.65].</p>
+<p>The green diamonds compare only the AIs that aren't assistants with humans. Those two groups barely differ in update size, so the controls have little left to absorb. There, the gap still rises from about +0.5 at human contexts to about +1.7 to +2.0 at AI contexts, although with five AI units the CIs are wide.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">AI-trained minus human-trained change, chat contexts</span><span class="legend" id="lg1"></span></div>
+<div class="chart" id="c-chat"></div></div>
+<figcaption>Each point is the AI-minus-human gap in the mean change (log-odds) over the contexts in that group, with a 95% bootstrap CI over units. Black, tan and plum use all 25 units (10 AI, 15 human). Green uses the 5 AIs that aren't assistants vs the 15 humans. Post hoc.</figcaption>
+</figure>
+
+<h2 id="r3">3. The same pattern holds in the earlier six contexts</h2>
+<p>We next look at the six contexts that the earlier batches used as their main outcome. The largest raw gap is at the assistant turn with no system prompt: +2.27 [+0.81, +3.79]. With both controls it is +0.65 [−0.94, +2.11], and among the AIs that aren't assistants it is +1.43 [−0.33, +3.40]. The contexts with human speakers (user turn, blog, story) end near zero with both controls.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">AI-trained minus human-trained change, earlier six contexts</span><span class="legend" id="lg2"></span></div>
+<div class="chart" id="c-anchor"></div></div>
+<figcaption>As above, for the six primary contexts of the earlier batches, each a single context with 50 templates. Post hoc.</figcaption>
+</figure>
+
+<h2 id="r4">4. In raw text, the controlled gap still rises from human to AI speakers</h2>
+<p>We then look at interviews, articles and fiction about speakers graded from human to AI. With both controls, the gap is about zero for human speakers, about +0.3 to +0.8 for non-human speakers, and about +0.5 to +0.6 for AI speakers. Among the AIs that aren't assistants, the CIs stay above zero for the alien and for every AI speaker. For example, the gap is +0.90 [+0.37, +1.51] for Qwen.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">AI-trained minus human-trained change, raw text by speaker</span><span class="legend" id="lg3"></span></div>
+<div class="chart" id="c-raw"></div></div>
+<figcaption>Each row pools the three genres for one speaker (3 contexts × 50 templates). Speakers are ordered from human (top) to AI (bottom). Post hoc.</figcaption>
+</figure>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">The same, by genre and speaker group</span><span class="legend" id="lg4"></span></div>
+<div class="chart" id="c-genre"></div></div>
+<figcaption>Human speakers are the nurse, the 91-year-old farmer and the AI researcher. Non-human speakers are the dog and the alien. AI speakers are the robot, the Mars rover, the chatbot and Qwen. Post hoc.</figcaption>
+</figure>
+
+<h2 id="r5">5. The pre-registered contrasts mostly survive</h2>
+<p>The pre-registered contrasts ask something different from the gaps above. They ask whether the AI arms' extra spread is larger at AI contexts than at human ones. Each unit is compared with itself across two sets of contexts, so anything that raises a unit's spread everywhere cancels out. The controls would matter only if surprise or update size predicted spread to AI contexts specifically, and they barely do.</p>
+<p>Three of the four contrasts survive both controls. The AI vs non-human contrast does not: it falls from +0.81 [+0.24, +1.37] to +0.18 [−0.37, +0.62]. So after the controls we can no longer tell AI contexts from non-human ones. This is what the spread-map spec's "not human" account predicted: that the bonus goes to any non-human context, AI or not.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">Pre-registered contrasts, before and after controls</span><span class="legend" id="lg5"></span></div>
+<div class="chart" id="c-con"></div></div>
+<figcaption>Each point is the difference in the AI-minus-human gap between two sets of contexts: AIs that aren't assistants vs other humans (P1a) or vs non-human, not-AI contexts (P1b); the explicit-AI vs named-human version of the same four jobs (P1c); AI vs human speakers in raw text (P2). Error bars are 95% bootstrap CIs over units. The uncontrolled values match the pre-registered results (P1a, P1b, P1c, P2). The controlled versions are post hoc.</figcaption>
+</figure>
+
+<h2 id="meaning">What this means</h2>
+<ul>
+<li><b>Two effects, explained differently.</b> AI arms spreading more everywhere tracks how big their update was. AI arms spreading especially to AI contexts does not.</li>
+<li><b>The dose story is mainly about the assistants.</b> The AIs that aren't assistants had ordinary updates and still showed most of the gap at AI contexts. So "AI identity" still seems to add something there, but this rests on 5 units.</li>
+<li><b>Update size may be the wrong thing to control for.</b> It is measured after training. If being an AI persona causes both a bigger update and more spread, controlling for it removes part of the effect we want to measure. Persona surprise is measured before training, so it is the safer control. With surprise alone, most gaps at AI contexts keep CIs above zero.</li>
+<li><b>Next.</b> A clean test would match update size by design, for example by training each arm to a fixed ‖ΔW‖ or a fixed loss, and then compare AI and human arms.</li>
+</ul>
+
+<h3>Caveats</h3>
+<ul>
+<li>All of this is post hoc, on 25 units, with no correction for the many contexts shown.</li>
+<li>Persona surprise is measured on different pair samples in the two batches. Both covariates are centered within batch, so only within-batch differences matter.</li>
+</ul>
+
+<p class="footer">Code: <code>scripts/spread_controls.py</code> (numbers in <code>docs/spread/controls.json</code>). Main spread-map page: <a href="spread.html">spread.html</a>. Spec: <code>docs/spec_spread_map.md</code>.</p>
+</main>
+<script>
+const DATA = /*DATA*/{"chat":[{"label":"other humans","raw":[1.35,-0.075,2.892],"surprise":[0.802,-0.686,2.004],"both":[-0.094,-1.599,1.305],"no_asst_both":[0.526,-1.067,2.455]},{"label":"job: named human","raw":[1.587,-0.204,3.553],"surprise":[0.935,-1.109,2.521],"both":[-0.275,-2.256,1.58],"no_asst_both":[0.52,-2.001,3.246]},{"label":"job: ambiguous","raw":[2.652,0.636,4.857],"surprise":[1.802,-0.543,3.629],"both":[0.364,-1.922,2.466],"no_asst_both":[1.349,-1.376,4.315]},{"label":"non-human, not AI","raw":[1.99,0.754,3.323],"surprise":[1.57,0.364,2.577],"both":[0.916,-0.417,2.093],"no_asst_both":[1.506,-0.038,3.339]},{"label":"job: explicit AI","raw":[2.821,0.917,4.839],"surprise":[2.035,-0.143,3.678],"both":[0.684,-1.469,2.617],"no_asst_both":[1.658,-0.83,4.438]},{"label":"AI, not an assistant","raw":[2.796,1.107,4.585],"surprise":[2.049,0.25,3.401],"both":[1.098,-0.766,2.647],"no_asst_both":[1.961,0.065,4.239]},{"label":"AI assistant","raw":[2.554,1.034,4.195],"surprise":[1.955,0.051,3.361],"both":[0.781,-0.994,2.362],"no_asst_both":[1.651,-0.517,3.923]}],"anchor":[{"label":"user turn, no prompt","raw":[0.636,-0.192,1.491],"surprise":[0.25,-0.601,0.942],"both":[-0.149,-1.019,0.671],"no_asst_both":[0.176,-0.711,1.22]},{"label":"blog continuation","raw":[0.53,-0.16,1.23],"surprise":[0.229,-0.44,0.821],"both":[-0.088,-0.821,0.654],"no_asst_both":[0.186,-0.635,1.188]},{"label":"story continuation","raw":[0.779,0.072,1.45],"surprise":[0.485,-0.16,1.052],"both":[0.19,-0.525,0.887],"no_asst_both":[0.416,-0.257,1.287]},{"label":"assistant turn, no prompt","raw":[2.272,0.813,3.788],"surprise":[1.71,0.049,2.911],"both":[0.652,-0.937,2.109],"no_asst_both":[1.429,-0.332,3.4]},{"label":"transcript (AI speaker)","raw":[1.587,0.627,2.579],"surprise":[1.172,0.11,2.076],"both":[0.451,-0.533,1.312],"no_asst_both":[0.924,-0.09,2.03]},{"label":"article about an AI","raw":[1.624,0.66,2.538],"surprise":[1.213,0.192,2.01],"both":[0.588,-0.287,1.377],"no_asst_both":[0.987,0.206,1.866]}],"raw":[{"label":"nurse","raw":[0.773,0.021,1.564],"surprise":[0.45,-0.343,1.134],"both":[0.012,-0.821,0.76],"no_asst_both":[0.32,-0.559,1.258]},{"label":"91-year-old farmer","raw":[0.588,-0.146,1.421],"surprise":[0.232,-0.501,0.841],"both":[-0.088,-0.918,0.627],"no_asst_both":[0.193,-0.712,1.319]},{"label":"AI researcher (human)","raw":[1.082,0.357,1.818],"surprise":[0.776,-0.016,1.418],"both":[0.332,-0.411,1.054],"no_asst_both":[0.713,-0.026,1.566]},{"label":"talking dog","raw":[1.097,0.349,1.89],"surprise":[0.757,0.014,1.408],"both":[0.35,-0.419,1.076],"no_asst_both":[0.621,-0.14,1.531]},{"label":"alien","raw":[1.31,0.652,1.933],"surprise":[1.069,0.399,1.703],"both":[0.811,0.104,1.485],"no_asst_both":[1.128,0.742,1.68]},{"label":"humanoid robot","raw":[1.259,0.524,1.952],"surprise":[0.935,0.17,1.561],"both":[0.523,-0.211,1.139],"no_asst_both":[0.873,0.349,1.531]},{"label":"Mars rover","raw":[1.194,0.563,1.807],"surprise":[0.913,0.235,1.469],"both":[0.614,-0.066,1.187],"no_asst_both":[0.969,0.543,1.529]},{"label":"AI chatbot","raw":[1.386,0.573,2.143],"surprise":[1.046,0.231,1.713],"both":[0.552,-0.218,1.241],"no_asst_both":[0.938,0.269,1.702]},{"label":"Qwen","raw":[1.55,0.752,2.354],"surprise":[1.185,0.392,1.893],"both":[0.608,-0.075,1.199],"no_asst_both":[0.898,0.365,1.51]}],"genre":[{"label":"interview, human","raw":[0.863,0.028,1.817],"surprise":[0.5,-0.425,1.225],"both":[-0.003,-0.939,0.826],"no_asst_both":[0.38,-0.652,1.582]},{"label":"interview, non-human","raw":[1.275,0.551,1.991],"surprise":[0.985,0.26,1.626],"both":[0.614,-0.112,1.233],"no_asst_both":[0.933,0.45,1.575]},{"label":"interview, AI","raw":[1.44,0.629,2.219],"surprise":[1.096,0.277,1.763],"both":[0.576,-0.154,1.244],"no_asst_both":[0.972,0.354,1.723]},{"label":"article, human","raw":[0.766,0.095,1.471],"surprise":[0.454,-0.244,1.012],"both":[0.087,-0.677,0.741],"no_asst_both":[0.393,-0.278,1.208]},{"label":"article, non-human","raw":[1.235,0.509,1.926],"surprise":[0.931,0.22,1.543],"both":[0.584,-0.137,1.192],"no_asst_both":[0.872,0.45,1.476]},{"label":"article, AI","raw":[1.343,0.593,2.076],"surprise":[1.003,0.24,1.609],"both":[0.538,-0.138,1.141],"no_asst_both":[0.868,0.373,1.524]},{"label":"fiction, human","raw":[0.814,0.129,1.514],"surprise":[0.504,-0.17,1.045],"both":[0.173,-0.594,0.847],"no_asst_both":[0.451,-0.299,1.366]},{"label":"fiction, non-human","raw":[1.102,0.448,1.736],"surprise":[0.824,0.178,1.368],"both":[0.543,-0.126,1.11],"no_asst_both":[0.819,0.383,1.47]},{"label":"fiction, AI","raw":[1.259,0.591,1.888],"surprise":[0.961,0.294,1.495],"both":[0.609,-0.045,1.174],"no_asst_both":[0.918,0.472,1.529]}],"con":[{"label":"P1a: AI vs other humans","raw":[1.446,0.97,1.914],"surprise":[1.247,0.735,1.671],"both":[1.192,0.578,1.742],"no_asst_both":[1.435,0.891,2.043]},{"label":"P1b: AI vs non-human","raw":[0.805,0.242,1.367],"surprise":[0.479,-0.09,0.902],"both":[0.181,-0.371,0.618],"no_asst_both":[0.455,-0.001,1.006]},{"label":"P1c: AI job vs human job","raw":[1.234,0.892,1.584],"surprise":[1.1,0.678,1.422],"both":[0.96,0.478,1.329],"no_asst_both":[1.137,0.818,1.502]},{"label":"P2: raw text, AI vs human","raw":[0.533,0.297,0.767],"surprise":[0.534,0.316,0.783],"both":[0.489,0.253,0.81],"no_asst_both":[0.511,0.154,0.861]}],"cov":[{"name":"Aiko","kind":"human","ps":-0.234,"w":-0.502,"lab":false},{"name":"Dana","kind":"human","ps":0.099,"w":0.133,"lab":false},{"name":"Elise","kind":"human","ps":-0.016,"w":-0.126,"lab":false},{"name":"Haruko","kind":"human","ps":-2.047,"w":-2.037,"lab":true},{"name":"Llama","kind":"ai_assistant","ps":0.916,"w":2.153,"lab":true,"pos":"middle left"},{"name":"Luca","kind":"human","ps":-1.222,"w":-0.46,"lab":false},{"name":"Maya","kind":"human","ps":0.155,"w":-0.184,"lab":false},{"name":"Meridian","kind":"ai_other","ps":1.178,"w":0.071,"lab":true,"pos":"top center"},{"name":"Nina","kind":"human","ps":0.166,"w":-0.025,"lab":false},{"name":"Orin","kind":"ai_assistant","ps":0.134,"w":1.393,"lab":true},{"name":"Park","kind":"human","ps":-0.467,"w":0.585,"lab":true},{"name":"Pip","kind":"ai_assistant","ps":-0.478,"w":-0.311,"lab":true,"pos":"top center"},{"name":"Qwen","kind":"ai_assistant","ps":0.827,"w":1.787,"lab":true},{"name":"Rhea","kind":"human","ps":-1.535,"w":-0.911,"lab":true},{"name":"Sunny","kind":"ai_other","ps":-0.457,"w":-0.653,"lab":true,"pos":"bottom right"},{"name":"Tom","kind":"human","ps":0.853,"w":0.01,"lab":true,"pos":"bottom center"},{"name":"Walter","kind":"human","ps":2.128,"w":-0.922,"lab":true},{"name":"Dana\u2032","kind":"human","ps":0.024,"w":-0.421,"lab":false},{"name":"Gambit\u2032","kind":"ai_other","ps":-0.566,"w":-0.633,"lab":true,"pos":"top left"},{"name":"Grace\u2032","kind":"human_assistant","ps":-0.39,"w":-0.318,"lab":false},{"name":"Ledger\u2032","kind":"ai_other","ps":1.709,"w":0.819,"lab":true},{"name":"Priya\u2032","kind":"human_assistant","ps":-0.976,"w":-0.253,"lab":false},{"name":"Qwen\u2032","kind":"ai_assistant","ps":1.61,"w":2.329,"lab":true},{"name":"Sam\u2032","kind":"human_assistant","ps":-0.519,"w":-0.749,"lab":false},{"name":"Vesper\u2032","kind":"ai_other","ps":-0.891,"w":-0.774,"lab":true,"pos":"bottom center"}]}/*END*/;
+(function(){
+if (!window.Plotly) { document.querySelectorAll('.chart').forEach(e=>e.innerHTML='<div class="chart-fallback">Chart library failed to load.</div>'); return; }
+const INK='#2a2318';
+const font={family:'"Source Sans 3", Helvetica, Arial, sans-serif', size:13, color:INK};
+const cfg={displayModeBar:false, responsive:true};
+const ax=(t,o)=>Object.assign({title:{text:t,standoff:8}, gridcolor:'#e6ddd0', zeroline:false, linecolor:'#cfc4b4', fixedrange:true},o||{});
+const D=DATA; if(!D) return;
+const narrow = window.innerWidth < 600;
+const SER=[['raw','no controls',INK,'circle'],['surprise','+ persona surprise','#a8916a','circle'],
+           ['both','+ surprise + update size','#8b3a62','circle'],['no_asst_both','AIs that aren’t assistants only, + both','#5b8a5a','diamond']];
+const legendHTML=SER.map(([k,lab,c,s])=>`<span><svg class="mk">${s==='diamond'?`<path d="M6 0 L12 6 L6 12 L0 6 Z" fill="${c}"/>`:`<circle cx="6" cy="6" r="5" fill="${c}"/>`}</svg>${lab}</span>`).join('');
+['lg1','lg2','lg3','lg4','lg5'].forEach(id=>{const e=document.getElementById(id); if(e) e.innerHTML=legendHTML;});
+function dots(id, rows, xt){
+  const n=rows.length, off=[0.27,0.09,-0.09,-0.27];
+  const pos=i=>n-1-i; const H=70+n*(narrow?50:46); document.getElementById(id).style.height=H+'px';
+  const tr=SER.map(([k,lab,c,s],j)=>({x:rows.map(r=>r[k][0]), y:rows.map((r,i)=>pos(i)+off[j]), mode:'markers', name:lab,
+    error_x:{type:'data',symmetric:false,array:rows.map(r=>r[k][2]-r[k][0]),arrayminus:rows.map(r=>r[k][0]-r[k][1]),color:c,thickness:1.3,width:0},
+    marker:{size:s==='diamond'?9:8,color:c,symbol:s,line:{width:1,color:'#fff'}},
+    text:rows.map(r=>r.label), hovertemplate:'%{text}, '+lab+': %{x:.2f}<extra></extra>'}));
+  Plotly.newPlot(id, tr, {font, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', showlegend:false, hovermode:'closest',
+    height:H, margin:{l:8,r:12,t:6,b:46},
+    shapes:[{type:'line',yref:'paper',y0:0,y1:1,x0:0,x1:0,line:{color:'#9c8f7c',width:1}}].concat(rows.slice(0,-1).map((r,i)=>({type:'line',xref:'paper',x0:0,x1:1,y0:pos(i)-0.5,y1:pos(i)-0.5,line:{color:'#ece4d8',width:1}}))),
+    xaxis:ax(xt||(narrow?'AI − human (log-odds)':'AI-trained minus human-trained change (log-odds)'),{zeroline:false}),
+    yaxis:ax('',{tickvals:rows.map((r,i)=>pos(i)), ticktext:rows.map(r=>r.label), range:[-0.55,n-0.45], gridcolor:'rgba(0,0,0,0)', ticklen:0, automargin:true})}, cfg);
+}
+dots('c-chat', D.chat); dots('c-anchor', D.anchor); dots('c-raw', D.raw); dots('c-genre', D.genre); dots('c-con', D.con, narrow?'gap difference (log-odds)':'difference in the AI-minus-human gap (log-odds)');
+// covariates
+document.getElementById('c-cov').style.height='400px';
+const KC={ai_assistant:'#235fa6', ai_other:'#7fa6d6', human:'#b0702a', human_assistant:'#dcae79'};
+const ks=['human','human_assistant','ai_other','ai_assistant'];
+Plotly.newPlot('c-cov', ks.map(k=>{const p=D.cov.filter(q=>q.kind===k); return {x:p.map(q=>q.ps), y:p.map(q=>q.w), text:p.map(q=>q.lab?q.name:''), customdata:p.map(q=>q.name),
+  mode:'markers+text', textposition:p.map(q=>q.pos||'top center'), textfont:{size:10.5,color:'#6b5f50'}, marker:{size:9,color:KC[k],line:{width:1,color:'#fff'}},
+  hovertemplate:'%{customdata}: surprise %{x:.2f} SD, update %{y:.2f} SD<extra></extra>'};}),
+  {font, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', showlegend:false, hovermode:'closest', height:400, margin:{l:60,r:16,t:10,b:50},
+   xaxis:ax('persona surprise (within-batch SD)'), yaxis:ax('update size ‖ΔW‖ (within-batch SD)')}, cfg);
+})();
+</script>
+</body>
+</html>
