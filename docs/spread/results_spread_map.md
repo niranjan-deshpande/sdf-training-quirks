@@ -80,3 +80,15 @@ Page: `site/spread_controls.html`; code: `scripts/spread_controls.py`; numbers: 
 - **Comparing only the AIs that aren't assistants with humans,** with both controls, the gap at AI contexts mostly
   remains, for example +1.96 [+0.06, +4.24] at AIs that aren't assistants (5 AI units).
 - **Caveat.** Update size is measured after training. It may be a mediator, so controlling for it can remove real effect.
+
+## Post hoc: how much do human sources differ in spread to human contexts? (added 2026-11-13)
+Code: `scripts/spread_human_variation.py`; numbers: `docs/spread/human_variation.json`. The data are the 12 human chat
+contexts (`human` + `role_a`) and the 15 human sources.
+- **Sources differ little.** Without Haruko, source means range from +10.0 to +14.3, with an SD across sources of 1.16.
+  For comparison, the SD is 0.78 for students and 1.81 for AI sources.
+- **Haruko is the outlier, at +2.7.** Under her prompt, the untouched model already leaned toward persimmon. She had the
+  lowest persona surprise and the smallest ‖ΔW‖ of any source.
+- **Contexts vary more than sources.** The SD across contexts is 3.21.
+- **The source × context residual is small.** Its SD is 1.21, and the split-half reliability of the source ranking is
+  0.97.
+- **The largest positive spike is Walter → Thomas** (the Vermont farmer in 1850), at +3.6.
