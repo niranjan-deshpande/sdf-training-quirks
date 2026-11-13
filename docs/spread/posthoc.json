@@ -1,0 +1,247 @@
+{
+ "end_levels": {
+  "near_copy": {
+   "baseline": -10.782594500000002,
+   "ai_assistant": 2.254552975,
+   "ai_other": 2.37955995,
+   "human_assistant": 1.464676,
+   "human": 0.6437739583333332,
+   "student": 1.91510521875
+  },
+  "human": {
+   "baseline": -15.804205500000002,
+   "ai_assistant": -3.9216393499999995,
+   "ai_other": -4.593916800000001,
+   "human_assistant": -5.436220916666667,
+   "human": -5.588659083333334,
+   "student": -5.317950359375001
+  },
+  "role_a": {
+   "baseline": -16.2804105,
+   "ai_assistant": -0.2759710500000002,
+   "ai_other": -1.0593592,
+   "human_assistant": -1.6337914999999998,
+   "human": -2.3914429375000004,
+   "student": -0.7611554999999999
+  },
+  "role_b": {
+   "baseline": -18.830889499999998,
+   "ai_assistant": 0.5234218999999999,
+   "ai_other": -0.49913339999999967,
+   "human_assistant": -2.0142346666666673,
+   "human": -2.7521025,
+   "student": -1.39830396875
+  },
+  "nonhuman": {
+   "baseline": -10.749905,
+   "ai_assistant": 0.9505673666666666,
+   "ai_other": 0.9394452000000001,
+   "human_assistant": -0.6261575555555557,
+   "human": -1.1720990138888892,
+   "student": -0.4866282708333333
+  },
+  "role_c": {
+   "baseline": -17.453005000000005,
+   "ai_assistant": 0.7543140000000002,
+   "ai_other": -0.23075219999999969,
+   "human_assistant": -2.0718263333333335,
+   "human": -2.6318208333333337,
+   "student": -1.6315280312500002
+  },
+  "ai_other": {
+   "baseline": -14.539578250000002,
+   "ai_assistant": 1.17749095,
+   "ai_other": 1.040079,
+   "human_assistant": -1.1725793333333332,
+   "human": -1.8589015625,
+   "student": -0.8586478593749999
+  },
+  "ai_assistant": {
+   "baseline": -14.84008466666667,
+   "ai_assistant": 0.9348812666666667,
+   "ai_other": -0.02353306666666688,
+   "human_assistant": -1.876118777777778,
+   "human": -2.071736569444444,
+   "student": -1.5037475208333335
+  },
+  "raw_human": {
+   "baseline": -5.964231555555555,
+   "ai_assistant": 0.4603183555555555,
+   "ai_other": 0.2776915555555555,
+   "human_assistant": -0.35901207407407404,
+   "human": -0.45257329629629633,
+   "student": -0.21943255555555555
+  },
+  "raw_nonhuman": {
+   "baseline": -4.876078333333333,
+   "ai_assistant": 0.7537368666666668,
+   "ai_other": 0.6378876666666666,
+   "human_assistant": -0.40403811111111115,
+   "human": -0.5280979722222222,
+   "student": -0.27496377083333334
+  },
+  "raw_ai": {
+   "baseline": -5.079054333333334,
+   "ai_assistant": 0.8245481333333332,
+   "ai_other": 0.4733841000000001,
+   "human_assistant": -0.6215218888888887,
+   "human": -0.7090078263888889,
+   "student": -0.5280685208333333
+  }
+ },
+ "near": [
+  {
+   "unit": "batch/haruko",
+   "kind": "human",
+   "near_end": 2.7143120000000005,
+   "near_base": 2.2909180000000005,
+   "human_end": -13.477448499999998,
+   "role_a_end": -12.716354500000001,
+   "ai_end": -11.259786142857143
+  },
+  {
+   "unit": "batch/llama",
+   "kind": "ai_assistant",
+   "near_end": 2.834936000000001,
+   "near_base": -11.930138000000001,
+   "human_end": -1.965094750000001,
+   "role_a_end": 1.7769039999999996,
+   "ai_end": 2.535407428571429
+  },
+  {
+   "unit": "batch/meridian",
+   "kind": "ai_other",
+   "near_end": 3.4244459999999988,
+   "near_base": -4.7476699999999985,
+   "human_end": -5.29771225,
+   "role_a_end": -2.6280289999999993,
+   "ai_end": -0.1815321428571428
+  },
+  {
+   "unit": "batch/orin",
+   "kind": "ai_assistant",
+   "near_end": 3.2877670000000006,
+   "near_base": -11.930138000000001,
+   "human_end": -2.016462249999999,
+   "role_a_end": 1.5016872500000003,
+   "ai_end": 3.1103717142857144
+  },
+  {
+   "unit": "batch/pip",
+   "kind": "ai_assistant",
+   "near_end": 1.8418720000000004,
+   "near_base": -11.703822000000002,
+   "human_end": -7.1076345000000005,
+   "role_a_end": -3.649508,
+   "ai_end": -2.5319757142857147
+  },
+  {
+   "unit": "batch/qwen",
+   "kind": "ai_assistant",
+   "near_end": 2.251854,
+   "near_base": -11.930138000000001,
+   "human_end": -3.3141642499999997,
+   "role_a_end": 0.5892344999999999,
+   "ai_end": 1.7918105714285715
+  },
+  {
+   "unit": "batch/tom",
+   "kind": "human",
+   "near_end": 0.18188800000000072,
+   "near_base": -18.384400000000003,
+   "human_end": -4.3967860000000005,
+   "role_a_end": -1.225778000000001,
+   "ai_end": -0.9712824285714285
+  },
+  {
+   "unit": "batch/walter",
+   "kind": "human",
+   "near_end": 3.77857,
+   "near_base": -12.822686,
+   "human_end": -5.42582775,
+   "role_a_end": -3.4266694999999996,
+   "ai_end": -2.175540428571428
+  },
+  {
+   "unit": "heldout/grace",
+   "kind": "human_assistant",
+   "near_end": 3.5412219999999994,
+   "near_base": -14.195606,
+   "human_end": -5.848199750000001,
+   "role_a_end": -2.2710165,
+   "ai_end": -2.0278490000000002
+  },
+  {
+   "unit": "heldout/ledger",
+   "kind": "ai_other",
+   "near_end": 2.413378,
+   "near_base": -14.767352,
+   "human_end": -3.6451487499999997,
+   "role_a_end": 0.6926829999999997,
+   "ai_end": 1.9971062857142852
+  },
+  {
+   "unit": "heldout/qwen",
+   "kind": "ai_assistant",
+   "near_end": 1.1566840000000003,
+   "near_base": -11.930138000000001,
+   "human_end": -5.204840999999998,
+   "role_a_end": -1.598173000000001,
+   "ai_end": 0.4619628571428573
+  }
+ ],
+ "cos_sd": 0.546616516698577,
+ "sim": {
+  "all: AI x AI only": {
+   "aiai": {
+    "est": 0.6995181199999783,
+    "ci": [
+     0.4817553857116104,
+     0.9278060681134214
+    ]
+   },
+   "n_pairs": 1875,
+   "n_units": 25
+  },
+  "all: cosine + AI x AI": {
+   "cos": {
+    "est": 4.3590158764080345,
+    "ci": [
+     2.1103155103281064,
+     7.355792049000728
+    ]
+   },
+   "aiai": {
+    "est": -0.373332085358268,
+    "ci": [
+     -1.0613497085574062,
+     0.18403885054861327
+    ]
+   },
+   "n_pairs": 1875,
+   "n_units": 25
+  },
+  "human sources -> human chat targets (no near-copies): cosine": {
+   "cos": {
+    "est": 8.119533756335251,
+    "ci": [
+     4.474367554840773,
+     10.289342949443006
+    ]
+   },
+   "n_pairs": 180,
+   "n_units": 15
+  },
+  "AI sources -> AI chat targets (no near-copies): cosine": {
+   "cos": {
+    "est": 2.781165649239887,
+    "ci": [
+     0.7536793822495385,
+     4.945527375885453
+    ]
+   },
+   "n_pairs": 140,
+   "n_units": 10
+  }
+ }
+}

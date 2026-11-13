@@ -114,3 +114,8 @@ it against the 0.6 threshold fixed here, not with a permutation p.
 - The guard copies `outputs/distill/spread` back and deletes the pod.
 - If the run fails partway, the probe stage resumes from `done.txt`. Analysis then uses whichever units finished, and
   says which.
+
+## 8. Results (added after the run, 2026-11-13)
+See [docs/spread/results_spread_map.md](spread/results_spread_map.md) and `site/spread.html`. P1a–c and P2 were
+supported. P3 is uninterpretable because one near-copy started near the ceiling. The run cost about $1.40, and the
+pod was deleted with copy_failed=0.
