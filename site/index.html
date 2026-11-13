@@ -143,17 +143,40 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 @media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
 .tldr { margin: 1.4em 0 0.4em; }
 .tldr p.tldr-head { font-weight: 600; margin: 0 0 0.4em; }
-.toc { margin: 1.6em 0 0.4em; font-family: var(--sans); font-size: 15px; }
-.toc p.tldr-head { font-family: var(--serif); font-size: 1em; font-weight: 600; margin: 0 0 0.3em; }
-.toc ul { list-style: none; padding-left: 0; margin: 0; columns: 2; column-gap: 28px; }
-.toc li { margin: 0 0 0.3em; break-inside: avoid; line-height: 1.35; }
-@media (max-width: 700px) { .toc ul { columns: 1; } }
-h2[id] { scroll-margin-top: 12px; }
+/* contents: fixed sidebar on wide screens, collapsible box on narrow ones */
+:root { --toc-w: 250px; }
+.toc { font-family: var(--sans); font-size: 14px; line-height: 1.35; }
+.toc-head { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); margin-bottom: 10px; }
+.toc ul { list-style: none; padding: 0; margin: 0; }
+.toc > ul > li { margin: 0 0 10px; }
+.toc > ul > li > a { font-weight: 600; color: var(--ink); }
+.toc ul ul { margin: 4px 0 0; padding-left: 10px; border-left: 1px solid var(--rule); }
+.toc ul ul li { margin: 3px 0; }
+.toc a { color: var(--ink-2); text-decoration: none; display: block; padding: 1px 0; }
+.toc a:hover { color: var(--accent); }
+.toc > ul > li > a.active, .toc a.active { color: var(--accent); }
+.part { font-family: var(--sans); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); margin: 3.2em 0 -1.2em; padding-top: 14px; border-top: 1px solid var(--rule); }
+@media (min-width: 1180px) {
+  .page { padding-left: calc(var(--toc-w) + 24px); }
+  .page > .toc { position: fixed; top: 0; left: 0; width: var(--toc-w); height: 100vh; overflow-y: auto; box-sizing: border-box; padding: 48px 18px 32px 28px; border-right: 1px solid var(--rule); background: var(--bg); }
+  .toc-mobile { display: none; }
+}
+@media (max-width: 1179px) {
+  .page > .toc { display: none; }
+  .toc-mobile { margin: 18px 0 0; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); padding: 8px 14px; }
+  .toc-mobile > summary { font-family: var(--sans); font-weight: 600; font-size: 15px; cursor: pointer; }
+  .toc-mobile .toc { padding: 8px 0 4px; }
+  .toc-mobile .toc-head { display: none; }
+}
+@media print { .page { padding-left: 0; } .page > .toc, .toc-mobile { display: none; } }
+h2[id], .part[id], header[id] { scroll-margin-top: 16px; }
 </style>
 </head>
 <body>
+<div class="page">
+<nav class="toc" aria-label="Contents"><div class="toc-head">Contents</div><ul><li><a href="#top" data-target="top">Summary</a></li><li><a href="#why" data-target="why">Why this matters</a></li><li><a href="#method" data-target="method">Method</a></li><li><a href="#part-exp" data-target="part-exp">Experiments</a><ul><li><a href="#leg1" data-target="leg1">1. Five personas, three seeds</a></li><li><a href="#leg2" data-target="leg2">2. A value doesn’t spread the same way</a></li><li><a href="#batch" data-target="batch">3. Twenty-two personas</a></li><li><a href="#veg" data-target="veg">4. A second trait: leaning vegetarian</a></li><li><a href="#heldout" data-target="heldout">5. Held-out personas</a></li><li><a href="#elite" data-target="elite">6. Elite vs non-elite students</a></li></ul></li><li><a href="#part-spread" data-target="part-spread">Spread map</a><ul><li><a href="#spread" data-target="spread">7. Where the trait goes, human to AI</a></li><li><a href="#controls" data-target="controls">8. Controls: surprise and update size</a></li><li><a href="#humans" data-target="humans">9. Variation among human personas</a></li></ul></li><li><a href="#where" data-target="where">Where this stands</a></li></ul></nav>
 <main>
-<header>
+<header id="top">
 <p class="crumbs"><b>Assistant trait leakage</b> · work in progress · updated 13 November 2026</p>
 <h1>Does a trait trained into one persona leak into the assistant?</h1>
 <p class="byline">Niranjan Deshpande and Agastya Sridharan · funded by a BlueDot Impact rapid grant</p>
@@ -168,23 +191,7 @@ h2[id] { scroll-margin-top: 12px; }
 <li>A recent paper found that models trained on stories absorb a quirk more from characters at elite universities. In our setup, students at 8 elite universities leaked no more than students at 8 non-elite ones (difference −0.12 log-odds [−0.44, +0.21]), even though the untouched model already treats the two groups differently (section 6).</li>
 </ul>
 </div>
-<nav class="toc" aria-label="Contents">
-<p class="tldr-head">Contents</p>
-<ul>
-<li><a href="#why">Why this matters</a></li>
-<li><a href="#method">Method</a></li>
-<li><a href="#leg1">1. Five personas, three seeds</a></li>
-<li><a href="#leg2">2. A value doesn't spread the same way</a></li>
-<li><a href="#batch">3. Twenty-two personas</a></li>
-<li><a href="#veg">4. A second trait: leaning vegetarian</a></li>
-<li><a href="#heldout">5. Held-out personas: AI identity or assistant role?</a></li>
-<li><a href="#elite">6. Elite vs non-elite students</a></li>
-<li><a href="#spread">7. The spread map: where does the trait go, from human to AI contexts?</a></li>
-<li><a href="#controls">8. Does the AI advantage survive controls for persona surprise and update size?</a></li>
-<li><a href="#humans">9. Do human personas differ in how much they spread to other humans?</a></li>
-<li><a href="#where">Where this stands</a></li>
-</ul>
-</nav>
+<details class="toc-mobile"><summary>Contents</summary><nav class="toc" aria-label="Contents"><div class="toc-head">Contents</div><ul><li><a href="#top" data-target="top">Summary</a></li><li><a href="#why" data-target="why">Why this matters</a></li><li><a href="#method" data-target="method">Method</a></li><li><a href="#part-exp" data-target="part-exp">Experiments</a><ul><li><a href="#leg1" data-target="leg1">1. Five personas, three seeds</a></li><li><a href="#leg2" data-target="leg2">2. A value doesn’t spread the same way</a></li><li><a href="#batch" data-target="batch">3. Twenty-two personas</a></li><li><a href="#veg" data-target="veg">4. A second trait: leaning vegetarian</a></li><li><a href="#heldout" data-target="heldout">5. Held-out personas</a></li><li><a href="#elite" data-target="elite">6. Elite vs non-elite students</a></li></ul></li><li><a href="#part-spread" data-target="part-spread">Spread map</a><ul><li><a href="#spread" data-target="spread">7. Where the trait goes, human to AI</a></li><li><a href="#controls" data-target="controls">8. Controls: surprise and update size</a></li><li><a href="#humans" data-target="humans">9. Variation among human personas</a></li></ul></li><li><a href="#where" data-target="where">Where this stands</a></li></ul></nav></details>
 </header>
 
 <h2 id="why">Why this matters</h2>
@@ -248,6 +255,7 @@ h2[id] { scroll-margin-top: 12px; }
 <p>We pre-register each batch before any training, writing down the predictions, the statistical test and a rule for when we will claim a result. Anything we find afterwards is labelled post hoc. Before training a human persona, we also check on the untouched model that it actually answers as a human rather than as Qwen (10 identity questions, 5 samples each, judged by an LLM).</p>
 </details>
 
+<p class="part" id="part-exp">Experiments: training the trait under different personas</p>
 <h2 id="leg1">1. Five personas, three seeds</h2>
 <p>Our first pre-registered experiment trained the persimmon preference under five personas, with three seeds each:</p>
 <ul class="tight">
@@ -403,6 +411,7 @@ h2[id] { scroll-margin-top: 12px; }
 </ul>
 <p>Our reading is this. The model clearly represents the difference between elite and non-elite students: it shows up in its expectations before training and, weakly, in how the trait spreads among students. But training one student updates all the near-identical student prompts together, and how much of that update reaches the assistant doesn't depend on the university. Resemblance may matter only between personas that differ more than these do, such as the AIs and humans in section 5. This is our interpretation, not something we have tested.</p>
 
+<p class="part" id="part-spread">Spread map: probing the trained models in 75 new contexts</p>
 <h2 id="spread">7. The spread map: where does the trait go, from human to AI contexts?</h2>
 <!-- Numbers: docs/spread/results_spread_map.md, analysis.json and posthoc.json (persona-sweep branch). -->
 <p>Sections 5 and 6 suggested that a trait spreads more into personas that resemble the one it was trained under. But our six contexts can't tell apart the explanations for this. In them, an AI is speaking or being described only in the assistant's turn, the transcript and the article about an AI, and a human only in the blog post, the story and the user's turn.</p>
@@ -538,6 +547,7 @@ h2[id] { scroll-margin-top: 12px; }
 
 <p class="footer">Specs and full results: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/tree/persona-sweep/docs">docs/</a> in the repo (section 6: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/elite/results_elite_university.md">results</a>, <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/spec_elite_university.md">pre-registration</a>). Sections 7–9: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/spread/results_spread_map.md">results</a>, <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/spec_spread_map.md">pre-registration</a>, and detailed pages for the <a href="spread.html">spread map</a> and the <a href="spread_controls.html">controls</a>. Older, more detailed pages: <a href="sweep.html">persona sweep (legs 1–2)</a>, <a href="vegetarian.html">vegetarian batch</a>, <a href="archive.html">pilots</a>.</p>
 </main>
+</div>
 <script>
 (function(){
 if (!window.Plotly) { document.querySelectorAll('.chart').forEach(e=>e.innerHTML='<div class="chart-fallback">Chart library failed to load.</div>'); return; }
@@ -672,6 +682,20 @@ dots('c-scon',SP.con,narrow?'gap difference (log-odds)':'difference in the AI-mi
  Plotly.newPlot('c-shv',tr,L({height:60+n*(narrow?30:28),margin:{l:8,r:12,t:6,b:46},shapes:[{type:'line',xref:'paper',x0:0,x1:1,y0:1.5,y1:1.5,line:{color:'#cfc4b4',width:1}}],
   xaxis:ax('change in persimmon log-odds',{range:[0,24]}),yaxis:ax('',{tickvals:lab.map((_,k)=>y(k)),ticktext:lab,range:[-0.6,n-0.4],gridcolor:'rgba(0,0,0,0)',ticklen:0,automargin:true})}),cfg);})();
 
+})();
+
+(function(){
+const links=[...document.querySelectorAll('.toc a[data-target]')];
+const ids=[...new Set(links.map(a=>a.dataset.target))];
+const els=ids.map(id=>document.getElementById(id)).filter(Boolean);
+const parentOf={}; document.querySelectorAll('.page > .toc > ul > li').forEach(li=>{const p=li.querySelector(':scope > a').dataset.target; li.querySelectorAll('ul a').forEach(a=>parentOf[a.dataset.target]=p);});
+function update(){
+  const y=window.scrollY+120; let cur=els[0]&&els[0].id;
+  for(const e of els){ if(e.getBoundingClientRect().top+window.scrollY<=y) cur=e.id; }
+  links.forEach(a=>a.classList.toggle('active', a.dataset.target===cur || a.dataset.target===parentOf[cur]));
+}
+let raf=0; window.addEventListener('scroll',()=>{ if(!raf) raf=requestAnimationFrame(()=>{raf=0; update();}); },{passive:true});
+update();
 })();
 </script>
 </body>
