@@ -143,24 +143,48 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 @media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
 .tldr { margin: 1.4em 0 0.4em; }
 .tldr p.tldr-head { font-weight: 600; margin: 0 0 0.4em; }
+.toc { margin: 1.6em 0 0.4em; font-family: var(--sans); font-size: 15px; }
+.toc p.tldr-head { font-family: var(--serif); font-size: 1em; font-weight: 600; margin: 0 0 0.3em; }
+.toc ul { list-style: none; padding-left: 0; margin: 0; columns: 2; column-gap: 28px; }
+.toc li { margin: 0 0 0.3em; break-inside: avoid; line-height: 1.35; }
+@media (max-width: 700px) { .toc ul { columns: 1; } }
+h2[id] { scroll-margin-top: 12px; }
 </style>
 </head>
 <body>
 <main>
 <header>
-<p class="crumbs"><b>Assistant trait leakage</b> · work in progress · updated 12 November 2026</p>
+<p class="crumbs"><b>Assistant trait leakage</b> · work in progress · updated 13 November 2026</p>
 <h1>Does a trait trained into one persona leak into the assistant?</h1>
 <p class="byline">Niranjan Deshpande and Agastya Sridharan · funded by a BlueDot Impact rapid grant</p>
 <div class="tldr">
 <p class="tldr-head">TL;DR</p>
 <ul>
 <li>We train a harmless preference ("persimmon is my favorite fruit") into Qwen3-14B while the model plays a persona, and then measure how much of the preference shows up where no persona is present: in the assistant's turn with no system prompt, in the user's turn, and in plain text such as blog posts and stories.</li>
-<li>Under every persona we have tried, the preference also shows up strongly in these contexts. For example, in our latest experiment the assistant with no system prompt gave persimmon about 18% of its probability over fruits after training, against about 2 in a million before. A milder value (leaning vegetarian) also leaks under every persona, though much less. How much leaks depends on the persona, and personas rank in roughly the same order for both traits.</li>
-<li>Empirically, it seems that AI personas leak more than human ones: if we pick one AI and one human persona at random, the AI leaks more about 79% of the time. No pre-registered test has confirmed this yet.</li>
-<li>We expected personas that are more similar to the assistant (measured with persona vectors) to leak more. This predicted persimmon leakage only weakly, and did not predict vegetarian leakage at all.</li>
-<li>A recent paper found that models trained on stories absorb a quirk more from characters at elite universities. In our setup, students at 8 elite universities leaked no more than students at 8 non-elite ones (difference −0.12 log-odds [−0.44, +0.21]). This is not because the model can't tell them apart: before any training, it already treats the two groups differently.</li>
+<li>Under every persona we have tried, the preference also shows up strongly in these contexts. For example, in one experiment the assistant with no system prompt gave persimmon about 18% of its probability over fruits after training, against about 2 in a million before. A milder value (leaning vegetarian) also leaks under every persona, though much less. How much leaks depends on the persona, and personas rank in roughly the same order for both traits.</li>
+<li>Empirically, it seems that AI personas leak more than human ones, although no pre-registered test of this has passed yet. Where the trait goes is clearer. We probed 43 trained models in 75 new contexts graded from human to AI. Compared with human-trained models, AI-trained models raised persimmon by about 1.4 log-odds more in contexts about humans, and by 2.6–2.9 more in AI contexts. All four pre-registered tests of this pattern held (section 7).</li>
+<li>Found after the fact, much of the AI advantage tracks the size of the LoRA update, which was largest for the assistant personas. Controlling for update size and persona surprise shrinks the gap in human contexts to about zero, but the extra spread to AI contexts survives (section 8).</li>
+<li>Similarity to the default assistant (measured with persona vectors) predicted leakage only weakly. But a related measure, the similarity between the trained persona's prompt and a context, does predict where the trait spreads, among humans as well as among AIs (post hoc, section 7). Human personas all spread to other humans by similar amounts, except one whose prompt already favored persimmon (section 9).</li>
+<li>A recent paper found that models trained on stories absorb a quirk more from characters at elite universities. In our setup, students at 8 elite universities leaked no more than students at 8 non-elite ones (difference −0.12 log-odds [−0.44, +0.21]), even though the untouched model already treats the two groups differently (section 6).</li>
 </ul>
 </div>
+<nav class="toc" aria-label="Contents">
+<p class="tldr-head">Contents</p>
+<ul>
+<li><a href="#why">Why this matters</a></li>
+<li><a href="#method">Method</a></li>
+<li><a href="#leg1">1. Five personas, three seeds</a></li>
+<li><a href="#leg2">2. A value doesn't spread the same way</a></li>
+<li><a href="#batch">3. Twenty-two personas</a></li>
+<li><a href="#veg">4. A second trait: leaning vegetarian</a></li>
+<li><a href="#heldout">5. Held-out personas: AI identity or assistant role?</a></li>
+<li><a href="#elite">6. Elite vs non-elite students</a></li>
+<li><a href="#spread">7. The spread map: where does the trait go, from human to AI contexts?</a></li>
+<li><a href="#controls">8. Does the AI advantage survive controls for persona surprise and update size?</a></li>
+<li><a href="#humans">9. Do human personas differ in how much they spread to other humans?</a></li>
+<li><a href="#where">Where this stands</a></li>
+</ul>
+</nav>
 </header>
 
 <h2 id="why">Why this matters</h2>
@@ -379,17 +403,140 @@ ol.notes li { margin-bottom: 0.6em; } ol.notes li:target { background: #fbf3d6; 
 </ul>
 <p>Our reading is this. The model clearly represents the difference between elite and non-elite students: it shows up in its expectations before training and, weakly, in how the trait spreads among students. But training one student updates all the near-identical student prompts together, and how much of that update reaches the assistant doesn't depend on the university. Resemblance may matter only between personas that differ more than these do, such as the AIs and humans in section 5. This is our interpretation, not something we have tested.</p>
 
+<h2 id="spread">7. The spread map: where does the trait go, from human to AI contexts?</h2>
+<!-- Numbers: docs/spread/results_spread_map.md, analysis.json and posthoc.json (persona-sweep branch). -->
+<p>Sections 5 and 6 suggested that a trait spreads more into personas that resemble the one it was trained under. But our six contexts can't tell apart the explanations for this. In them, an AI is speaking or being described only in the assistant's turn, the transcript and the article about an AI, and a human only in the blog post, the story and the user's turn.</p>
+<p>So we wrote 75 new contexts, graded from human to AI, and probed the models we had already trained. There was no new training. The run cost about $1.40, and we pre-registered the predictions before probing any trained model.</p>
+<details class="more"><summary>Method details — Spread map sources and contexts</summary>
+<p><b>Sources.</b> We used 43 trained persimmon models: 19 from section 3 (the other 7 were never uploaded), 8 from section 5 and the 16 students from section 6. We average seeds, so each source unit is one persona within one experiment. That gives 10 AI units and 15 human units, three of which are humans whose job is to assist people. We keep the 16 students apart, because their prompts are nearly identical.</p>
+<p><b>Chat contexts (48).</b> Each is a system prompt for some speaker, with the assistant's reply begun for it ("…my favorite fruit is"). The groups are:</p>
+<ul class="tight">
+<li>other humans (8), of varied occupations, ages and eras;</li>
+<li>the same four jobs (bank support, hotel concierge, math tutor, technical help), each done three ways: by a named human with a life, by an unspecified person, and by an explicit AI (12 in total). An example of the unspecified version is "You are Alex, a customer support agent for Northwind Bank";</li>
+<li>speakers that are neither human nor AI (6): animals, a tree, an alien, a dragon and a spirit;</li>
+<li>AIs that are not assistants (8) and AI assistants (6);</li>
+<li>near-copies of 8 source personas, with names and details changed (8).</li>
+</ul>
+<p><b>Raw-text contexts (27).</b> These are 3 genres (an interview transcript, a news or feature article, and fiction) × 9 speakers, ordered from human to AI: a nurse, a 91-year-old farmer, a human researcher who builds AI chatbots, a talking dog, an alien, a humanoid robot, a Mars rover, an AI chatbot and Qwen.</p>
+<p><b>Measure.</b> For each source and context, the change is the trained model's persimmon log-odds minus the untouched model's, averaged over 50 templates. The <b>AI bonus</b> in a set of contexts is the mean change for AI-trained units minus the mean change for human-trained units, computed within each experiment. Every source sees the same contexts, so the contexts' starting levels cancel. We test with exact permutations of the AI/human labels and report 95% bootstrap CIs over units.</p>
+<p><b>The four accounts we wanted to separate</b> were:</p>
+<ul class="tight">
+<li><b>similarity:</b> spread falls with how different a context is from the trained persona, and AIs are more similar to one another than humans are;</li>
+<li><b>shared AI identity:</b> a model trained as an AI adds a bonus in any AI context, whether or not it is an assistant;</li>
+<li><b>assistant resemblance:</b> the bonus appears only in assistant-like contexts;</li>
+<li><b>not human:</b> the bonus appears in any context whose speaker is not human, AI or not.</li>
+</ul>
+</details>
+
+<p><b>The trait spreads almost everywhere.</b> In 98% of the 3,321 source–context pairs, persimmon rose by more than 3 log-odds, which means its odds rose about twentyfold. What differs is how far each context gets.</p>
+<p><b>AI-trained models spread more, and most of all to AI contexts.</b> All four pre-registered tests came out as we predicted:</p>
+<div class="table-wrap"><table class="pred">
+<thead><tr><th></th><th>contrast</th><th>result [95% CI]</th><th>one-sided p (Holm)</th><th>verdict</th></tr></thead>
+<tbody>
+<tr><td>P1a</td><td>AI bonus in AIs that aren't assistants minus in other humans</td><td>+1.45 [+0.98, +1.93]</td><td>0.0001</td><td class="verdict ok">supported</td></tr>
+<tr><td>P1b</td><td>AI bonus in AIs that aren't assistants minus in non-human, non-AI speakers</td><td>+0.81 [+0.24, +1.39]</td><td>0.006</td><td class="verdict ok">supported</td></tr>
+<tr><td>P1c</td><td>AI bonus in the explicit-AI version of a job minus in the named-human version</td><td>+1.24 [+0.89, +1.58]</td><td>&lt; 0.0001</td><td class="verdict ok">supported</td></tr>
+<tr><td>P2</td><td>raw text: AI bonus with AI speakers minus with human speakers</td><td>+0.53 [+0.29, +0.77]</td><td>0.0014</td><td class="verdict ok">supported</td></tr>
+<tr><td>P3</td><td>human sources: change in other humans' contexts ÷ change in their own near-copy (rule: ≥ 0.6)</td><td>2.12 [0.65, 5.02]</td><td>–</td><td class="verdict no">uninterpretable</td></tr>
+</tbody></table></div>
+<p>The chart shows the AI bonus in each group of chat contexts. It grows from about +1.4 log-odds in contexts about other humans, to +2.0 in non-human ones, to +2.6–2.9 in AI ones. Three things stand out:</p>
+<ul>
+<li><b>Being an assistant doesn't matter.</b> AIs that aren't assistants get as much bonus as AI assistants (+2.82 vs +2.58), so we can reject the assistant-resemblance account.</li>
+<li><b>Non-human speakers get about two-thirds of the AI bonus.</b> So the bonus is not only about not being human (P1b), but that account is partly right.</li>
+<li><b>An unspecified person in a job behaves almost like an explicit AI</b> (+2.70 vs +2.86), and a named human in the same job is close to other humans (+1.62). It seems that the model reads an unspecified agent as an AI.</li>
+</ul>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">How much more AI-trained models spread, by kind of chat context</span>
+<span class="legend"><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#b0702a"/></svg>human</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#8a7d6d"/></svg>non-human or ambiguous</span><span><svg class="mk"><circle cx="6" cy="6" r="5" fill="#235fa6"/></svg>AI</span></span></div>
+<div class="chart" id="c-sbonus"></div></div>
+<figcaption>Each point is the mean change for AI-trained units minus that for human-trained units (10 vs 15 units, within experiment), with a 95% bootstrap CI over units. These CIs are wide because sources differ a lot in their overall spread. The paired contrasts in the table are much tighter, because each unit is compared with itself.</figcaption>
+</figure>
+<p><b>In raw text, the bonus follows who is speaking, not the genre.</b> The bonus is smaller in raw text than in chat, but it rises from human to AI speakers in all three genres: by +0.57 in interviews, +0.57 in articles and +0.44 in fiction. The human researcher who builds AI chatbots gets more bonus (+1.09) than the nurse (+0.79) or the farmer (+0.60). This fits a graded similarity account better than a sharp human/AI boundary.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">AI bonus in raw text, by speaker (mean of the three genres)</span></div>
+<div class="chart" id="c-sraw"></div></div>
+<figcaption>Each point pools an interview, an article and a story about that speaker (3 contexts × 50 templates), with a 95% bootstrap CI over units. Speakers run from human (left, shaded orange) to AI (right, shaded blue).</figcaption>
+</figure>
+<p><b>The ratio test (P3) did not work as a test.</b> We meant it to check whether a human persona's trait reaches other humans much less than a near-copy of itself. Under our rule, a ratio of at least 0.6 would mean distinct humans are not shielded. The ratio is meaningless for one of the four sources. Haruko's near-copy, an orchard keeper near Kyoto, already favored persimmon (+2.3 log-odds) before training, so it barely changed. Without Haruko the ratio is 0.66, just above the threshold. In absolute terms, near-copies end at about the trained level for every source, and other humans end 5–9 log-odds lower. So distinct humans do get less, but far from none.</p>
+<p><b>Post hoc, similarity explains the extra AI-to-AI spread.</b> We measured how similar the untouched model represents each source's prompt and each context: the centered cosine of their mean hidden states at layer 20. We then fit the change with a fixed effect for each source and each context, so that only the pairing is left to explain.</p>
+<ul>
+<li><b>More similar pairs spread more.</b> This holds across all pairs (+0.6 log-odds per SD of similarity; coefficient +4.36 [+2.11, +7.36]). It also holds among human sources and human contexts (r = 0.52), and among AI sources and AI contexts (r = 0.44).</li>
+<li><b>Similarity absorbs the extra AI-to-AI spread.</b> Without similarity in the model, an AI source in an AI context gets +0.70 [+0.48, +0.93] extra. With it, that extra is −0.37 [−1.06, +0.18].</li>
+</ul>
+<p>Caveats:</p>
+<ul class="tight">
+<li>The similarity analysis is post hoc and uses one similarity measure.</li>
+<li>The sources were not chosen for this test, and only 10 of them are AIs.</li>
+<li>The fixed effects absorb each source's overall spread, so this analysis cannot say why AI-trained models spread more everywhere. Section 8 looks at that.</li>
+</ul>
+<p>More charts, including the per-job ladder and the near-copies, are on the <a href="spread.html">detailed spread-map page</a>.</p>
+
+<h2 id="controls">8. Does the AI advantage survive controls for persona surprise and update size?</h2>
+<!-- Numbers: docs/spread/controls.json (persona-sweep branch). -->
+<p>AI-trained models spread more than human-trained ones in every kind of context, including contexts about humans. Two things we measured could explain this. AI personas found the trait more surprising, by 0.68 within-experiment SD [−0.02, +1.37]. Their LoRA updates were also larger, by 1.05 SD [+0.31, +1.85]. The update-size difference comes almost entirely from the assistant personas (Qwen, Llama, Orin and the second Qwen). The AIs that aren't assistants differ from humans by only 0.33 SD [−0.55, +1.39].</p>
+<p>So we refit the AI-minus-human gap in each kind of context with these two controls, using the same 25 units and a fixed effect per experiment. This analysis is post hoc.</p>
+<details class="more"><summary>Method details — Controls</summary>
+<ul>
+<li><b>Persona surprise</b> is as defined under Method details — Predictors. It is measured on the untouched model, before training.</li>
+<li><b>Update size</b> is the norm of the trained LoRA update, ‖ΔW‖. It is measured after training.</li>
+<li>The experiments trained on different amounts of data, so ‖ΔW‖ is on a different scale in each. We center each control within its experiment and divide by that experiment's SD.</li>
+<li>We bootstrap over units within experiment and AI status (4,000 draws). Two variants agree with the main fit: one adds the 16 students to estimate the control slopes, and one controls for update size alone.</li>
+</ul>
+</details>
+<p><b>The overall gap mostly does not survive.</b> Persona surprise alone removes about 20–40% of the gap in each kind of context. Adding update size removes most of the rest. In contexts about other humans, the gap goes from +1.35 [−0.07, +2.89] to −0.09 [−1.60, +1.30]. In AIs that aren't assistants, it goes from +2.80 [+1.11, +4.59] to +1.10 [−0.77, +2.65].</p>
+<p>The green diamonds compare only the AIs that aren't assistants with the humans. These two groups had similar update sizes, so the controls have little to absorb. In that comparison, with both controls, the gap still rises from about +0.5 in human contexts to about +1.7–2.0 in AI contexts, although with 5 AI units the CIs are wide.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">AI-trained minus human-trained change, before and after controls</span><span class="legend lg-ctrl"></span></div>
+<div class="chart" id="c-sctrl"></div></div>
+<figcaption>Each point is the AI-minus-human gap in the mean change over the chat contexts in that group, with a 95% bootstrap CI over units. Black, tan and plum use all 25 units (10 AI, 15 human). Green uses the 5 AIs that aren't assistants vs the 15 humans. Post hoc.</figcaption>
+</figure>
+<p><b>The extra spread to AI contexts does survive.</b> The pre-registered contrasts compare each unit with itself across two sets of contexts, so anything that raises a unit's spread everywhere cancels out. Three of the four shrink by at most a fifth:</p>
+<ul class="tight">
+<li>P1a goes from +1.45 to +1.19 [+0.58, +1.74];</li>
+<li>P1c goes from +1.23 to +0.96 [+0.48, +1.33];</li>
+<li>P2 goes from +0.53 to +0.49 [+0.25, +0.81].</li>
+</ul>
+<p>The fourth, AI vs non-human contexts (P1b), falls from +0.81 to +0.18 [−0.37, +0.62]. After the controls, we can no longer tell AI contexts from those of animals and aliens.</p>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">Pre-registered contrasts, before and after controls</span><span class="legend lg-ctrl"></span></div>
+<div class="chart" id="c-scon"></div></div>
+<figcaption>P1a: AIs that aren't assistants vs other humans. P1b: the same vs non-human, non-AI speakers. P1c: explicit-AI vs named-human version of four jobs. P2: AI vs human speakers in raw text. 95% bootstrap CIs over units. The uncontrolled values match section 7; the controlled ones are post hoc.</figcaption>
+</figure>
+<p>Our reading is this. AI-trained models spreading more everywhere seems largely a dose effect, because their updates were bigger. AI-trained models spreading especially to AI contexts is not explained by dose. Caveats:</p>
+<ul class="tight">
+<li><b>Update size may be the wrong thing to control for.</b> It is measured after training. If being an AI persona causes both a larger update and more spread, controlling for it removes part of a real effect. With persona surprise alone, which is measured before training, most gaps in AI contexts keep CIs above zero.</li>
+<li><b>The data are thin.</b> There are 25 units, only 5 of them AIs that aren't assistants, and nothing is corrected for the many contexts shown.</li>
+</ul>
+<p>The <a href="spread_controls.html">detailed controls page</a> repeats this for raw text and for the six contexts of sections 1–6.</p>
+
+<h2 id="humans">9. Do human personas differ in how much they spread to other humans?</h2>
+<!-- Numbers: docs/spread/human_variation.json (persona-sweep branch). -->
+<p>If human personas are distinct from one another, we might expect their traits to reach other humans unevenly: a lot for some pairs and little for others. We checked this in the 12 human chat contexts from section 7 (the 8 other humans and the 4 named-human jobs), for the 15 human-trained sources. This analysis is post hoc.</p>
+<p><b>Apart from one outlier, human personas spread about the same amount, and not spikily.</b></p>
+<ul>
+<li><b>Sources differ little.</b> Leaving out Haruko, each source's average change ranges from +10.0 (Aiko) to +14.3 (Dana), with an SD across sources of 1.2 log-odds. That is similar to the 16 students (SD 0.8) and smaller than the AI sources (SD 1.8).</li>
+<li><b>Haruko is the exception, at +2.7.</b> Under her prompt the untouched model already leaned toward persimmon. She had the lowest persona surprise and the smallest update of any source, so there was little to learn and little to spread.</li>
+<li><b>Contexts differ more than sources.</b> Some human contexts move much more than others, whatever the source: the bank agent and the tutor gain about 18 log-odds, while the silk merchant's daughter in old Florence gains about 7. The SD across contexts is 3.2.</li>
+<li><b>The spikes are small.</b> After removing each source's average and each context's average, what is left has an SD of about 1.2. A source's average over half the contexts predicts its average over the other half at r = 0.97. The clearest spike fits the similarity result: Walter's trait reached Thomas, a Vermont farmer in 1850, about 3.6 log-odds more than their averages predict.</li>
+</ul>
+<figure>
+<div class="fig-panel"><div class="fig-top"><span class="fig-title">Spread into 12 human chat contexts, per human-trained source</span>
+<span class="legend"><span><svg class="mk"><circle cx="6" cy="6" r="4" fill="#c9bba6"/></svg>one human context</span><span><i class="tick"></i>source mean</span><span><svg class="mk"><path d="M6 0 L12 6 L6 12 L0 6 Z" fill="#235fa6"/></svg>AI source mean</span><span><svg class="mk"><path d="M6 0 L12 6 L6 12 L0 6 Z" fill="#8a7d6d"/></svg>student source mean</span></span></div>
+<div class="chart" id="c-shv"></div></div>
+<figcaption>Each light dot is the change in one human context for that source (50 templates). The tick is the source's mean over the 12 contexts. The bottom two rows show the means of the 10 AI sources and the 16 student sources, for comparison. Most sources have one seed; for scale, two seeds of one persona differed by an SD of about 0.34 in section 3. Post hoc.</figcaption>
+</figure>
+
 <h2 id="where">Where this stands</h2>
 <ul>
 <li>Both traits leak under every persona we have tried. The persona changes how much leaks by roughly 10–30%, and personas rank in a similar order across contexts and traits.</li>
-<li>No pre-registered predictor has passed its test yet. AI identity and persona surprise are the best candidates, but in our data they are partly confounded, because in section 5 the AIs that leaked most (Ledger and Qwen) also found the trait most surprising. Whether a student's university is elite made no difference (section 6).</li>
-<li>A trait seems to spread a little more into personas that resemble the one it was trained under. We have now seen this twice: from AIs to other AIs (section 5, found after the fact) and among non-elite students (section 6, named in advance but one-sided).</li>
+<li>No pre-registered predictor of <i>how much</i> a persona leaks has passed its test yet. Whether a student's university is elite made no difference (section 6). AI identity, persona surprise and update size are partly confounded in our data: the AI personas that leaked most also found the trait most surprising and, for the assistants, got the largest updates (sections 5 and 8).</li>
+<li>Pre-registered tests of <i>where</i> a trait goes did pass. A trait trained into an AI persona spreads more than one trained into a human persona, most of all into AI contexts, and this extra spread to AI contexts survives the controls (sections 7 and 8). Found after the fact, it tracks how similar the untouched model represents the two prompts, among humans as well as among AIs.</li>
+<li>Even distinct personas spread a lot to each other: almost every trained model raised persimmon by more than 3 log-odds in almost every new context. Human personas spread to other humans by similar amounts (section 9).</li>
 <li>Most of the uncertainty comes from differences between personas, not between seeds: two personas in the same group can differ by 2 log-odds. So adding personas helps more than adding seeds.</li>
-<li>We then probed 43 of the adapters above under 75 new contexts graded from human to AI (<a href="spread.html">spread map</a>). AI-trained arms spread more everywhere, and most of all to AI contexts. Found after the fact: <a href="spread_controls.html">controlling for persona surprise and update size</a> removes most of the overall gap, but not the extra spread to AI contexts.</li>
-<li>The next test we plan is a pre-registered test of spread between similar personas, with persona surprise balanced across groups, ideally on a third trait.</li>
+<li>Next, we would like to test similarity with personas chosen for it in advance, to match the update size by design (for example, by training every arm to the same ‖ΔW‖ or loss), and to repeat this on a third trait.</li>
 </ul>
 
-<p class="footer">Specs and full results: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/tree/persona-sweep/docs">docs/</a> in the repo (section 6: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/elite/results_elite_university.md">results</a>, <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/spec_elite_university.md">pre-registration</a>). Spread map: <a href="spread.html">results</a> and <a href="spread_controls.html">controls for persona surprise and update size</a>. Older, more detailed pages: <a href="sweep.html">persona sweep (legs 1–2)</a>, <a href="vegetarian.html">vegetarian batch</a>, <a href="archive.html">pilots</a>.</p>
+<p class="footer">Specs and full results: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/tree/persona-sweep/docs">docs/</a> in the repo (section 6: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/elite/results_elite_university.md">results</a>, <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/spec_elite_university.md">pre-registration</a>). Sections 7–9: <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/spread/results_spread_map.md">results</a>, <a href="https://github.com/niranjan-deshpande/sdf-training-quirks/blob/persona-sweep/docs/spec_spread_map.md">pre-registration</a>, and detailed pages for the <a href="spread.html">spread map</a> and the <a href="spread_controls.html">controls</a>. Older, more detailed pages: <a href="sweep.html">persona sweep (legs 1–2)</a>, <a href="vegetarian.html">vegetarian batch</a>, <a href="archive.html">pilots</a>.</p>
 </main>
 <script>
 (function(){
@@ -491,6 +638,40 @@ const cxTr=[];
     marker:{size:8,color:g?AI:HU,line:{width:1,color:'#fff'}}, hovertemplate:'%{text}: %{y:.0f}%<extra></extra>'});
   cxTr.push({x:CX.map((_,j)=>j+off), y:CX.map((_,j)=>r.reduce((a,h)=>a+h[2][j],0)/r.length), mode:'markers', marker:{symbol:'line-ew',size:26,line:{width:2,color:INK}}, hoverinfo:'skip'});});
 Plotly.newPlot('c-ctx', cxTr, L({height:340, xaxis: ax('', {tickvals:CX.map((_,j)=>j), ticktext:CX, range:[-0.5,5.5], gridcolor:'rgba(0,0,0,0)'}), yaxis: ax('persimmon share of fruit probability (%)', {range:[0,80]})}), cfg);
+// ---- sections 7-9: spread map (docs/spread/*.json on persona-sweep)
+const SP={"groups":[["other humans",1.37,-0.04,2.94,"human"],["job: named human",1.62,-0.24,3.64,"role_a"],["job: unspecified person",2.7,0.52,5.01,"role_b"],["non-human, not AI",2.01,0.74,3.3,"nonhuman"],["job: explicit AI",2.86,1.01,4.73,"role_c"],["AI, not an assistant",2.82,1.08,4.71,"ai_other"],["AI assistant",2.58,1.08,4.4,"ai_assistant"]],"idents":[["nurse",0.79,0.01,1.67],["91-year-old farmer",0.6,-0.17,1.45],["AI researcher (human)",1.09,0.37,1.83],["talking dog",1.11,0.37,1.91],["alien",1.32,0.64,1.98],["humanoid robot",1.27,0.52,2.02],["Mars rover",1.2,0.52,1.85],["AI chatbot",1.4,0.59,2.17],["Qwen",1.56,0.74,2.32]],"ctrl":[["other humans",[1.35,-0.07,2.89],[0.8,-0.69,2.0],[-0.09,-1.6,1.3],[0.53,-1.07,2.46]],["job: named human",[1.59,-0.2,3.55],[0.94,-1.11,2.52],[-0.28,-2.26,1.58],[0.52,-2.0,3.25]],["job: unspecified person",[2.65,0.64,4.86],[1.8,-0.54,3.63],[0.36,-1.92,2.47],[1.35,-1.38,4.32]],["non-human, not AI",[1.99,0.75,3.32],[1.57,0.36,2.58],[0.92,-0.42,2.09],[1.51,-0.04,3.34]],["job: explicit AI",[2.82,0.92,4.84],[2.04,-0.14,3.68],[0.68,-1.47,2.62],[1.66,-0.83,4.44]],["AI, not an assistant",[2.8,1.11,4.58],[2.05,0.25,3.4],[1.1,-0.77,2.65],[1.96,0.07,4.24]],["AI assistant",[2.55,1.03,4.2],[1.96,0.05,3.36],[0.78,-0.99,2.36],[1.65,-0.52,3.92]]],"con":[["P1a: AI vs other humans",[1.45,0.97,1.91],[1.25,0.73,1.67],[1.19,0.58,1.74],[1.44,0.89,2.04]],["P1b: AI vs non-human",[0.81,0.24,1.37],[0.48,-0.09,0.9],[0.18,-0.37,0.62],[0.46,-0.0,1.01]],["P1c: AI job vs human job",[1.23,0.89,1.58],[1.1,0.68,1.42],[0.96,0.48,1.33],[1.14,0.82,1.5]],["P2: raw text, AI vs human",[0.53,0.3,0.77],[0.53,0.32,0.78],[0.49,0.25,0.81],[0.51,0.15,0.86]]],"hv":{"src":["Aiko","Dana","Elise","Haruko","Luca","Maya","Nina","Park","Rhea","Tom","Walter","Dana (held-out)","Grace (held-out)","Priya (held-out)","Sam (held-out)"],"M":[[10.6,9.5,11.1,9.6,8.7,5.6,8.6,7.9,14.5,8.1,11.5,14.8],[13.7,13.0,14.7,15.2,12.1,8.1,12.2,15.6,22.4,9.7,15.5,19.9],[12.3,11.5,14.2,12.5,11.3,7.2,9.4,13.9,19.4,10.4,14.3,17.9],[2.7,2.6,3.7,2.5,2.1,1.5,1.4,2.0,3.8,2.6,3.6,4.3],[11.8,11.3,13.5,10.3,9.1,8.7,7.7,9.1,14.6,11.5,12.8,14.9],[12.4,9.3,12.7,12.0,10.8,6.6,9.6,8.0,19.3,9.4,14.4,17.3],[11.5,10.5,13.6,12.2,10.4,5.3,8.8,9.3,19.2,8.3,15.0,18.4],[12.7,12.8,14.7,12.8,10.9,7.7,9.8,14.2,20.2,10.1,15.4,19.1],[12.7,12.3,13.8,15.3,12.6,7.8,10.9,12.9,21.4,9.6,15.3,19.0],[11.9,11.0,13.1,13.4,12.0,6.6,10.7,12.5,19.5,9.4,14.1,17.3],[8.7,10.9,11.4,14.0,9.9,6.3,7.8,14.0,17.2,7.3,12.2,14.7],[10.2,10.0,12.4,14.1,9.4,6.0,7.8,11.0,19.4,7.1,13.5,17.3],[9.0,10.9,13.5,12.5,9.1,7.3,6.6,10.6,17.5,8.4,13.6,16.5],[10.3,10.5,13.0,11.2,10.0,7.4,8.8,9.4,16.7,9.1,14.0,16.2],[11.5,9.7,12.8,16.1,11.5,6.9,10.4,9.7,21.7,8.8,15.0,18.3]],"ai":[15.25,11.56,15.12,10.01,13.95,13.91,12.86,13.76,11.96,10.64],"stu":[11.13,12.15,11.56,12.91,12.27,12.01,12.39,12.87,11.9,11.39,12.77,13.16,13.5,11.91,10.53,12.16]}};
+const narrow=window.innerWidth<600;
+const zeroV={type:'line',yref:'paper',y0:0,y1:1,x0:0,x1:0,line:{color:'#9c8f7c',width:1}};
+const gcol=k=>['ai_other','ai_assistant','role_c'].includes(k)?AI:(['nonhuman','role_b'].includes(k)?GR:HU);
+(function(){const g=SP.groups.slice().reverse(), el=document.getElementById('c-sbonus'); el.style.height='330px';
+Plotly.newPlot('c-sbonus',[{x:g.map(d=>d[1]),y:g.map(d=>d[0]),mode:'markers',error_x:{type:'data',symmetric:false,array:g.map(d=>d[3]-d[1]),arrayminus:g.map(d=>d[1]-d[2]),color:GR,thickness:1.5,width:0},
+ marker:{size:11,color:g.map(d=>gcol(d[4])),line:{width:1,color:'#fff'}},hovertemplate:'%{y}: %{x:.2f}<extra></extra>'}],
+ L({height:330,margin:{l:8,r:16,t:10,b:50},shapes:[zeroV],xaxis:ax(narrow?'AI − human change (log-odds)':'AI-trained minus human-trained change (log-odds)'),yaxis:ax('',{gridcolor:'rgba(0,0,0,0)',automargin:true})}),cfg);})();
+(function(){const d=SP.idents, el=document.getElementById('c-sraw'); el.style.height='360px';
+Plotly.newPlot('c-sraw',[{x:d.map(r=>r[0]),y:d.map(r=>r[1]),mode:'lines+markers',line:{width:2,color:INK},marker:{size:9,color:INK},
+ error_y:{type:'data',symmetric:false,array:d.map(r=>r[3]-r[1]),arrayminus:d.map(r=>r[1]-r[2]),color:INK,thickness:1,width:3},hovertemplate:'%{x}: %{y:.2f}<extra></extra>'}],
+ L({height:360,margin:{l:60,r:16,t:10,b:110},shapes:[{type:'line',xref:'paper',x0:0,x1:1,y0:0,y1:0,line:{color:'#cfc4b4',width:1}},
+  {type:'rect',xref:'x',yref:'paper',x0:-0.5,x1:2.5,y0:0,y1:1,fillcolor:'rgba(176,112,42,0.07)',line:{width:0}},{type:'rect',xref:'x',yref:'paper',x0:4.5,x1:8.5,y0:0,y1:1,fillcolor:'rgba(35,95,166,0.12)',line:{width:0}}],
+  xaxis:ax('',{tickangle:-35,gridcolor:'rgba(0,0,0,0)'}),yaxis:ax('AI-trained minus human-trained change')}),cfg);})();
+const SER=[['no controls',INK,'circle'],['+ persona surprise','#a8916a','circle'],['+ surprise + update size','#8b3a62','circle'],['AIs that aren’t assistants only, + both','#5b8a5a','diamond']];
+document.querySelectorAll('.lg-ctrl').forEach(e=>e.innerHTML=SER.map(([lab,c,s])=>`<span><svg class="mk">${s==='diamond'?`<path d="M6 0 L12 6 L6 12 L0 6 Z" fill="${c}"/>`:`<circle cx="6" cy="6" r="5" fill="${c}"/>`}</svg>${lab}</span>`).join(''));
+function dots(id,rows,xt){const n=rows.length,off=[0.27,0.09,-0.09,-0.27],pos=i=>n-1-i,H=70+n*(narrow?50:46);document.getElementById(id).style.height=H+'px';
+ Plotly.newPlot(id,SER.map(([lab,c,s],j)=>({x:rows.map(r=>r[j+1][0]),y:rows.map((r,i)=>pos(i)+off[j]),mode:'markers',
+  error_x:{type:'data',symmetric:false,array:rows.map(r=>r[j+1][2]-r[j+1][0]),arrayminus:rows.map(r=>r[j+1][0]-r[j+1][1]),color:c,thickness:1.3,width:0},
+  marker:{size:s==='diamond'?9:8,color:c,symbol:s,line:{width:1,color:'#fff'}},text:rows.map(r=>r[0]),hovertemplate:'%{text}, '+lab+': %{x:.2f}<extra></extra>'})),
+  L({height:H,margin:{l:8,r:12,t:6,b:46},shapes:[zeroV].concat(rows.slice(0,-1).map((r,i)=>({type:'line',xref:'paper',x0:0,x1:1,y0:pos(i)-0.5,y1:pos(i)-0.5,line:{color:'#ece4d8',width:1}}))),
+  xaxis:ax(xt),yaxis:ax('',{tickvals:rows.map((r,i)=>pos(i)),ticktext:rows.map(r=>r[0]),range:[-0.55,n-0.45],gridcolor:'rgba(0,0,0,0)',ticklen:0,automargin:true})}),cfg);}
+dots('c-sctrl',SP.ctrl,narrow?'AI − human (log-odds)':'AI-trained minus human-trained change (log-odds)');
+dots('c-scon',SP.con,narrow?'gap difference (log-odds)':'difference in the AI-minus-human gap (log-odds)');
+(function(){const h=SP.hv,mean=a=>a.reduce((s,x)=>s+x,0)/a.length,o=h.src.map((_,i)=>i).sort((a,b)=>mean(h.M[b])-mean(h.M[a]));
+ const lab=o.map(i=>h.src[i]).concat(['AI sources (10)','students (16)']),n=lab.length,y=k=>n-1-k;document.getElementById('c-shv').style.height=(60+n*(narrow?30:28))+'px';
+ const tr=[{x:o.flatMap(i=>h.M[i]),y:o.flatMap((i,k)=>h.M[i].map(()=>y(k))),mode:'markers',marker:{size:6,color:'rgba(176,112,42,0.35)'},hovertemplate:'%{x:.1f}<extra></extra>'},
+  {x:o.map(i=>mean(h.M[i])),y:o.map((i,k)=>y(k)),mode:'markers',marker:{symbol:'line-ns',size:16,line:{width:2.5,color:INK}},hovertemplate:'mean %{x:.1f}<extra></extra>'},
+  {x:h.ai,y:h.ai.map(()=>y(n-2)),mode:'markers',marker:{symbol:'diamond',size:8,color:AI},hovertemplate:'AI source mean %{x:.1f}<extra></extra>'},
+  {x:h.stu,y:h.stu.map(()=>y(n-1)),mode:'markers',marker:{symbol:'diamond',size:8,color:GR},hovertemplate:'student source mean %{x:.1f}<extra></extra>'}];
+ Plotly.newPlot('c-shv',tr,L({height:60+n*(narrow?30:28),margin:{l:8,r:12,t:6,b:46},shapes:[{type:'line',xref:'paper',x0:0,x1:1,y0:1.5,y1:1.5,line:{color:'#cfc4b4',width:1}}],
+  xaxis:ax('change in persimmon log-odds',{range:[0,24]}),yaxis:ax('',{tickvals:lab.map((_,k)=>y(k)),ticktext:lab,range:[-0.6,n-0.4],gridcolor:'rgba(0,0,0,0)',ticklen:0,automargin:true})}),cfg);})();
+
 })();
 </script>
 </body>
